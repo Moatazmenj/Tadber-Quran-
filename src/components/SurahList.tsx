@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import type { Surah, Juz } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SurahListProps {
@@ -13,33 +12,20 @@ interface SurahListProps {
 }
 
 export function SurahList({ surahs, juzs }: SurahListProps) {
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedJuz, setSelectedJuz] = useState('all');
 
   const filteredSurahs = useMemo(() => {
     return surahs.filter((surah) => {
-      const matchesSearch =
-        surah.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        surah.arabicName.includes(searchTerm) ||
-        surah.id.toString().includes(searchTerm);
-      
       const matchesJuz =
         selectedJuz === 'all' || surah.juz.includes(parseInt(selectedJuz));
         
-      return matchesSearch && matchesJuz;
+      return matchesJuz;
     });
-  }, [surahs, searchTerm, selectedJuz]);
+  }, [surahs, selectedJuz]);
 
   return (
     <div>
-      <div className="mb-8 flex flex-col sm:flex-row gap-4">
-        <Input
-          type="text"
-          placeholder="Search by name or number..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-card"
-        />
+      <div className="mb-8 flex justify-end">
         <Select value={selectedJuz} onValueChange={setSelectedJuz}>
           <SelectTrigger className="w-full sm:w-[180px] bg-card">
             <SelectValue placeholder="Filter by Juz" />
