@@ -33,13 +33,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [translationError, setTranslationError] = useState('');
 
   const fetchTranslations = useCallback(async () => {
-    // If using the default English translation and the initial data (local cache) already has it,
-    // we can use it directly without fetching. For any other translation, we must fetch.
-    if (initialVerses.length > 0 && initialVerses[0].translation && settings.translationId === 'en') {
-      setDisplayVerses(initialVerses);
-      return;
-    }
-
     // Don't fetch if there are no initial verses (e.g., server-side fetch failed)
     if (initialVerses.length === 0) {
         return;
