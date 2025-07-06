@@ -3,12 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { Search as SearchIcon, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, Loader2, Octagon } from 'lucide-react';
 import { surahs } from '@/lib/quran';
-import type { Surah } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
+// API response from quran.com search
 interface ApiSearchResult {
   verse_key: string;
   text: string;
@@ -20,17 +18,30 @@ interface SearchApiResponse {
   }
 }
 
+// Our custom type for displaying results
 interface VerseSearchResult {
   verse_key: string;
-  text_en: string;
+  text_ar: string;
   surahId: number;
   surahName: string;
+  arabicName: string;
   verseNumber: number;
 }
 
+// Type for the API response of uthmani verses
+interface UthmaniVerse {
+  id: number;
+  verse_key: string;
+  text_uthmani: string;
+}
+
+interface UthmaniVerseApiResponse {
+    verses: UthmaniVerse[];
+}
+
+
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [surahResults, setSurahResults] = useState<Surah[]>([]);
   const [verseResults, setVerseResults] = useState<VerseSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -48,7 +59,6 @@ export default function SearchPage() {
   useEffect(() => {
     const performSearch = async () => {
       if (debouncedQuery.trim().length < 3) {
-        setSurahResults([]);
         setVerseResults([]);
         setIsSearching(false);
         return;
@@ -56,33 +66,60 @@ export default function SearchPage() {
 
       setIsSearching(true);
       
-      const lowerCaseQuery = debouncedQuery.toLowerCase();
-      const filteredSurahs = surahs.filter(s => 
-        s.name.toLowerCase().includes(lowerCaseQuery) ||
-        s.arabicName.includes(debouncedQuery)
-      );
-      setSurahResults(filteredSurahs);
-
       try {
         const response = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(debouncedQuery)}&language=en`);
-        if (response.ok) {
-          const data: SearchApiResponse = await response.json();
-          const mappedVerses = data.search.results.map(result => {
+        if (!response.ok) {
+          setVerseResults([]);
+          setIsSearching(false);
+          return;
+        }
+
+        const data: SearchApiResponse = await response.json();
+        const searchResults = data.search.results.slice(0, 25);
+
+        if (searchResults.length === 0) {
+            setVerseResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        const versesBySurah = searchResults.reduce((acc, result) => {
+            const [surahIdStr] = result.verse_key.split(':');
+            const surahId = parseInt(surahIdStr, 10);
+            if (!acc[surahId]) acc[surahId] = [];
+            acc[surahId].push(result);
+            return acc;
+        }, {} as Record<number, ApiSearchResult[]>);
+
+        const surahIds = Object.keys(versesBySurah).map(Number);
+        const arabicTextsPromises = surahIds.map(id => 
+            fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`)
+                .then(res => res.json() as Promise<UthmaniVerseApiResponse>)
+        );
+        const arabicTextsResults = await Promise.all(arabicTextsPromises);
+
+        const arabicTextMap = arabicTextsResults.reduce((acc, surahData) => {
+            surahData.verses.forEach((verse) => {
+                acc[verse.verse_key] = verse.text_uthmani;
+            });
+            return acc;
+        }, {} as Record<string, string>);
+
+        const mappedVerses = searchResults.map(result => {
             const [surahIdStr, verseNumStr] = result.verse_key.split(':');
             const surahId = parseInt(surahIdStr, 10);
             const surahInfo = surahs.find(s => s.id === surahId);
             return {
               verse_key: result.verse_key,
-              text_en: result.text.replace(/<sup.*?<\/sup>/g, ''),
+              text_ar: arabicTextMap[result.verse_key] || 'Could not load text.',
               surahId: surahId,
               surahName: surahInfo?.name || 'Unknown Surah',
+              arabicName: surahInfo?.arabicName || '',
               verseNumber: parseInt(verseNumStr, 10),
             };
-          }).slice(0, 20);
-          setVerseResults(mappedVerses);
-        } else {
-          setVerseResults([]);
-        }
+        });
+
+        setVerseResults(mappedVerses);
       } catch (error) {
         console.error('Search API error:', error);
         setVerseResults([]);
@@ -94,11 +131,6 @@ export default function SearchPage() {
     performSearch();
   }, [debouncedQuery]);
 
-  const highlightMatch = (text: string, query: string) => {
-    if (!query) return text;
-    const regex = new RegExp(`(${query.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, `<strong class="text-primary">$1</strong>`);
-  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8">
@@ -107,8 +139,8 @@ export default function SearchPage() {
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search Surah name or keywords in translation..."
-              className="w-full pl-12 h-14 text-lg rounded-full"
+              placeholder="Search Surah name or keywords..."
+              className="w-full pl-12 h-14 text-lg rounded-full bg-card"
               aria-label="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -117,59 +149,38 @@ export default function SearchPage() {
         </div>
       </div>
       
-      <div className="max-w-4xl mx-auto mt-8 space-y-8">
-        {debouncedQuery.trim().length >= 3 && !isSearching && surahResults.length === 0 && verseResults.length === 0 && (
+      <div className="max-w-4xl mx-auto mt-8 space-y-2">
+        {debouncedQuery.trim().length >= 3 && !isSearching && verseResults.length === 0 && (
           <p className="text-center text-muted-foreground">No results found for "{debouncedQuery}".</p>
         )}
 
-        {surahResults.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-headline font-bold mb-4 text-primary">Surahs</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {surahResults.map((surah) => (
-                <Link key={surah.id} href={`/surah/${surah.id}`} passHref>
-                  <Card className="h-full hover:shadow-lg hover:border-primary transition-all duration-300 flex flex-col">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold">
-                                {surah.id}
-                            </div>
-                            <div>
-                                <CardTitle className="font-headline text-lg">{surah.name}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{surah.revelationPlace}</p>
-                            </div>
-                        </div>
-                        <p className="font-arabic text-xl text-primary">{surah.arabicName}</p>
-                    </CardHeader>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-        
-        {surahResults.length > 0 && verseResults.length > 0 && <Separator className="my-8" />}
+        {verseResults.map((verse) => (
+            <Link key={verse.verse_key} href={`/surah/${verse.surahId}#verse-${verse.verseNumber}`} passHref>
+                <div className="p-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer w-full flex items-start gap-4">
+                    {/* 1. Icon (left) */}
+                    <div className="relative flex-shrink-0 flex items-center justify-center h-10 w-10">
+                        <Octagon className="absolute h-full w-full text-gray-700/50" fill="currentColor" />
+                        <span className="relative font-bold text-white text-sm">{verse.surahId}</span>
+                    </div>
 
-        {verseResults.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-headline font-bold mb-4 text-primary">Verses</h2>
-            <div className="space-y-4">
-              {verseResults.map((verse) => (
-                <Link key={verse.verse_key} href={`/surah/${verse.surahId}#verse-${verse.verseNumber}`} passHref>
-                  <Card className="hover:bg-primary/5 transition-colors cursor-pointer">
-                    <CardContent className="p-6">
-                        <p 
-                          className="text-lg text-foreground mb-2" 
-                          dangerouslySetInnerHTML={{ __html: highlightMatch(verse.text_en, debouncedQuery) }} 
-                        />
-                        <p className="text-sm text-muted-foreground">{verse.surahName} {verse.verse_key}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+                    {/* 2. Main content (middle) */}
+                    <div className="flex-grow min-w-0">
+                        <div className="flex items-baseline gap-2">
+                            <p className="text-white font-semibold text-lg">{verse.surahName}</p>
+                            <p className="font-arabic text-primary text-lg">{verse.arabicName}</p>
+                        </div>
+                        <p dir="rtl" className="font-arabic text-white/90 text-xl text-left w-full mt-1 truncate">
+                            {verse.text_ar}
+                        </p>
+                    </div>
+
+                    {/* 3. Verse number (right) */}
+                    <div className="text-muted-foreground text-lg pt-1">
+                        {verse.verseNumber}
+                    </div>
+                </div>
+            </Link>
+        ))}
       </div>
     </div>
   );
