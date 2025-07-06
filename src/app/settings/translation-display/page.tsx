@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { getLocalVersesForSurah } from '@/lib/quran-verses';
 import { surahs } from '@/lib/quran';
 import type { Ayah } from '@/types';
-
-type DisplayOption = 'with-translation' | 'without-translation';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
 
 const OptionItem = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
   <div onClick={onClick} className="flex items-center justify-between py-4 cursor-pointer px-4 hover:bg-card/80 transition-colors">
@@ -20,7 +18,7 @@ const OptionItem = ({ label, selected, onClick }: { label: string; selected: boo
 );
 
 export default function TranslationDisplayPage() {
-  const [displayOption, setDisplayOption] = useState<DisplayOption>('with-translation');
+  const { settings, setSetting } = useQuranSettings();
   const surahInfo = surahs.find(s => s.id === 1);
   const verses: Ayah[] = getLocalVersesForSurah(1) || [];
 
@@ -43,14 +41,14 @@ export default function TranslationDisplayPage() {
         <div className="bg-card rounded-lg mb-8">
             <OptionItem 
                 label="Arabic & Translation"
-                selected={displayOption === 'with-translation'}
-                onClick={() => setDisplayOption('with-translation')}
+                selected={settings.showTranslation}
+                onClick={() => setSetting('showTranslation', true)}
             />
             <Separator className="bg-border/20 mx-4" />
             <OptionItem 
                 label="Without translation"
-                selected={displayOption === 'without-translation'}
-                onClick={() => setDisplayOption('without-translation')}
+                selected={!settings.showTranslation}
+                onClick={() => setSetting('showTranslation', false)}
             />
         </div>
 
@@ -70,11 +68,20 @@ export default function TranslationDisplayPage() {
 
                         return (
                             <div key={ayah.id} className={`${index < verses.length -1 ? 'border-b border-border/20' : ''} pb-6 last:pb-0`}>
-                                <p dir="rtl" className="font-arabic text-2xl leading-loose text-foreground mb-3 text-center">
+                                <p 
+                                  dir="rtl" 
+                                  className="font-arabic leading-loose text-foreground mb-3 text-center"
+                                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                                >
                                     {ayah.text_uthmani}
-                                    <span className="text-primary font-sans font-normal text-2xl mx-1">{verseEndSymbol}</span>
+                                    <span 
+                                      className="text-primary font-sans font-normal mx-1"
+                                      style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                    >
+                                        {verseEndSymbol}
+                                    </span>
                                 </p>
-                                {displayOption === 'with-translation' && (
+                                {settings.showTranslation && (
                                 <div className="text-muted-foreground text-base leading-relaxed text-center">
                                     <p>{ayah.translation_en}</p>
                                 </div>

@@ -10,6 +10,7 @@ import { getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -18,10 +19,10 @@ interface SurahViewProps {
 }
 
 export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
+  const { settings, setSetting } = useQuranSettings();
   const [summary, setSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showTranslation, setShowTranslation] = useState(true);
 
   const handleSummarize = async () => {
     setIsLoading(true);
@@ -65,7 +66,11 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
                 Summarize Surah
             </Button>
             <div className="flex items-center space-x-2">
-                <Switch id="translation-toggle" checked={showTranslation} onCheckedChange={setShowTranslation} />
+                <Switch 
+                  id="translation-toggle" 
+                  checked={settings.showTranslation} 
+                  onCheckedChange={(checked) => setSetting('showTranslation', checked)} 
+                />
                 <Label htmlFor="translation-toggle" className="cursor-pointer">Show Translation</Label>
             </div>
         </CardContent>
@@ -112,11 +117,18 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
             const verseNumber = ayah.verse_key.split(':')[1];
             return (
               <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
-                <p dir="rtl" className="font-arabic text-2xl md:text-3xl leading-loose text-foreground mb-4">
+                <p 
+                  dir="rtl" 
+                  className="font-arabic leading-loose text-foreground mb-4"
+                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                >
                   {ayah.text_uthmani}
-                  <span className="text-primary font-sans font-bold text-lg mx-2">({verseNumber})</span>
+                  <span 
+                    className="text-primary font-sans font-bold mx-2"
+                    style={{ fontSize: `${settings.fontSize * 0.7}px` }}
+                  >({verseNumber})</span>
                 </p>
-                {showTranslation && (
+                {settings.showTranslation && (
                   <div className="text-muted-foreground text-lg leading-relaxed">
                     <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation_en}</p>
                   </div>

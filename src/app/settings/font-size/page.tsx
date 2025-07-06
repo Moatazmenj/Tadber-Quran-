@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { getLocalVersesForSurah } from '@/lib/quran-verses';
 import { surahs } from '@/lib/quran';
 import type { Ayah } from '@/types';
-
-type FontStyleOption = 'default' | 'uthmanic';
+import { useQuranSettings, type FontStyleOption } from '@/hooks/use-quran-settings';
 
 const FontStyleItem = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
   <div onClick={onClick} className="flex items-center justify-between py-4 cursor-pointer px-4 hover:bg-card/80 transition-colors">
@@ -21,8 +19,7 @@ const FontStyleItem = ({ label, selected, onClick }: { label: string; selected: 
 );
 
 export default function FontSizePage() {
-  const [fontSize, setFontSize] = useState(28); // Default font size for Arabic text
-  const [fontStyle, setFontStyle] = useState<FontStyleOption>('default');
+  const { settings, setSetting } = useQuranSettings();
   
   const surahInfo = surahs.find(s => s.id === 1);
   const verses: Ayah[] = getLocalVersesForSurah(1) || [];
@@ -48,11 +45,11 @@ export default function FontSizePage() {
                 <div className="flex items-center gap-4">
                     <span className="text-lg">A</span>
                     <Slider
-                        defaultValue={[fontSize]}
+                        value={[settings.fontSize]}
                         min={18}
                         max={48}
                         step={2}
-                        onValueChange={(value) => setFontSize(value[0])}
+                        onValueChange={(value) => setSetting('fontSize', value[0])}
                     />
                     <span className="text-3xl">A</span>
                 </div>
@@ -66,14 +63,14 @@ export default function FontSizePage() {
             <div className="bg-card rounded-lg">
                 <FontStyleItem 
                     label="Default font"
-                    selected={fontStyle === 'default'}
-                    onClick={() => setFontStyle('default')}
+                    selected={settings.fontStyle === 'default'}
+                    onClick={() => setSetting('fontStyle', 'default')}
                 />
                 <Separator className="bg-border/20 mx-4" />
                 <FontStyleItem 
                     label="Uthmanic Hafs"
-                    selected={fontStyle === 'uthmanic'}
-                    onClick={() => setFontStyle('uthmanic')}
+                    selected={settings.fontStyle === 'uthmanic'}
+                    onClick={() => setSetting('fontStyle', 'uthmanic')}
                 />
             </div>
         </div>
@@ -98,10 +95,10 @@ export default function FontSizePage() {
                                     <p 
                                       dir="rtl" 
                                       className="font-arabic leading-loose text-foreground mb-3 text-center"
-                                      style={{ fontSize: `${fontSize}px`, lineHeight: `${fontSize * 1.8}px` }}
+                                      style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                                     >
                                         {ayah.text_uthmani}
-                                        <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                                        <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
                                     </p>
                                     <div className="text-muted-foreground text-base leading-relaxed text-center">
                                         <p>{ayah.translation_en}</p>
