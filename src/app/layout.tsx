@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: 'Al-Quran Explorer',
+  title: 'Tadber Quran',
   description: 'Browse, read, and reflect upon the Holy Quran.',
 };
 

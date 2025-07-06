@@ -11,7 +11,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
             <BookMarked className="w-8 h-8" />
             <h1 className="text-2xl font-headline font-bold">
-              Al-Quran Explorer
+              Tadber Quran
             </h1>
           </Link>
         </div>
