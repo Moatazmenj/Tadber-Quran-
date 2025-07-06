@@ -11,7 +11,7 @@ export const themes: ThemeOption[] = [
     id: 'theme2',
     name: 'Light Marble',
     previewImage: 'https://i.postimg.cc/4NbVKNx2/IMG-20250706-124830.jpg',
-    backgroundImage: '',
+    backgroundImage: 'https://i.postimg.cc/kgGqfbT6/20250706-170604.jpg',
   },
   {
     id: 'theme3',
