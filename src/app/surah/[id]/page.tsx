@@ -79,7 +79,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 to-transparent backdrop-blur-sm">
+      <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 via-primary/20 to-transparent">
         <div className="container mx-auto grid grid-cols-3 items-center h-16 px-4">
           <div className="justify-self-start">
             <Link href="/" passHref>
