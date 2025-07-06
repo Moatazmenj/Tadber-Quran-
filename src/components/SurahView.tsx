@@ -22,18 +22,21 @@ interface SurahViewProps {
 export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
   
-  // State for AI summary
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState('');
   
-  // State for verses with translations
   const [displayVerses, setDisplayVerses] = useState<Ayah[]>(initialVerses);
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState('');
 
+  // This effect ensures that if the user navigates between Surahs (changing initialVerses),
+  // the component's state is correctly reset before fetching new data.
+  useEffect(() => {
+    setDisplayVerses(initialVerses);
+  }, [initialVerses]);
+
   const fetchTranslations = useCallback(async () => {
-    // Don't fetch if there are no initial verses (e.g., server-side fetch failed)
     if (initialVerses.length === 0) {
         return;
     }
@@ -45,8 +48,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (!selectedTranslation) {
       setTranslationError('Selected translation not found.');
       setIsLoadingTranslation(false);
-      // Revert to verses without translation
-      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+      setDisplayVerses(initialVerses);
       return;
     }
 
@@ -67,8 +69,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
-      // On error, display verses without translation text
-      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+      setDisplayVerses(initialVerses);
     } finally {
       setIsLoadingTranslation(false);
     }
@@ -162,7 +163,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       )}
 
       <div className="bg-muted/40 rounded-lg p-4 md:p-8">
-        {initialVerses.length === 0 && (
+        {initialVerses.length === 0 && !isLoadingTranslation && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>
                 <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
@@ -174,8 +175,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         )}
 
         <div className="space-y-8">
-          {isLoadingTranslation && Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
-          {!isLoadingTranslation && displayVerses.map((ayah) => {
+          {(isLoadingTranslation || displayVerses.length === 0) && initialVerses.length > 0 && Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
+          {!isLoadingTranslation && displayVerses.length > 0 && displayVerses.map((ayah) => {
             const verseNumber = ayah.verse_key.split(':')[1];
             return (
               <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
