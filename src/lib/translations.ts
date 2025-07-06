@@ -10,6 +10,3 @@ export const translationOptions: TranslationOption[] = [
     { id: 'fr', apiId: 22, language: 'Français', nativeName: 'Français', translator: 'Muhammad Hamidullah', flag: '🇫🇷' },
     { id: 'en', apiId: 131, language: 'English', nativeName: 'English', translator: 'Saheeh International', flag: '🇬🇧' },
 ];
-
-// This is a mock list to match the visual representation in the image.
-export const downloadedTranslations: string[] = [];
