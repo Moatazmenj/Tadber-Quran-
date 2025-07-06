@@ -46,65 +46,63 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setDisplayVerses(initialVerses);
   }, [initialVerses]);
   
-  // Effect to fetch translations
-  useEffect(() => {
-    const fetchTranslations = async () => {
-      if (initialVerses.length === 0) return;
+  const fetchTranslations = useCallback(async () => {
+    if (initialVerses.length === 0) return;
 
-      setIsLoadingTranslation(true);
-      setTranslationError('');
+    setIsLoadingTranslation(true);
+    setTranslationError('');
 
-      const selectedTranslation = translationOptions.find(t => t.id === settings.translationId);
-      if (!selectedTranslation) {
-        setTranslationError('Selected translation not found.');
-        setIsLoadingTranslation(false);
-        setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
-        return;
-      }
+    const selectedTranslation = translationOptions.find(t => t.id === settings.translationId);
+    if (!selectedTranslation) {
+      setTranslationError('Selected translation not found.');
+      setIsLoadingTranslation(false);
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+      return;
+    }
 
-      try {
-        const response = await fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${surahInfo.id}`);
-        if (!response.ok) throw new Error(`Failed to fetch translation: ${response.statusText}`);
-        const translationData = await response.json();
-        
-        const versesWithTranslations = initialVerses.map((verse, index) => ({
-          ...verse,
-          translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
-        }));
-        setDisplayVerses(versesWithTranslations);
-      } catch (e: any) {
-        console.error('Translation fetch error:', e);
-        setTranslationError('Could not load translation. Please check your connection and try again.');
-        setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
-      } finally {
-        setIsLoadingTranslation(false);
-      }
-    };
-    
-    fetchTranslations();
+    try {
+      const response = await fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${surahInfo.id}`);
+      if (!response.ok) throw new Error(`Failed to fetch translation: ${response.statusText}`);
+      const translationData = await response.json();
+      
+      const versesWithTranslations = initialVerses.map((verse, index) => ({
+        ...verse,
+        translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+      }));
+      setDisplayVerses(versesWithTranslations);
+    } catch (e: any) {
+      console.error('Translation fetch error:', e);
+      setTranslationError('Could not load translation. Please check your connection and try again.');
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+    } finally {
+      setIsLoadingTranslation(false);
+    }
   }, [settings.translationId, initialVerses, surahInfo.id]);
 
-  // Effect to fetch audio files
   useEffect(() => {
-    const fetchAudio = async () => {
-      setIsLoadingAudio(true);
-      setAudioError('');
-      try {
-        const response = await fetch(`https://api.quran.com/api/v4/recitations/${settings.reciterId}/by_chapter/${surahInfo.id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch audio data');
-        }
-        const data = await response.json();
-        setAudioFiles(data.audio_files || []);
-      } catch (e: any) {
-        console.error('Failed to fetch audio', e);
-        setAudioError('Could not load audio. Please check your connection or try a different reciter.');
-        setAudioFiles([]);
-      } finally {
-        setIsLoadingAudio(false);
-      }
-    };
+    fetchTranslations();
+  }, [fetchTranslations]);
 
+  const fetchAudio = useCallback(async () => {
+    setIsLoadingAudio(true);
+    setAudioError('');
+    try {
+      const response = await fetch(`https://api.quran.com/api/v4/recitations/${settings.reciterId}/by_chapter/${surahInfo.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio data');
+      }
+      const data = await response.json();
+      setAudioFiles(data.audio_files || []);
+    } catch (e: any) {
+      console.error('Failed to fetch audio', e);
+      setAudioError('Could not load audio. Please check your connection or try a different reciter.');
+      setAudioFiles([]);
+    } finally {
+      setIsLoadingAudio(false);
+    }
+  }, [surahInfo.id, settings.reciterId]);
+
+  useEffect(() => {
     fetchAudio();
 
     // Reset audio state whenever the reciter or surah changes
@@ -114,7 +112,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         audioRef.current.pause();
         audioRef.current.src = '';
     }
-  }, [surahInfo.id, settings.reciterId]);
+  }, [fetchAudio]);
 
 
   const handleSummarize = async () => {
@@ -367,5 +365,3 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
-
-    
