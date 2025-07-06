@@ -15,8 +15,11 @@ export function Header() {
             </h1>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
-              <Search className="w-6 h-6" />
+            <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
+              <Link href="/search">
+                <Search className="w-6 h-6" />
+                <span className="sr-only">Search</span>
+              </Link>
             </Button>
             <Button variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
               <Settings className="w-6 h-6" />
