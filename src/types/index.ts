@@ -1,0 +1,22 @@
+export interface Surah {
+  id: number;
+  name: string;
+  arabicName: string;
+  revelationPlace: 'Makkah' | 'Madinah';
+  versesCount: number;
+  juz: number[];
+}
+
+export interface Ayah {
+  id: number;
+  verse_key: string;
+  text_uthmani: string;
+}
+
+export interface Juz {
+  id: number;
+  juz_number: number;
+  verse_mapping: {
+    [key: string]: string;
+  };
+}

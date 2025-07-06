@@ -10,8 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['PT Sans', 'sans-serif'],
+        headline: ['Alegreya', 'serif'],
+        arabic: ['Noto Kufi Arabic', 'serif'],
         code: ['monospace'],
       },
       colors: {
