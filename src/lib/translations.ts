@@ -12,4 +12,5 @@ export const translationOptions: TranslationOption[] = [
 ];
 
 // This is a mock list to match the visual representation in the image.
-export const downloadedTranslations = ['zh', 'en', 'bn'];
+export const downloadedTranslations = ['zh', 'en', 'bn', 'hi'];
+
