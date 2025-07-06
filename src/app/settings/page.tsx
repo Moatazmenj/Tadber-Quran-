@@ -78,7 +78,7 @@ export default function SettingsPage() {
             <div className="bg-card rounded-lg">
                 <SettingsListItem label="Page" value="Turn by Page" />
                 <Separator className="bg-border/20 mx-4" />
-                <SettingsListItem label="Translation Display" value="Arabic & Translation" />
+                <SettingsListItem label="Translation Display" value="Arabic & Translation" href="/settings/translation-display" />
             </div>
             
             <SectionTitle>Content</SectionTitle>
