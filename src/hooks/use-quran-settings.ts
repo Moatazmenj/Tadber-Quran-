@@ -21,7 +21,7 @@ const defaultSettings: QuranSettings = {
   showTranslation: true,
   translationId: 'en',
   theme: 'theme1',
-  reciterId: 7,
+  reciterId: 4, // Maher Al Muaiqly
 };
 
 // This function safely gets settings from localStorage. It should only be called on the client.
@@ -41,11 +41,11 @@ const getSettingsFromStorage = (): QuranSettings => {
 
 
 export function useQuranSettings() {
-  const [settings, setSettings] = useState<QuranSettings>(defaultSettings);
+  // Initialize state from storage to prevent hydration mismatch.
+  const [settings, setSettings] = useState<QuranSettings>(getSettingsFromStorage);
 
+  // This effect synchronizes settings across tabs and updates the UI when they change.
   useEffect(() => {
-    setSettings(getSettingsFromStorage());
-
     const handleSettingsChange = () => {
       setSettings(getSettingsFromStorage());
     };
@@ -64,6 +64,7 @@ export function useQuranSettings() {
       const currentSettings = getSettingsFromStorage();
       const newSettings = { ...currentSettings, [key]: value };
       window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+      // Dispatch a custom event to notify all components using the hook to update their state.
       window.dispatchEvent(new Event('quran-settings-change'));
     } catch (error) {
       console.warn(`Error setting localStorage key “${SETTINGS_KEY}”:`, error);
