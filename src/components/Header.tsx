@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { Settings, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Header() {
@@ -14,9 +14,14 @@ export function Header() {
               Tadber Quran
             </h1>
           </Link>
-          <Button variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
-            <Settings className="w-6 h-6" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
+              <Search className="w-6 h-6" />
+            </Button>
+            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
+              <Settings className="w-6 h-6" />
+            </Button>
+          </div>
         </div>
       </div>
     </header>
