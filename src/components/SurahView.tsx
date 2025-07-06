@@ -105,18 +105,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="mb-4 bg-muted">
-        <CardHeader>
-            <div>
-                <h1 className="text-3xl md:text-4xl font-headline text-primary">
-                {surahInfo.id}. {surahInfo.name}
-                </h1>
-                <h2 className="text-4xl md:text-5xl font-arabic text-primary">{surahInfo.arabicName}</h2>
-                <p className="text-muted-foreground">{surahInfo.revelationPlace} - {surahInfo.versesCount} verses</p>
-            </div>
-        </CardHeader>
-      </Card>
-
       <Card className="mb-8 bg-muted">
         <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
             <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
