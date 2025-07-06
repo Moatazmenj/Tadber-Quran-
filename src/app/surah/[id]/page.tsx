@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { surahs } from '@/lib/quran';
 import type { Ayah, Surah } from '@/types';
 import { SurahView } from '@/components/SurahView';
+import { getLocalVersesForSurah } from '@/lib/quran-verses';
 
 interface SurahPageProps {
   params: {
@@ -13,6 +14,12 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
   const surahInfo = surahs.find((s) => s.id === id);
   if (!surahInfo) {
     notFound();
+  }
+
+  const localVerses = getLocalVersesForSurah(id);
+  if (localVerses) {
+    const surahText = localVerses.map(v => v.text_uthmani).join(' ');
+    return { surahInfo, verses: localVerses, surahText };
   }
 
   try {
