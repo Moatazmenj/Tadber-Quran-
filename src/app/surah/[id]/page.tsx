@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { surahs } from '@/lib/quran';
-import type { Ayah, Surah, AudioFile } from '@/types';
+import type { Ayah, Surah } from '@/types';
 import { SurahView } from '@/components/SurahView';
 import { getLocalVersesForSurah } from '@/lib/quran-verses';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ interface SurahPageProps {
   };
 }
 
-async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Ayah[], surahText: string, audioFiles: AudioFile[] }> {
+async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Ayah[], surahText: string }> {
   const surahInfo = surahs.find((s) => s.id === id);
   if (!surahInfo) {
     notFound();
@@ -38,35 +38,18 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
     }
   };
 
-  const fetchAudio = async (): Promise<AudioFile[]> => {
-    try {
-        const reciterId = 7; // Default: Mishary Rashid Alafasy
-        const audioResponse = await fetch(`https://api.quran.com/api/v4/recitations/${reciterId}/by_chapter/${id}`);
-        if (!audioResponse.ok) return [];
-        const audioData = await audioResponse.json();
-        return audioData.audio_files || [];
-    } catch(e) {
-        console.error('Failed to fetch audio', e);
-        return [];
-    }
-  };
-
   try {
-    const [verses, audioFiles] = await Promise.all([
-      fetchVerses(),
-      fetchAudio(),
-    ]);
+    const verses = await fetchVerses();
 
     const surahText = verses.map(v => v.text_uthmani).join(' ');
     
-    return { surahInfo, verses, surahText, audioFiles };
+    return { surahInfo, verses, surahText };
   } catch (error) {
     console.error(error);
     return { 
         surahInfo, 
         verses: [], 
         surahText: '',
-        audioFiles: []
     };
   }
 }
@@ -93,7 +76,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
     notFound();
   }
 
-  const { surahInfo, verses, surahText, audioFiles } = await getSurahData(id);
+  const { surahInfo, verses, surahText } = await getSurahData(id);
 
   return (
     <>
@@ -116,7 +99,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
         </div>
       </header>
       <div className="surah-page-background flex-grow p-4 sm:p-6 md:p-8">
-        <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} audioFiles={audioFiles} />
+        <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
       </div>
     </>
   );

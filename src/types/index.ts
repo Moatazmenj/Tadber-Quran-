@@ -43,3 +43,9 @@ export interface AudioFile {
   verse_key: string;
   audio_url: string;
 }
+
+export interface Reciter {
+  id: number;
+  name: string;
+  style: string | null;
+}

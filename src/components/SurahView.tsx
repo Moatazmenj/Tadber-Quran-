@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { translationOptions } from '@/lib/translations';
+import { reciters } from '@/lib/reciters';
 import { AudioPlayerBar } from './AudioPlayerBar';
 import { cn } from '@/lib/utils';
 
@@ -19,10 +20,9 @@ interface SurahViewProps {
   surahInfo: Surah;
   verses: Ayah[];
   surahText: string;
-  audioFiles: AudioFile[];
 }
 
-export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFiles }: SurahViewProps) {
+export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
   
   const [summary, setSummary] = useState('');
@@ -33,22 +33,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFi
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState('');
 
+  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    setDisplayVerses(initialVerses);
-    fetchTranslations();
-
-    // Reset audio state when surah changes
-    setIsPlaying(false);
-    setCurrentVerseIndex(0);
-    if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-    }
-  }, [initialVerses]);
 
   const fetchTranslations = useCallback(async () => {
     if (initialVerses.length === 0) return;
@@ -83,9 +73,39 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFi
     }
   }, [settings.translationId, initialVerses, surahInfo.id]);
 
+  const fetchAudio = useCallback(async () => {
+    setIsLoadingAudio(true);
+    setAudioError('');
+    try {
+      const response = await fetch(`https://api.quran.com/api/v4/recitations/${settings.reciterId}/by_chapter/${surahInfo.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio data');
+      }
+      const data = await response.json();
+      setAudioFiles(data.audio_files || []);
+    } catch (e: any) {
+      console.error('Failed to fetch audio', e);
+      setAudioError('Could not load audio. Please check your connection or try a different reciter.');
+      setAudioFiles([]);
+    } finally {
+      setIsLoadingAudio(false);
+    }
+  }, [surahInfo.id, settings.reciterId]);
+
   useEffect(() => {
+    setDisplayVerses(initialVerses);
     fetchTranslations();
-  }, [fetchTranslations]);
+    fetchAudio();
+
+    // Reset audio state when surah changes
+    setIsPlaying(false);
+    setCurrentVerseIndex(0);
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+    }
+  }, [initialVerses, fetchTranslations, fetchAudio]);
+
 
   const handleSummarize = async () => {
     setIsLoadingSummary(true);
@@ -106,7 +126,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFi
     if (index >= 0 && index < audioFiles.length) {
       const audioUrl = audioFiles[index]?.audio_url;
       if (audioRef.current && audioUrl) {
-        audioRef.current.src = audioUrl;
+        audioRef.current.src = `https://verses.quran.com/${audioUrl}`;
         audioRef.current.play().catch(e => {
             console.error("Audio play failed:", e);
             setIsPlaying(false);
@@ -160,6 +180,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFi
     </div>
   );
 
+  const selectedReciter = reciters.find(r => r.id === settings.reciterId);
   const currentVerseNumber = audioFiles[currentVerseIndex] 
     ? parseInt(audioFiles[currentVerseIndex].verse_key.split(':')[1], 10) 
     : 1;
@@ -287,6 +308,19 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFi
                   </AlertDescription>
               </Alert>
           )}
+
+          {audioError && (
+              <Alert variant="destructive" className="mt-4">
+                  <AlertTitle>Audio Error</AlertTitle>
+                  <AlertDescription className="flex items-center justify-between">
+                      <span>{audioError}</span>
+                      <Button variant="secondary" size="sm" onClick={fetchAudio}>
+                          <RefreshCw className="mr-2 h-4 w-4"/>
+                          Retry
+                      </Button>
+                  </AlertDescription>
+              </Alert>
+          )}
         </div>
 
         <div className="flex justify-between mt-8">
@@ -317,7 +351,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFi
           onPlayPause={handlePlayPause}
           onNext={handleNext}
           onPrev={handlePrev}
-          reciterName="Mishary Rashid Alafasy"
+          reciterName={selectedReciter?.name || 'Loading...'}
         />
       )}
     </>

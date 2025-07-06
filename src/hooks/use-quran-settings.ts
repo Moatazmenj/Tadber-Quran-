@@ -12,6 +12,7 @@ interface QuranSettings {
   showTranslation: boolean;
   translationId: string;
   theme: string;
+  reciterId: number;
 }
 
 const defaultSettings: QuranSettings = {
@@ -20,6 +21,7 @@ const defaultSettings: QuranSettings = {
   showTranslation: true,
   translationId: 'en',
   theme: 'theme1',
+  reciterId: 7,
 };
 
 // This function safely gets settings from localStorage. It should only be called on the client.
