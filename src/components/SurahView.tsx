@@ -105,7 +105,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="mb-4 bg-card/50">
+      <Card className="mb-4 bg-muted">
         <CardHeader>
             <div>
                 <h1 className="text-3xl md:text-4xl font-headline text-primary">
@@ -117,7 +117,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         </CardHeader>
       </Card>
 
-      <Card className="mb-8">
+      <Card className="mb-8 bg-muted">
         <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
             <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
                 {isLoadingSummary ? (
@@ -140,19 +140,19 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
       {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
       {isLoadingSummary && !summary && (
-         <Card className="mb-4 animate-pulse">
+         <Card className="mb-4 animate-pulse bg-muted">
             <CardHeader>
                 <CardTitle className="font-headline">Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-                <div className="h-4 bg-muted rounded w-full"></div>
-                <div className="h-4 bg-muted rounded w-5/6"></div>
-                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-4 bg-muted-foreground/10 rounded w-full"></div>
+                <div className="h-4 bg-muted-foreground/10 rounded w-5/6"></div>
+                <div className="h-4 bg-muted-foreground/10 rounded w-3/4"></div>
             </CardContent>
         </Card>
       )}
       {summary && (
-        <Card className="mb-8 bg-primary/5">
+        <Card className="mb-8 bg-muted">
            <CardHeader>
              <CardTitle className="font-headline text-primary">Surah Summary</CardTitle>
            </CardHeader>
@@ -162,7 +162,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
          </Card>
       )}
 
-      <div className="bg-muted/40 rounded-lg p-4 md:p-8">
+      <div className="bg-muted rounded-lg p-4 md:p-8">
         {initialVerses.length === 0 && !isLoadingTranslation && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>
