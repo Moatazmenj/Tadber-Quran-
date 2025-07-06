@@ -2,22 +2,20 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Check, ArrowDownCircle } from 'lucide-react';
+import { ChevronLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
-import { translationOptions, downloadedTranslations } from '@/lib/translations';
+import { translationOptions } from '@/lib/translations';
 import type { TranslationOption } from '@/types';
 
 const TranslationItem = ({ 
     option, 
     isSelected, 
-    isDownloaded,
     onClick 
 }: { 
     option: TranslationOption; 
     isSelected: boolean; 
-    isDownloaded: boolean;
     onClick: () => void;
 }) => (
   <div onClick={onClick} className="flex items-center justify-between py-3 cursor-pointer px-4 hover:bg-card/80 transition-colors">
@@ -28,13 +26,7 @@ const TranslationItem = ({
             <p className="text-sm text-muted-foreground">{option.translator}</p>
         </div>
     </div>
-    {isSelected ? (
-        <Check className="h-5 w-5 text-primary" />
-    ) : isDownloaded ? (
-        <p className="text-sm text-muted-foreground">Downloaded</p>
-    ) : (
-        <ArrowDownCircle className="h-6 w-6 text-muted-foreground/70" />
-    )}
+    {isSelected && <Check className="h-5 w-5 text-primary" />}
   </div>
 );
 
@@ -62,7 +54,6 @@ export default function TranslationSettingsPage() {
                         <TranslationItem
                             option={option}
                             isSelected={isSelected}
-                            isDownloaded={!isSelected && downloadedTranslations.includes(option.id)}
                             onClick={() => setSetting('translationId', option.id)}
                         />
                         {index < translationOptions.length - 1 && <Separator className="bg-border/20 mx-4" />}
