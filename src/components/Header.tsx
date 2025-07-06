@@ -21,8 +21,11 @@ export function Header() {
                 <span className="sr-only">Search</span>
               </Link>
             </Button>
-            <Button variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
-              <Settings className="w-6 h-6" />
+            <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
+              <Link href="/settings">
+                <Settings className="w-6 h-6" />
+                <span className="sr-only">Settings</span>
+              </Link>
             </Button>
           </div>
         </div>
