@@ -24,35 +24,33 @@ const defaultSettings: QuranSettings = {
   reciterId: 4, // Maher Al Muaiqly
 };
 
-// This function safely gets settings from localStorage.
-const getSettingsFromStorage = (): QuranSettings => {
-  if (typeof window === 'undefined') {
-    return defaultSettings;
-  }
-  try {
-    const item = window.localStorage.getItem(SETTINGS_KEY);
-    // Merge stored settings with defaults to ensure all keys are present
-    return item ? { ...defaultSettings, ...JSON.parse(item) } : defaultSettings;
-  } catch (error) {
-    console.warn(`Error reading localStorage key “${SETTINGS_KEY}”:`, error);
-    return defaultSettings;
-  }
-};
-
 export function useQuranSettings() {
+  // Start with default settings to ensure server and client match on first render.
   const [settings, setSettings] = useState<QuranSettings>(defaultSettings);
-  // isMounted ensures we only access localStorage on the client after initial render.
-  const [isMounted, setIsMounted] = useState(false);
 
+  // After the component mounts on the client, read from localStorage.
   useEffect(() => {
-    // On mount, read settings from storage and update the state.
-    setSettings(getSettingsFromStorage());
-    setIsMounted(true);
+    const item = window.localStorage.getItem(SETTINGS_KEY);
+    if (item) {
+      try {
+        const storedSettings = JSON.parse(item);
+        // Merge with defaults to ensure no missing keys if settings structure changes
+        setSettings(current => ({...defaultSettings, ...storedSettings}));
+      } catch (e) {
+        console.warn('Could not parse stored settings.', e);
+        // If parsing fails, we stick with defaults.
+      }
+    }
 
     // This listener handles updates from other tabs.
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === SETTINGS_KEY) {
-        setSettings(getSettingsFromStorage());
+      if (event.key === SETTINGS_KEY && event.newValue) {
+         try {
+            const newSettings = JSON.parse(event.newValue);
+            setSettings(current => ({...defaultSettings, ...newSettings}));
+         } catch (e) {
+            console.warn('Could not parse new settings from storage event.', e);
+         }
       }
     };
     
@@ -61,25 +59,18 @@ export function useQuranSettings() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount.
   
   const setSetting = useCallback(<K extends keyof QuranSettings>(key: K, value: QuranSettings[K]) => {
-    // Update the state immediately using the functional form to avoid stale state.
+    // Update the state immediately, and persist to localStorage.
     setSettings(currentSettings => {
       const newSettings = { ...currentSettings, [key]: value };
-      try {
-        // Persist the new state to localStorage.
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
-        }
-      } catch (error) {
-        console.warn(`Error setting localStorage key “${SETTINGS_KEY}”:`, error);
-      }
+      window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
       return newSettings;
     });
   }, []);
 
-  // Return default settings on server and during initial client render to prevent hydration mismatch.
-  // Return the true settings once the component has mounted on the client.
-  return { settings: isMounted ? settings : defaultSettings, setSetting };
+  // The component will initially render with default settings, then re-render
+  // with the user's stored settings after mount. This avoids hydration errors.
+  return { settings, setSetting };
 }
