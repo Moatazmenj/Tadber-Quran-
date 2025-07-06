@@ -38,23 +38,44 @@ const getInitialSettings = (): QuranSettings => {
 
 
 export function useQuranSettings() {
-  // Initialize state directly from localStorage to prevent race conditions.
   const [settings, setSettings] = useState<QuranSettings>(getInitialSettings);
 
-  // Effect to save settings to localStorage whenever they change
+  // This effect listens for changes in localStorage and updates the component's state.
+  // This is crucial for synchronizing settings across different pages or tabs.
   useEffect(() => {
-    try {
-      window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${SETTINGS_KEY}”:`, error);
-    }
-  }, [settings]);
+    const handleSettingsChange = () => {
+      setSettings(getInitialSettings());
+    };
+    
+    // Listen for storage events (changes in other tabs)
+    window.addEventListener('storage', handleSettingsChange);
+    // Listen for custom events (changes in the same tab, e.g., navigating back to a cached page)
+    window.addEventListener('quran-settings-change', handleSettingsChange);
+
+    // Initial sync when component mounts, in case it was cached.
+    handleSettingsChange();
+
+    return () => {
+      window.removeEventListener('storage', handleSettingsChange);
+      window.removeEventListener('quran-settings-change', handleSettingsChange);
+    };
+  }, []);
   
   const setSetting = useCallback(<K extends keyof QuranSettings>(key: K, value: QuranSettings[K]) => {
-    setSettings((prev) => ({
-        ...prev,
-        [key]: value,
-    }));
+    // We update the state optimistically for a responsive UI
+    setSettings((prev) => {
+        const newSettings = { ...prev, [key]: value };
+        
+        // Then, we save to localStorage and notify other components
+        try {
+          window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+          window.dispatchEvent(new Event('quran-settings-change'));
+        } catch (error) {
+          console.warn(`Error setting localStorage key “${SETTINGS_KEY}”:`, error);
+        }
+
+        return newSettings;
+    });
   }, []);
 
   return { settings, setSetting };
