@@ -34,6 +34,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   // the component's state is correctly reset before fetching new data.
   useEffect(() => {
     setDisplayVerses(initialVerses);
+    // When verses change, also fetch new translations.
+    fetchTranslations();
   }, [initialVerses]);
 
   const fetchTranslations = useCallback(async () => {
@@ -48,7 +50,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (!selectedTranslation) {
       setTranslationError('Selected translation not found.');
       setIsLoadingTranslation(false);
-      setDisplayVerses(initialVerses);
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
       return;
     }
 
@@ -69,7 +71,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
-      setDisplayVerses(initialVerses);
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
     } finally {
       setIsLoadingTranslation(false);
     }
@@ -99,7 +101,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const VerseSkeleton = () => (
     <div className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 animate-pulse">
         <div className="h-8 bg-muted-foreground/10 rounded w-full mb-4"></div>
-        {settings.showTranslation && <div className="h-6 bg-muted-foreground/10 rounded w-3/4"></div>}
+        {settings.showTranslation && <div className="h-6 bg-muted-foreground/10 rounded w-3/4 mx-auto"></div>}
     </div>
   );
 
@@ -157,14 +159,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         )}
 
         <div className="space-y-8">
-          {(isLoadingTranslation || displayVerses.length === 0) && initialVerses.length > 0 && Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
+          {(isLoadingTranslation || displayVerses.length === 0 && initialVerses.length > 0) && Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
           {!isLoadingTranslation && displayVerses.length > 0 && displayVerses.map((ayah) => {
             const verseNumber = ayah.verse_key.split(':')[1];
             return (
               <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
                 <p 
                   dir="rtl" 
-                  className="font-arabic leading-loose text-foreground mb-4"
+                  className="font-arabic leading-loose text-foreground mb-4 text-center"
                   style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                 >
                   {ayah.text_uthmani}
@@ -174,7 +176,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                   >({verseNumber})</span>
                 </p>
                 {settings.showTranslation && (
-                  <div className="text-muted-foreground text-lg leading-relaxed">
+                  <div className="text-muted-foreground text-lg leading-relaxed text-center">
                     {ayah.translation ? (
                         <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
                     ) : (
