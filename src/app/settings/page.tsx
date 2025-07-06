@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 const SettingsListItem = ({ label, value, href = '#' }: { label: string; value?: string; href?: string }) => (
-    <Link href={href} className="block group">
-      <div className="flex items-center justify-between py-4 cursor-pointer group-hover:bg-card/90 px-4 rounded-md transition-colors">
+    <Link href={href} className="block">
+      <div className="flex items-center justify-between py-4 cursor-pointer px-4">
         <p className="text-lg text-foreground">{label}</p>
         <div className="flex items-center gap-4 text-muted-foreground">
           {value && <p className="text-base">{value}</p>}
@@ -17,7 +17,7 @@ const SettingsListItem = ({ label, value, href = '#' }: { label: string; value?:
 );
   
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-sm font-semibold text-muted-foreground mt-8 mb-2 px-4 uppercase tracking-wider">
+    <h3 className="text-base font-medium text-muted-foreground mt-8 mb-2 px-4">
         {children}
     </h3>
 );
