@@ -16,9 +16,14 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
     notFound();
   }
 
+  // The SurahView component will now handle fetching translations client-side
+  // So we just need to provide the Uthmani text.
+  // We can optimize by checking for local data first.
+
   const localVersesData = getLocalVersesForSurah(id);
   if (localVersesData) {
     const surahText = localVersesData.map(v => v.text_uthmani).join(' ');
+    // Important: Reset translation when loading local data so it can be fetched fresh
     const verses: Ayah[] = localVersesData.map(v => ({...v, translation: undefined}));
     return { surahInfo, verses, surahText };
   }
@@ -76,7 +81,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
   const { surahInfo, verses, surahText } = await getSurahData(id);
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8">
+    <div className="bg-muted flex-grow p-4 sm:p-6 md:p-8">
       <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
     </div>
   );
