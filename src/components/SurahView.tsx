@@ -95,7 +95,7 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
          </Card>
       )}
 
-      <div className="bg-card rounded-lg p-4 md:p-8">
+      <div className="bg-muted rounded-lg p-4 md:p-8">
         {verses.length === 0 && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>
