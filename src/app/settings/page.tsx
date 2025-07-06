@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,8 +38,15 @@ export default function SettingsPage() {
       
       <main>
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card border-primary">
-              <div className="flex-grow rounded bg-muted/40"></div>
+          <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card border-primary overflow-hidden">
+              <div className="flex-grow rounded relative">
+                <Image
+                  src="https://i.postimg.cc/65VFbRMW/IMG-20250706-124724.jpg"
+                  alt="Theme preview"
+                  fill
+                  className="object-cover"
+                />
+              </div>
               <Button className="w-full mt-3 bg-accent text-accent-foreground hover:bg-accent/90">In Use</Button>
           </Card>
           <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card">
