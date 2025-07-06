@@ -79,20 +79,20 @@ export default async function SurahPage({ params }: SurahPageProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
+      <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 to-transparent backdrop-blur-sm">
         <div className="container mx-auto grid grid-cols-3 items-center h-16 px-4">
           <div className="justify-self-start">
             <Link href="/" passHref>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground">
                 <ChevronLeft className="h-6 w-6" />
                 <span className="sr-only">Back</span>
               </Button>
             </Link>
           </div>
-          <h1 className="text-xl font-bold text-foreground text-center truncate">
+          <h1 className="text-xl font-bold text-primary-foreground text-center truncate">
             {surahInfo.name}
           </h1>
-          <div className="justify-self-end text-sm text-muted-foreground">
+          <div className="justify-self-end text-sm text-primary-foreground/80">
             {surahInfo.versesCount} verses
           </div>
         </div>
