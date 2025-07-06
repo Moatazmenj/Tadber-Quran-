@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
-import { Search as SearchIcon, Loader2, Octagon } from 'lucide-react';
+import { Search as SearchIcon, Loader2, Octagon, ChevronLeft } from 'lucide-react';
 import { surahs } from '@/lib/quran';
+import { Button } from '@/components/ui/button';
 
 // API response from quran.com search
 interface ApiSearchResult {
@@ -134,8 +135,14 @@ export default function SearchPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8">
-      <div className="relative my-8 max-w-2xl mx-auto">
-        <div className="relative">
+      <div className="my-8 max-w-2xl mx-auto flex items-center gap-2">
+        <Link href="/" passHref>
+          <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
+            <ChevronLeft className="h-6 w-6" />
+            <span className="sr-only">Back</span>
+          </Button>
+        </Link>
+        <div className="relative flex-grow">
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
