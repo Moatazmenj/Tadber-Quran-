@@ -16,10 +16,11 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
     notFound();
   }
 
-  const localVerses = getLocalVersesForSurah(id);
-  if (localVerses) {
-    const surahText = localVerses.map(v => v.text_uthmani).join(' ');
-    return { surahInfo, verses: localVerses, surahText };
+  const localVersesData = getLocalVersesForSurah(id);
+  if (localVersesData) {
+    const surahText = localVersesData.map(v => v.text_uthmani).join(' ');
+    const verses: Ayah[] = localVersesData.map(v => ({...v, translation: undefined}));
+    return { surahInfo, verses, surahText };
   }
 
   try {
