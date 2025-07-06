@@ -49,8 +49,15 @@ export default function SettingsPage() {
               </div>
               <Button className="w-full mt-3 bg-accent text-accent-foreground hover:bg-accent/90">In Use</Button>
           </Card>
-          <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card">
-            <div className="flex-grow rounded bg-muted/40"></div>
+          <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card overflow-hidden">
+            <div className="flex-grow rounded relative">
+              <Image
+                src="https://i.postimg.cc/4NbVKNx2/IMG-20250706-124830.jpg"
+                alt="Theme preview 2"
+                fill
+                className="object-cover"
+              />
+            </div>
             <Button variant="default" className="w-full mt-3">Use</Button>
           </Card>
            <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card">
