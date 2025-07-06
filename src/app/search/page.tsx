@@ -166,16 +166,16 @@ export default function SearchPage() {
                     {/* 2. Main content (middle) */}
                     <div className="flex-grow min-w-0">
                         <div className="flex items-baseline gap-2">
-                            <p className="text-white font-semibold text-lg">{verse.surahName}</p>
-                            <p className="font-arabic text-primary text-lg">{verse.arabicName}</p>
+                            <p className="text-white font-semibold text-base">{verse.surahName}</p>
+                            <p className="font-arabic text-primary text-base">{verse.arabicName}</p>
                         </div>
-                        <p dir="rtl" className="font-arabic text-white/90 text-xl text-left w-full mt-1 truncate">
+                        <p dir="rtl" className="font-arabic text-white/90 text-lg text-left w-full mt-1 truncate">
                             {verse.text_ar}
                         </p>
                     </div>
 
                     {/* 3. Verse number (right) */}
-                    <div className="text-muted-foreground text-lg pt-1">
+                    <div className="text-muted-foreground text-base pt-1">
                         {verse.verseNumber}
                     </div>
                 </div>
