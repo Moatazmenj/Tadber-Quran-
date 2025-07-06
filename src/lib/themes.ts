@@ -17,6 +17,6 @@ export const themes: ThemeOption[] = [
     id: 'theme3',
     name: 'Dark Pattern',
     previewImage: 'https://i.postimg.cc/TPjZFbdq/IMG-20250706-124850.jpg',
-    backgroundImage: '',
+    backgroundImage: 'https://i.postimg.cc/GhjCXHtf/20250706-170641.jpg',
   },
 ];

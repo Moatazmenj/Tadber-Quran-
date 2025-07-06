@@ -102,6 +102,13 @@ body.theme-active.theme-theme2 {
   background-attachment: fixed;
 }
 
+body.theme-active.theme-theme3 {
+  background-image: url('https://i.postimg.cc/GhjCXHtf/20250706-170641.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
 body.theme-active .surah-page-background {
   background-color: transparent !important;
 }
