@@ -167,29 +167,32 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
             <div className="space-y-8">
                 {displayVerses.map((ayah) => {
-                const verseNumber = ayah.verse_key.split(':')[1];
-                return (
-                    <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
-                    <p 
-                        dir="rtl" 
-                        className="font-arabic leading-loose text-foreground mb-4 text-center"
-                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                    >
-                        {ayah.text_uthmani}
-                        <span 
-                        className="text-primary font-sans font-bold mx-2"
-                        style={{ fontSize: `${settings.fontSize * 0.7}px` }}
-                        >({verseNumber})</span>
-                    </p>
-                    <div className="text-muted-foreground text-lg leading-relaxed text-center">
-                        {ayah.translation ? (
-                            <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
-                        ) : (
-                            !translationError && <p className="text-sm">Loading translation...</p>
-                        )}
-                    </div>
-                    </div>
-                );
+                    const verseNumber = ayah.verse_key.split(':')[1];
+                    const verseNumberArabic = Number(verseNumber).toLocaleString('ar-EG');
+                    const verseEndSymbol = `\u06dd${verseNumberArabic}`;
+                    
+                    return (
+                        <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
+                        <p 
+                            dir="rtl" 
+                            className="font-arabic leading-loose text-foreground mb-4 text-center"
+                            style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                        >
+                            {ayah.text_uthmani}
+                            <span 
+                                className="text-primary font-sans font-normal mx-1"
+                                style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                            >{verseEndSymbol}</span>
+                        </p>
+                        <div className="text-muted-foreground text-lg leading-relaxed text-center">
+                            {ayah.translation ? (
+                                <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
+                            ) : (
+                                !translationError && <p className="text-sm">Loading translation...</p>
+                            )}
+                        </div>
+                        </div>
+                    );
                 })}
             </div>
         )}
@@ -202,14 +205,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
             >
                 {displayVerses.map((ayah, index) => {
                     const verseNumber = ayah.verse_key.split(':')[1];
+                    const verseNumberArabic = Number(verseNumber).toLocaleString('ar-EG');
+                    const verseEndSymbol = `\u06dd${verseNumberArabic}`;
                     return (
                         <span key={ayah.id} id={`verse-${verseNumber}`} className="scroll-mt-24">
                             {ayah.text_uthmani}
                             <span 
-                                className="text-primary font-sans font-bold mx-2"
-                                style={{ fontSize: `${settings.fontSize * 0.7}px` }}
+                                className="text-primary font-sans font-normal mx-1"
+                                style={{ fontSize: `${settings.fontSize * 0.8}px` }}
                             >
-                                ({verseNumber})
+                                {verseEndSymbol}
                             </span>
                             {' '}
                         </span>
