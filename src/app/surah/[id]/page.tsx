@@ -3,6 +3,9 @@ import { surahs } from '@/lib/quran';
 import type { Ayah, Surah } from '@/types';
 import { SurahView } from '@/components/SurahView';
 import { getLocalVersesForSurah } from '@/lib/quran-verses';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
 
 interface SurahPageProps {
   params: {
@@ -16,14 +19,9 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
     notFound();
   }
 
-  // The SurahView component will now handle fetching translations client-side
-  // So we just need to provide the Uthmani text.
-  // We can optimize by checking for local data first.
-
   const localVersesData = getLocalVersesForSurah(id);
   if (localVersesData) {
     const surahText = localVersesData.map(v => v.text_uthmani).join(' ');
-    // Important: Reset translation when loading local data so it can be fetched fresh
     const verses: Ayah[] = localVersesData.map(v => ({...v, translation: undefined}));
     return { surahInfo, verses, surahText };
   }
@@ -47,7 +45,6 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
     return { surahInfo, verses, surahText };
   } catch (error) {
     console.error(error);
-    // Return empty verses and text on error to allow page to render with a message
     return { 
         surahInfo, 
         verses: [], 
@@ -81,9 +78,29 @@ export default async function SurahPage({ params }: SurahPageProps) {
   const { surahInfo, verses, surahText } = await getSurahData(id);
 
   return (
-    <div className="bg-muted flex-grow p-4 sm:p-6 md:p-8">
-      <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
-    </div>
+    <>
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
+        <div className="container mx-auto grid grid-cols-3 items-center h-16 px-4">
+          <div className="justify-self-start">
+            <Link href="/" passHref>
+              <Button variant="ghost" size="icon">
+                <ChevronLeft className="h-6 w-6" />
+                <span className="sr-only">Back</span>
+              </Button>
+            </Link>
+          </div>
+          <h1 className="text-xl font-bold text-foreground text-center truncate">
+            {surahInfo.name}
+          </h1>
+          <div className="justify-self-end text-sm text-muted-foreground">
+            {surahInfo.versesCount} verses
+          </div>
+        </div>
+      </header>
+      <div className="bg-muted flex-grow p-4 sm:p-6 md:p-8">
+        <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
+      </div>
+    </>
   );
 }
 
