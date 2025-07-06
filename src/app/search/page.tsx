@@ -140,7 +140,7 @@ export default function SearchPage() {
             <Input
               type="search"
               placeholder="Search Surah name or keywords..."
-              className="w-full pl-12 h-12 text-base rounded-full bg-card"
+              className="w-full pl-12 h-10 text-base rounded-full bg-card"
               aria-label="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -156,26 +156,26 @@ export default function SearchPage() {
 
         {verseResults.map((verse) => (
             <Link key={verse.verse_key} href={`/surah/${verse.surahId}#verse-${verse.verseNumber}`} passHref>
-                <div className="p-4 hover:bg-white/5 transition-colors cursor-pointer w-full flex items-start gap-4 border-b border-border/20">
+                <div className="p-3 hover:bg-white/5 transition-colors cursor-pointer w-full flex items-start gap-3 border-b border-border/20">
                     {/* 1. Icon (left) */}
-                    <div className="relative flex-shrink-0 flex items-center justify-center h-10 w-10">
+                    <div className="relative flex-shrink-0 flex items-center justify-center h-8 w-8">
                         <Octagon className="absolute h-full w-full text-gray-700/50" fill="currentColor" />
-                        <span className="relative font-bold text-white text-sm">{verse.surahId}</span>
+                        <span className="relative font-bold text-white text-xs">{verse.surahId}</span>
                     </div>
 
                     {/* 2. Main content (middle) */}
                     <div className="flex-grow min-w-0">
                         <div className="flex items-baseline gap-2">
-                            <p className="text-white font-semibold text-base">{verse.surahName}</p>
-                            <p className="font-arabic text-primary text-base">{verse.arabicName}</p>
+                            <p className="text-white font-semibold text-xs">{verse.surahName}</p>
+                            <p className="font-arabic text-primary text-xs">{verse.arabicName}</p>
                         </div>
-                        <p dir="rtl" className="font-arabic text-white/90 text-lg text-left w-full mt-1 truncate">
+                        <p dir="rtl" className="font-arabic text-white/90 text-sm text-left w-full mt-0.5 truncate">
                             {verse.text_ar}
                         </p>
                     </div>
 
                     {/* 3. Verse number (right) */}
-                    <div className="text-muted-foreground text-base pt-1">
+                    <div className="text-muted-foreground text-xs pt-0">
                         {verse.verseNumber}
                     </div>
                 </div>
