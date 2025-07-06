@@ -22,9 +22,8 @@ const defaultSettings: QuranSettings = {
   theme: 'theme1',
 };
 
-// This function safely gets settings from localStorage.
-// It's defined outside the hook to be used in the initial state.
-const getInitialSettings = (): QuranSettings => {
+// This function safely gets settings from localStorage. It should only be called on the client.
+const getSettingsFromStorage = (): QuranSettings => {
   if (typeof window === 'undefined') {
     return defaultSettings;
   }
@@ -40,28 +39,28 @@ const getInitialSettings = (): QuranSettings => {
 
 
 export function useQuranSettings() {
-  const [settings, setSettings] = useState<QuranSettings>(getInitialSettings);
+  // Initialize with default settings to ensure server and client match on first render.
+  const [settings, setSettings] = useState<QuranSettings>(defaultSettings);
 
-  // This effect listens for changes in localStorage and updates the component's state.
-  // This is crucial for synchronizing settings across different pages or tabs.
+  // This effect runs only on the client, after hydration.
   useEffect(() => {
+    // Load settings from localStorage and update the state.
+    setSettings(getSettingsFromStorage());
+
     const handleSettingsChange = () => {
-      setSettings(getInitialSettings());
+      setSettings(getSettingsFromStorage());
     };
     
     // Listen for storage events (changes in other tabs)
     window.addEventListener('storage', handleSettingsChange);
-    // Listen for custom events (changes in the same tab, e.g., navigating back to a cached page)
+    // Listen for custom events (changes in the same tab, for cross-component updates)
     window.addEventListener('quran-settings-change', handleSettingsChange);
-
-    // Initial sync when component mounts, in case it was cached.
-    handleSettingsChange();
 
     return () => {
       window.removeEventListener('storage', handleSettingsChange);
       window.removeEventListener('quran-settings-change', handleSettingsChange);
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount.
   
   const setSetting = useCallback(<K extends keyof QuranSettings>(key: K, value: QuranSettings[K]) => {
     // We update the state optimistically for a responsive UI
