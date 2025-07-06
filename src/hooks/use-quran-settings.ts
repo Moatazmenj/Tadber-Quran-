@@ -17,7 +17,7 @@ const defaultSettings: QuranSettings = {
   fontSize: 28,
   fontStyle: 'default',
   showTranslation: true,
-  translationId: 'tr',
+  translationId: 'en',
 };
 
 function getInitialSettings(): QuranSettings {

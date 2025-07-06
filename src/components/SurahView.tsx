@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import { getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { translationOptions } from '@/lib/translations';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -18,15 +19,73 @@ interface SurahViewProps {
   surahText: string;
 }
 
-export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
+export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
+  
+  // State for AI summary
   const [summary, setSummary] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState('');
+  
+  // State for verses with translations
+  const [displayVerses, setDisplayVerses] = useState<Ayah[]>(initialVerses);
+  const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
+  const [translationError, setTranslationError] = useState('');
+
+  const fetchTranslations = useCallback(async () => {
+    // Don't fetch if verses came with translations (i.e., local data)
+    if (initialVerses.length > 0 && initialVerses[0].translation) {
+      setDisplayVerses(initialVerses);
+      return;
+    }
+    // Don't fetch if there are no initial verses (e.g., server-side fetch failed)
+    if (initialVerses.length === 0) {
+        return;
+    }
+
+    setIsLoadingTranslation(true);
+    setTranslationError('');
+
+    const selectedTranslation = translationOptions.find(t => t.id === settings.translationId);
+    if (!selectedTranslation) {
+      setTranslationError('Selected translation not found.');
+      setIsLoadingTranslation(false);
+      // Revert to verses without translation
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${surahInfo.id}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch translation: ${response.statusText}`);
+      }
+      const translationData = await response.json();
+      
+      const versesWithTranslations = initialVerses.map((verse, index) => ({
+        ...verse,
+        translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+      }));
+
+      setDisplayVerses(versesWithTranslations);
+
+    } catch (e: any) {
+      console.error('Translation fetch error:', e);
+      setTranslationError('Could not load translation. Please check your connection and try again.');
+      // On error, display verses without translation text
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+    } finally {
+      setIsLoadingTranslation(false);
+    }
+  }, [settings.translationId, initialVerses, surahInfo.id]);
+
+  useEffect(() => {
+    fetchTranslations();
+  }, [fetchTranslations]);
 
   const handleSummarize = async () => {
-    setIsLoading(true);
-    setError('');
+    setIsLoadingSummary(true);
+    setSummaryError('');
     setSummary('');
     try {
         if (!surahText) {
@@ -35,11 +94,18 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
       const result = await getSurahSummary(surahInfo.name, surahText);
       setSummary(result);
     } catch (e) {
-      setError('Failed to generate summary. Please try again later.');
+      setSummaryError('Failed to generate summary. Please try again later.');
       console.error(e);
     }
-    setIsLoading(false);
+    setIsLoadingSummary(false);
   };
+
+  const VerseSkeleton = () => (
+    <div className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 animate-pulse">
+        <div className="h-8 bg-muted-foreground/10 rounded w-full mb-4"></div>
+        {settings.showTranslation && <div className="h-6 bg-muted-foreground/10 rounded w-3/4"></div>}
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -57,8 +123,8 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
 
       <Card className="mb-8">
         <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <Button onClick={handleSummarize} disabled={isLoading} className="w-full sm:w-auto">
-                {isLoading ? (
+            <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
+                {isLoadingSummary ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                 <BookOpenCheck className="mr-2 h-4 w-4" />
@@ -76,8 +142,8 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
         </CardContent>
       </Card>
 
-      {error && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-      {isLoading && !summary && (
+      {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
+      {isLoadingSummary && !summary && (
          <Card className="mb-4 animate-pulse">
             <CardHeader>
                 <CardTitle className="font-headline">Summary</CardTitle>
@@ -101,7 +167,7 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
       )}
 
       <div className="bg-muted/40 rounded-lg p-4 md:p-8">
-        {verses.length === 0 && (
+        {initialVerses.length === 0 && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>
                 <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
@@ -113,7 +179,8 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
         )}
 
         <div className="space-y-8">
-          {verses.map((ayah) => {
+          {isLoadingTranslation && Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
+          {!isLoadingTranslation && displayVerses.map((ayah) => {
             const verseNumber = ayah.verse_key.split(':')[1];
             return (
               <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
@@ -130,12 +197,28 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
                 </p>
                 {settings.showTranslation && (
                   <div className="text-muted-foreground text-lg leading-relaxed">
-                    <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation_en}</p>
+                    {ayah.translation ? (
+                        <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
+                    ) : (
+                        !translationError && <p className="text-sm">Loading translation...</p>
+                    )}
                   </div>
                 )}
               </div>
             );
           })}
+          {translationError && (
+              <Alert variant="destructive" className="mt-4">
+                  <AlertTitle>Translation Error</AlertTitle>
+                  <AlertDescription className="flex items-center justify-between">
+                      <span>{translationError}</span>
+                      <Button variant="secondary" size="sm" onClick={fetchTranslations}>
+                          <RefreshCw className="mr-2 h-4 w-4"/>
+                          Retry
+                      </Button>
+                  </AlertDescription>
+              </Alert>
+          )}
         </div>
       </div>
 

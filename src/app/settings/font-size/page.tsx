@@ -101,7 +101,7 @@ export default function FontSizePage() {
                                         <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
                                     </p>
                                     <div className="text-muted-foreground text-base leading-relaxed text-center">
-                                        <p>{ayah.translation_en}</p>
+                                        <p>{ayah.translation}</p>
                                     </div>
                                 </div>
                             );

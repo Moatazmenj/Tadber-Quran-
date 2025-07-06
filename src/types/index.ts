@@ -11,7 +11,7 @@ export interface Ayah {
   id: number;
   verse_key: string;
   text_uthmani: string;
-  translation_en: string;
+  translation?: string;
 }
 
 export interface Juz {
@@ -24,6 +24,7 @@ export interface Juz {
 
 export interface TranslationOption {
   id: string;
+  apiId: number;
   language: string;
   nativeName: string;
   translator: string;

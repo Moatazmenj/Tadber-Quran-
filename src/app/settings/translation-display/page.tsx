@@ -83,7 +83,7 @@ export default function TranslationDisplayPage() {
                                 </p>
                                 {settings.showTranslation && (
                                 <div className="text-muted-foreground text-base leading-relaxed text-center">
-                                    <p>{ayah.translation_en}</p>
+                                    <p>{ayah.translation}</p>
                                 </div>
                                 )}
                             </div>

@@ -23,21 +23,17 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
   }
 
   try {
-    const [versesResponse, translationsResponse] = await Promise.all([
-        fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`),
-        fetch(`https://api.quran.com/api/v4/quran/translations/131?chapter_number=${id}`) // Saheeh International
-    ]);
-
-    if (!versesResponse.ok || !translationsResponse.ok) {
+    const versesResponse = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
+    
+    if (!versesResponse.ok) {
         throw new Error('Failed to fetch surah data');
     }
     
     const versesData = await versesResponse.json();
-    const translationsData = await translationsResponse.json();
 
-    const verses: Ayah[] = versesData.verses.map((verse: any, index: number) => ({
+    const verses: Ayah[] = versesData.verses.map((verse: any) => ({
       ...verse,
-      translation_en: translationsData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+      translation: undefined
     }));
 
     const surahText = verses.map(v => v.text_uthmani).join(' ');
