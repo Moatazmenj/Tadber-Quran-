@@ -11,6 +11,7 @@ interface QuranSettings {
   fontStyle: FontStyleOption;
   showTranslation: boolean;
   translationId: string;
+  theme: string;
 }
 
 const defaultSettings: QuranSettings = {
@@ -18,6 +19,7 @@ const defaultSettings: QuranSettings = {
   fontStyle: 'default',
   showTranslation: true,
   translationId: 'en',
+  theme: 'theme1',
 };
 
 // This function safely gets settings from localStorage.

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import { getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -105,7 +105,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="mb-8 bg-muted">
+      <Card className="mb-8 surah-view-card">
         <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
             <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
                 {isLoadingSummary ? (
@@ -128,11 +128,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
       {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
       {isLoadingSummary && !summary && (
-         <Card className="mb-4 animate-pulse bg-muted">
-            <CardHeader>
-                <CardTitle className="font-headline">Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+         <Card className="mb-4 animate-pulse surah-view-card">
+            <CardContent className="p-6 space-y-2">
                 <div className="h-4 bg-muted-foreground/10 rounded w-full"></div>
                 <div className="h-4 bg-muted-foreground/10 rounded w-5/6"></div>
                 <div className="h-4 bg-muted-foreground/10 rounded w-3/4"></div>
@@ -140,17 +137,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         </Card>
       )}
       {summary && (
-        <Card className="mb-8 bg-muted">
-           <CardHeader>
-             <CardTitle className="font-headline text-primary">Surah Summary</CardTitle>
-           </CardHeader>
-           <CardContent>
+        <Card className="mb-8 surah-view-card">
+           <CardContent className="p-6">
              <p className="text-lg leading-relaxed">{summary}</p>
            </CardContent>
          </Card>
       )}
 
-      <div className="bg-muted rounded-lg p-4 md:p-8">
+      <div className="surah-view-card rounded-lg p-4 md:p-8">
         {initialVerses.length === 0 && !isLoadingTranslation && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>

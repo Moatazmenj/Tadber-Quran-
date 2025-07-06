@@ -1,9 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { themes } from '@/lib/themes';
 
 const SettingsListItem = ({ label, value, href = '#' }: { label: string; value?: string; href?: string }) => (
     <Link href={href} className="block">
@@ -24,6 +28,8 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function SettingsPage() {
+  const { settings, setSetting } = useQuranSettings();
+
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
       <header className="flex items-center mb-8 relative">
@@ -38,39 +44,29 @@ export default function SettingsPage() {
       
       <main>
         <div className="grid grid-cols-3 gap-6 mb-8">
-          <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card border-primary overflow-hidden">
-              <div className="flex-grow rounded relative">
-                <Image
-                  src="https://i.postimg.cc/65VFbRMW/IMG-20250706-124724.jpg"
-                  alt="Theme preview"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <Button className="w-full mt-3 bg-accent text-accent-foreground hover:bg-accent/90">In Use</Button>
-          </Card>
-          <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card overflow-hidden">
-            <div className="flex-grow rounded relative">
-              <Image
-                src="https://i.postimg.cc/4NbVKNx2/IMG-20250706-124830.jpg"
-                alt="Theme preview 2"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <Button variant="default" className="w-full mt-3">Use</Button>
-          </Card>
-           <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card overflow-hidden">
-            <div className="flex-grow rounded relative">
-              <Image
-                src="https://i.postimg.cc/TPjZFbdq/IMG-20250706-124850.jpg"
-                alt="Theme preview 3"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <Button variant="default" className="w-full mt-3">Use</Button>
-          </Card>
+          {themes.map((theme) => {
+            const isActive = settings.theme === theme.id;
+            return (
+              <Card key={theme.id} className={`aspect-[3/4] flex flex-col justify-end p-3 bg-card overflow-hidden ${isActive ? 'border-primary' : ''}`}>
+                  <div className="flex-grow rounded relative">
+                    <Image
+                      src={theme.previewImage}
+                      alt={`${theme.name} preview`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <Button
+                    className="w-full mt-3"
+                    variant={isActive ? 'secondary' : 'default'}
+                    disabled={isActive}
+                    onClick={() => setSetting('theme', theme.id)}
+                  >
+                    {isActive ? 'In Use' : 'Use'}
+                  </Button>
+              </Card>
+            );
+          })}
         </div>
 
         <div className="flex flex-col">

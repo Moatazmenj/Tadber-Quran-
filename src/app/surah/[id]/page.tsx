@@ -97,7 +97,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
           </div>
         </div>
       </header>
-      <div className="bg-muted flex-grow p-4 sm:p-6 md:p-8">
+      <div className="bg-muted surah-page-background flex-grow p-4 sm:p-6 md:p-8">
         <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
       </div>
     </>

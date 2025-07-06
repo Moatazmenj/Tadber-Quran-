@@ -30,3 +30,10 @@ export interface TranslationOption {
   translator: string;
   flag: string;
 }
+
+export interface ThemeOption {
+  id: string;
+  name: string;
+  previewImage: string;
+  backgroundImage: string;
+}

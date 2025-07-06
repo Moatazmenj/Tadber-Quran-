@@ -18,7 +18,7 @@ body {
     --primary-foreground: 180 100% 98%;
     --secondary: 180 20% 90%;
     --secondary-foreground: 180 100% 25.1%;
-    --muted: 180 20% 94%;
+    --muted: 240 5% 15%;
     --muted-foreground: 224 8% 45%;
     --accent: 27.4 43.6% 65.5%;
     --accent-foreground: 24 9.8% 10%;
@@ -85,4 +85,29 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Theme-specific styles */
+body.theme-active.theme-theme1 {
+  background-image: url('https://i.postimg.cc/Hk8M7f0N/20250706-170535.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+body.theme-active .surah-page-background {
+  background-color: transparent !important;
+}
+
+body.theme-active .surah-view-card {
+  background-color: hsl(var(--card) / 0.7) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: hsl(var(--border) / 0.2);
+}
+
+/* To ensure text is readable on the background */
+body.theme-active {
+  --foreground: 210 40% 98%;
+  --muted-foreground: 215 20.2% 65.1%;
 }
