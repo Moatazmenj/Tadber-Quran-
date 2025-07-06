@@ -72,8 +72,6 @@ export default function SettingsPage() {
         <div className="flex flex-col">
             <SectionTitle>Recitation Mode</SectionTitle>
             <div className="bg-card rounded-lg">
-                <SettingsListItem label="Page" value="Turn by Page" />
-                <Separator className="bg-border/20 mx-4" />
                 <SettingsListItem label="Translation Display" value="Arabic & Translation" href="/settings/translation-display" />
             </div>
             
