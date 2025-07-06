@@ -140,7 +140,7 @@ export default function SearchPage() {
             <Input
               type="search"
               placeholder="Search Surah name or keywords..."
-              className="w-full pl-12 h-14 text-lg rounded-full bg-card"
+              className="w-full pl-12 h-12 text-base rounded-full bg-card"
               aria-label="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -149,14 +149,14 @@ export default function SearchPage() {
         </div>
       </div>
       
-      <div className="max-w-4xl mx-auto mt-8 space-y-2">
+      <div className="max-w-4xl mx-auto mt-8">
         {debouncedQuery.trim().length >= 3 && !isSearching && verseResults.length === 0 && (
           <p className="text-center text-muted-foreground">No results found for "{debouncedQuery}".</p>
         )}
 
         {verseResults.map((verse) => (
             <Link key={verse.verse_key} href={`/surah/${verse.surahId}#verse-${verse.verseNumber}`} passHref>
-                <div className="p-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer w-full flex items-start gap-4">
+                <div className="p-4 hover:bg-white/5 transition-colors cursor-pointer w-full flex items-start gap-4 border-b border-border/20">
                     {/* 1. Icon (left) */}
                     <div className="relative flex-shrink-0 flex items-center justify-center h-10 w-10">
                         <Octagon className="absolute h-full w-full text-gray-700/50" fill="currentColor" />
