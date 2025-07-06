@@ -23,19 +23,34 @@ async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Aya
   }
 
   try {
-    const response = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch surah verses');
+    const [versesResponse, translationsResponse] = await Promise.all([
+        fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`),
+        fetch(`https://api.quran.com/api/v4/quran/translations/131?chapter_number=${id}`) // Saheeh International
+    ]);
+
+    if (!versesResponse.ok || !translationsResponse.ok) {
+        throw new Error('Failed to fetch surah data');
     }
-    const data = await response.json();
-    const verses: Ayah[] = data.verses;
+    
+    const versesData = await versesResponse.json();
+    const translationsData = await translationsResponse.json();
+
+    const verses: Ayah[] = versesData.verses.map((verse: any, index: number) => ({
+      ...verse,
+      translation_en: translationsData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+    }));
+
     const surahText = verses.map(v => v.text_uthmani).join(' ');
     
     return { surahInfo, verses, surahText };
   } catch (error) {
     console.error(error);
     // Return empty verses and text on error to allow page to render with a message
-    return { surahInfo, verses: [], surahText: '' };
+    return { 
+        surahInfo, 
+        verses: [], 
+        surahText: '' 
+    };
   }
 }
 

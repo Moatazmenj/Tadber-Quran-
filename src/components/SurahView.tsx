@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -19,6 +21,7 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
   const [summary, setSummary] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTranslation, setShowTranslation] = useState(true);
 
   const handleSummarize = async () => {
     setIsLoading(true);
@@ -37,32 +40,39 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
     setIsLoading(false);
   };
 
-  const hasBismillah = surahInfo.id !== 1 && surahInfo.id !== 9;
-
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="mb-8 bg-card/50">
-        <CardHeader className="flex-row justify-between items-center">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-headline text-primary">
-              {surahInfo.id}. {surahInfo.name}
-            </h1>
-            <h2 className="text-4xl md:text-5xl font-arabic text-primary">{surahInfo.arabicName}</h2>
-            <p className="text-muted-foreground">{surahInfo.revelationPlace} - {surahInfo.versesCount} verses</p>
-          </div>
-          <Button onClick={handleSummarize} disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <BookOpenCheck className="mr-2 h-4 w-4" />
-            )}
-            Summarize Surah
-          </Button>
+      <Card className="mb-4 bg-card/50">
+        <CardHeader>
+            <div>
+                <h1 className="text-3xl md:text-4xl font-headline text-primary">
+                {surahInfo.id}. {surahInfo.name}
+                </h1>
+                <h2 className="text-4xl md:text-5xl font-arabic text-primary">{surahInfo.arabicName}</h2>
+                <p className="text-muted-foreground">{surahInfo.revelationPlace} - {surahInfo.versesCount} verses</p>
+            </div>
         </CardHeader>
       </Card>
 
+      <Card className="mb-8">
+        <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <Button onClick={handleSummarize} disabled={isLoading} className="w-full sm:w-auto">
+                {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                <BookOpenCheck className="mr-2 h-4 w-4" />
+                )}
+                Summarize Surah
+            </Button>
+            <div className="flex items-center space-x-2">
+                <Switch id="translation-toggle" checked={showTranslation} onCheckedChange={setShowTranslation} />
+                <Label htmlFor="translation-toggle" className="cursor-pointer">Show Translation</Label>
+            </div>
+        </CardContent>
+      </Card>
+
       {error && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-      {isLoading && (
+      {isLoading && !summary && (
          <Card className="mb-4 animate-pulse">
             <CardHeader>
                 <CardTitle className="font-headline">Summary</CardTitle>
@@ -86,7 +96,7 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
       )}
 
       <div className="bg-card rounded-lg p-4 md:p-8">
-        {verses.length === 0 && !surahText && (
+        {verses.length === 0 && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>
                 <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
@@ -97,13 +107,18 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
             <p className="text-center font-arabic text-3xl mb-8">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
         )}
 
-        <div dir="rtl" className="space-y-6">
+        <div className="space-y-8">
           {verses.map((ayah) => (
-            <div key={ayah.id} className="flex items-start gap-4">
-              <span className="text-sm font-bold text-primary">{ayah.verse_key.split(':')[1]}</span>
-              <p className="font-arabic text-2xl md:text-3xl leading-loose text-foreground">
+            <div key={ayah.id} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0">
+              <p dir="rtl" className="font-arabic text-2xl md:text-3xl leading-loose text-foreground mb-4">
                 {ayah.text_uthmani}
+                <span className="text-primary font-sans font-bold text-lg mx-2">({ayah.verse_key.split(':')[1]})</span>
               </p>
+              {showTranslation && (
+                <div className="text-muted-foreground text-lg leading-relaxed">
+                  <p><span className="text-primary font-bold mr-2">{ayah.verse_key.split(':')[1]}</span>{ayah.translation_en}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>
