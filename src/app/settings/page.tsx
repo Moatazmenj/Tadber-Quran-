@@ -60,8 +60,15 @@ export default function SettingsPage() {
             </div>
             <Button variant="default" className="w-full mt-3">Use</Button>
           </Card>
-           <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card">
-            <div className="flex-grow rounded bg-muted/40"></div>
+           <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card overflow-hidden">
+            <div className="flex-grow rounded relative">
+              <Image
+                src="https://i.postimg.cc/TPjZFbdq/IMG-20250706-124850.jpg"
+                alt="Theme preview 3"
+                fill
+                className="object-cover"
+              />
+            </div>
             <Button variant="default" className="w-full mt-3">Use</Button>
           </Card>
         </div>
