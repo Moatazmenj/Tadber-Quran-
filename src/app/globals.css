@@ -100,7 +100,7 @@ body.theme-active .surah-page-background {
 }
 
 body.theme-active .surah-view-card {
-  background-color: hsl(var(--card) / 0.7) !important;
+  background-color: transparent !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-color: hsl(var(--border) / 0.2);
