@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { surahs } from '@/lib/quran';
-import type { Ayah, Surah } from '@/types';
+import type { Ayah, Surah, AudioFile } from '@/types';
 import { SurahView } from '@/components/SurahView';
 import { getLocalVersesForSurah } from '@/lib/quran-verses';
 import Link from 'next/link';
@@ -13,42 +13,60 @@ interface SurahPageProps {
   };
 }
 
-async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Ayah[], surahText: string }> {
+async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Ayah[], surahText: string, audioFiles: AudioFile[] }> {
   const surahInfo = surahs.find((s) => s.id === id);
   if (!surahInfo) {
     notFound();
   }
 
-  const localVersesData = getLocalVersesForSurah(id);
-  if (localVersesData) {
-    const surahText = localVersesData.map(v => v.text_uthmani).join(' ');
-    const verses: Ayah[] = localVersesData.map(v => ({...v, translation: undefined}));
-    return { surahInfo, verses, surahText };
-  }
+  const fetchVerses = async (): Promise<Ayah[]> => {
+    const localVersesData = getLocalVersesForSurah(id);
+    if (localVersesData) {
+      return localVersesData.map(v => ({...v, translation: undefined}));
+    }
+
+    try {
+        const versesResponse = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
+        if (!versesResponse.ok) {
+            throw new Error('Failed to fetch surah data');
+        }
+        const versesData = await versesResponse.json();
+        return versesData.verses.map((verse: any) => ({ ...verse, translation: undefined }));
+    } catch (e) {
+        console.error('Failed to fetch verses', e);
+        return [];
+    }
+  };
+
+  const fetchAudio = async (): Promise<AudioFile[]> => {
+    try {
+        const reciterId = 7; // Default: Mishary Rashid Alafasy
+        const audioResponse = await fetch(`https://api.quran.com/api/v4/recitations/${reciterId}/by_chapter/${id}`);
+        if (!audioResponse.ok) return [];
+        const audioData = await audioResponse.json();
+        return audioData.audio_files || [];
+    } catch(e) {
+        console.error('Failed to fetch audio', e);
+        return [];
+    }
+  };
 
   try {
-    const versesResponse = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
-    
-    if (!versesResponse.ok) {
-        throw new Error('Failed to fetch surah data');
-    }
-    
-    const versesData = await versesResponse.json();
-
-    const verses: Ayah[] = versesData.verses.map((verse: any) => ({
-      ...verse,
-      translation: undefined
-    }));
+    const [verses, audioFiles] = await Promise.all([
+      fetchVerses(),
+      fetchAudio(),
+    ]);
 
     const surahText = verses.map(v => v.text_uthmani).join(' ');
     
-    return { surahInfo, verses, surahText };
+    return { surahInfo, verses, surahText, audioFiles };
   } catch (error) {
     console.error(error);
     return { 
         surahInfo, 
         verses: [], 
-        surahText: '' 
+        surahText: '',
+        audioFiles: []
     };
   }
 }
@@ -75,7 +93,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
     notFound();
   }
 
-  const { surahInfo, verses, surahText } = await getSurahData(id);
+  const { surahInfo, verses, surahText, audioFiles } = await getSurahData(id);
 
   return (
     <>
@@ -98,7 +116,7 @@ export default async function SurahPage({ params }: SurahPageProps) {
         </div>
       </header>
       <div className="surah-page-background flex-grow p-4 sm:p-6 md:p-8">
-        <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
+        <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} audioFiles={audioFiles} />
       </div>
     </>
   );

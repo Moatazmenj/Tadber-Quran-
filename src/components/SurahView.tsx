@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import type { Ayah, Surah } from '@/types';
+import type { Ayah, Surah, AudioFile } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
@@ -12,14 +12,17 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { translationOptions } from '@/lib/translations';
+import { AudioPlayerBar } from './AudioPlayerBar';
+import { cn } from '@/lib/utils';
 
 interface SurahViewProps {
   surahInfo: Surah;
   verses: Ayah[];
   surahText: string;
+  audioFiles: AudioFile[];
 }
 
-export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
+export function SurahView({ surahInfo, verses: initialVerses, surahText, audioFiles }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
   
   const [summary, setSummary] = useState('');
@@ -30,18 +33,25 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState('');
 
-  // This effect ensures that if the user navigates between Surahs (changing initialVerses),
-  // the component's state is correctly reset before fetching new data.
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
   useEffect(() => {
     setDisplayVerses(initialVerses);
-    // When verses change, also fetch new translations.
     fetchTranslations();
+
+    // Reset audio state when surah changes
+    setIsPlaying(false);
+    setCurrentVerseIndex(0);
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+    }
   }, [initialVerses]);
 
   const fetchTranslations = useCallback(async () => {
-    if (initialVerses.length === 0) {
-        return;
-    }
+    if (initialVerses.length === 0) return;
 
     setIsLoadingTranslation(true);
     setTranslationError('');
@@ -56,18 +66,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
     try {
       const response = await fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${surahInfo.id}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch translation: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch translation: ${response.statusText}`);
       const translationData = await response.json();
       
       const versesWithTranslations = initialVerses.map((verse, index) => ({
         ...verse,
         translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
       }));
-
       setDisplayVerses(versesWithTranslations);
-
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
@@ -86,9 +92,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setSummaryError('');
     setSummary('');
     try {
-        if (!surahText) {
-            throw new Error("Surah text is not available to summarize.");
-        }
+      if (!surahText) throw new Error("Surah text is not available to summarize.");
       const result = await getSurahSummary(surahInfo.name, surahText);
       setSummary(result);
     } catch (e) {
@@ -97,6 +101,57 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
     setIsLoadingSummary(false);
   };
+  
+  const playVerse = useCallback((index: number) => {
+    if (index >= 0 && index < audioFiles.length) {
+      const audioUrl = audioFiles[index]?.audio_url;
+      if (audioRef.current && audioUrl) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play().catch(e => {
+            console.error("Audio play failed:", e);
+            setIsPlaying(false);
+        });
+        setCurrentVerseIndex(index);
+        setIsPlaying(true);
+        const verseNum = audioFiles[index].verse_key.split(':')[1];
+        const verseElement = document.getElementById(`verse-${verseNum}`);
+        verseElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+      setIsPlaying(false);
+      setCurrentVerseIndex(0); // Reset to start
+    }
+  }, [audioFiles]);
+
+  const handlePlayPause = useCallback(() => {
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    } else {
+      if (audioFiles.length > 0) {
+        playVerse(currentVerseIndex);
+      }
+    }
+  }, [isPlaying, audioFiles, currentVerseIndex, playVerse]);
+
+  const handleNext = useCallback(() => {
+    if (currentVerseIndex < audioFiles.length - 1) {
+      playVerse(currentVerseIndex + 1);
+    } else {
+      setIsPlaying(false); // Stop at the end of the surah
+    }
+  }, [currentVerseIndex, playVerse, audioFiles.length]);
+
+  const handlePrev = useCallback(() => {
+    if (currentVerseIndex > 0) {
+      playVerse(currentVerseIndex - 1);
+    }
+  }, [currentVerseIndex, playVerse]);
+
+  const handleAudioEnded = () => {
+    handleNext();
+  };
+
 
   const VerseSkeleton = () => (
     <div className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 animate-pulse">
@@ -105,156 +160,166 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </div>
   );
 
+  const currentVerseNumber = audioFiles[currentVerseIndex] 
+    ? parseInt(audioFiles[currentVerseIndex].verse_key.split(':')[1], 10) 
+    : 1;
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <Card className="mb-8 surah-view-card">
-        <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
-                {isLoadingSummary ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                <BookOpenCheck className="mr-2 h-4 w-4" />
-                )}
-                Summarize Surah
-            </Button>
-            <div className="flex items-center space-x-2">
-                <Switch 
-                  id="translation-toggle" 
-                  checked={settings.showTranslation} 
-                  onCheckedChange={(checked) => setSetting('showTranslation', checked)} 
-                />
-                <Label htmlFor="translation-toggle" className="cursor-pointer">Show Translation</Label>
-            </div>
-        </CardContent>
-      </Card>
-
-      {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
-      {isLoadingSummary && !summary && (
-         <Card className="mb-4 animate-pulse surah-view-card">
-            <CardContent className="p-6 space-y-2">
-                <div className="h-4 bg-muted-foreground/10 rounded w-full"></div>
-                <div className="h-4 bg-muted-foreground/10 rounded w-5/6"></div>
-                <div className="h-4 bg-muted-foreground/10 rounded w-3/4"></div>
-            </CardContent>
-        </Card>
-      )}
-      {summary && (
+    <>
+      <div className="max-w-4xl mx-auto pb-28">
         <Card className="mb-8 surah-view-card">
-           <CardContent className="p-6">
-             <p className="text-lg leading-relaxed">{summary}</p>
-           </CardContent>
-         </Card>
+          <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
+              <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
+                  {isLoadingSummary ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                  <BookOpenCheck className="mr-2 h-4 w-4" />
+                  )}
+                  Summarize Surah
+              </Button>
+              <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="translation-toggle" 
+                    checked={settings.showTranslation} 
+                    onCheckedChange={(checked) => setSetting('showTranslation', checked)} 
+                  />
+                  <Label htmlFor="translation-toggle" className="cursor-pointer">Show Translation</Label>
+              </div>
+          </CardContent>
+        </Card>
+
+        {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
+        {isLoadingSummary && !summary && (
+          <Card className="mb-4 animate-pulse surah-view-card">
+              <CardContent className="p-6 space-y-2">
+                  <div className="h-4 bg-muted-foreground/10 rounded w-full"></div>
+                  <div className="h-4 bg-muted-foreground/10 rounded w-5/6"></div>
+                  <div className="h-4 bg-muted-foreground/10 rounded w-3/4"></div>
+              </CardContent>
+          </Card>
+        )}
+        {summary && (
+          <Card className="mb-8 surah-view-card">
+            <CardContent className="p-6">
+              <p className="text-lg leading-relaxed">{summary}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="surah-view-card rounded-lg p-4 md:p-8">
+          {initialVerses.length === 0 && !isLoadingTranslation && (
+              <Alert variant="destructive">
+                  <AlertTitle>Could Not Load Verses</AlertTitle>
+                  <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
+              </Alert>
+          )}
+          
+          {surahInfo.id !== 1 && surahInfo.id !== 9 && (
+              <p className="text-center font-arabic text-3xl mb-8">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+          )}
+
+          {(isLoadingTranslation || (displayVerses.length === 0 && initialVerses.length > 0)) && (
+              <div className="space-y-8">
+                  {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
+              </div>
+          )}
+          
+          {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
+              <div className="space-y-8">
+                  {displayVerses.map((ayah, index) => {
+                      const verseNumber = ayah.verse_key.split(':')[1];
+                      const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
+                      const isCurrentVerse = isPlaying && index === currentVerseIndex;
+                      
+                      return (
+                          <div key={ayah.id} id={`verse-${verseNumber}`} className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300", isCurrentVerse && "bg-primary/10 rounded-lg p-2")}>
+                          <p 
+                              dir="rtl" 
+                              className="font-arabic leading-loose text-foreground mb-4 text-center"
+                              style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                          >
+                              {ayah.text_uthmani}
+                              <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                          </p>
+                          <div className="text-muted-foreground text-lg leading-relaxed text-center">
+                              {ayah.translation ? (
+                                  <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
+                              ) : (
+                                  !translationError && <p className="text-sm">Loading translation...</p>
+                              )}
+                          </div>
+                          </div>
+                      );
+                  })}
+              </div>
+          )}
+
+          {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
+              <div
+                  dir="rtl"
+                  className="font-arabic leading-loose text-foreground text-justify"
+                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+              >
+                  {displayVerses.map((ayah, index) => {
+                      const verseNumber = ayah.verse_key.split(':')[1];
+                      const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
+                      const isCurrentVerse = isPlaying && index === currentVerseIndex;
+                      return (
+                          <span key={ayah.id} id={`verse-${verseNumber}`} className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md", isCurrentVerse && "bg-primary/20")}>
+                              {ayah.text_uthmani}
+                              <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                              {' '}
+                          </span>
+                      );
+                  })}
+              </div>
+          )}
+
+          {translationError && (
+              <Alert variant="destructive" className="mt-4">
+                  <AlertTitle>Translation Error</AlertTitle>
+                  <AlertDescription className="flex items-center justify-between">
+                      <span>{translationError}</span>
+                      <Button variant="secondary" size="sm" onClick={fetchTranslations}>
+                          <RefreshCw className="mr-2 h-4 w-4"/>
+                          Retry
+                      </Button>
+                  </AlertDescription>
+              </Alert>
+          )}
+        </div>
+
+        <div className="flex justify-between mt-8">
+          {surahInfo.id > 1 ? (
+            <Link href={`/surah/${surahInfo.id - 1}`} passHref>
+              <Button variant="outline">
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Previous Surah
+              </Button>
+            </Link>
+          ) : <div />}
+          {surahInfo.id < 114 ? (
+            <Link href={`/surah/${surahInfo.id + 1}`} passHref>
+              <Button variant="outline">
+                Next Surah
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          ): <div />}
+        </div>
+      </div>
+      <audio ref={audioRef} onEnded={handleAudioEnded} />
+      {audioFiles && audioFiles.length > 0 && (
+        <AudioPlayerBar
+          surah={surahInfo}
+          isPlaying={isPlaying}
+          currentVerse={currentVerseNumber}
+          onPlayPause={handlePlayPause}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          reciterName="Mishary Rashid Alafasy"
+        />
       )}
-
-      <div className="surah-view-card rounded-lg p-4 md:p-8">
-        {initialVerses.length === 0 && !isLoadingTranslation && (
-            <Alert variant="destructive">
-                <AlertTitle>Could Not Load Verses</AlertTitle>
-                <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
-            </Alert>
-        )}
-        
-        {surahInfo.id !== 1 && surahInfo.id !== 9 && (
-            <p className="text-center font-arabic text-3xl mb-8">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
-        )}
-
-        {(isLoadingTranslation || (displayVerses.length === 0 && initialVerses.length > 0)) && (
-            <div className="space-y-8">
-                {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
-            </div>
-        )}
-        
-        {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
-            <div className="space-y-8">
-                {displayVerses.map((ayah) => {
-                    const verseNumber = ayah.verse_key.split(':')[1];
-                    const verseNumberArabic = Number(verseNumber).toLocaleString('ar-EG');
-                    const verseEndSymbol = `\u06dd${verseNumberArabic}`;
-                    
-                    return (
-                        <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
-                        <p 
-                            dir="rtl" 
-                            className="font-arabic leading-loose text-foreground mb-4 text-center"
-                            style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                        >
-                            {ayah.text_uthmani}
-                            <span 
-                                className="text-primary font-sans font-normal mx-1"
-                                style={{ fontSize: `${settings.fontSize * 0.8}px` }}
-                            >{verseEndSymbol}</span>
-                        </p>
-                        <div className="text-muted-foreground text-lg leading-relaxed text-center">
-                            {ayah.translation ? (
-                                <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
-                            ) : (
-                                !translationError && <p className="text-sm">Loading translation...</p>
-                            )}
-                        </div>
-                        </div>
-                    );
-                })}
-            </div>
-        )}
-
-        {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
-             <div
-                dir="rtl"
-                className="font-arabic leading-loose text-foreground text-justify"
-                style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-            >
-                {displayVerses.map((ayah, index) => {
-                    const verseNumber = ayah.verse_key.split(':')[1];
-                    const verseNumberArabic = Number(verseNumber).toLocaleString('ar-EG');
-                    const verseEndSymbol = `\u06dd${verseNumberArabic}`;
-                    return (
-                        <span key={ayah.id} id={`verse-${verseNumber}`} className="scroll-mt-24">
-                            {ayah.text_uthmani}
-                            <span 
-                                className="text-primary font-sans font-normal mx-1"
-                                style={{ fontSize: `${settings.fontSize * 0.8}px` }}
-                            >
-                                {verseEndSymbol}
-                            </span>
-                            {' '}
-                        </span>
-                    );
-                })}
-            </div>
-        )}
-
-        {translationError && (
-            <Alert variant="destructive" className="mt-4">
-                <AlertTitle>Translation Error</AlertTitle>
-                <AlertDescription className="flex items-center justify-between">
-                    <span>{translationError}</span>
-                    <Button variant="secondary" size="sm" onClick={fetchTranslations}>
-                        <RefreshCw className="mr-2 h-4 w-4"/>
-                        Retry
-                    </Button>
-                </AlertDescription>
-            </Alert>
-        )}
-      </div>
-
-      <div className="flex justify-between mt-8">
-        {surahInfo.id > 1 ? (
-          <Link href={`/surah/${surahInfo.id - 1}`} passHref>
-            <Button variant="outline">
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Previous Surah
-            </Button>
-          </Link>
-        ) : <div />}
-        {surahInfo.id < 114 ? (
-          <Link href={`/surah/${surahInfo.id + 1}`} passHref>
-            <Button variant="outline">
-              Next Surah
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        ): <div />}
-      </div>
-    </div>
+    </>
   );
 }

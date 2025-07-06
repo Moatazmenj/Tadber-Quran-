@@ -37,3 +37,9 @@ export interface ThemeOption {
   previewImage: string;
   backgroundImage: string;
 }
+
+export interface AudioFile {
+  id: number;
+  verse_key: string;
+  audio_url: string;
+}
