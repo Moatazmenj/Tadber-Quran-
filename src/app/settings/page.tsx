@@ -25,7 +25,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 export default function SettingsPage() {
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-2xl">
+    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
       <header className="flex items-center mb-8 relative">
         <Link href="/" passHref>
           <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
@@ -37,7 +37,7 @@ export default function SettingsPage() {
       </header>
       
       <main>
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-6 mb-8">
           <Card className="aspect-[3/4] flex flex-col justify-end p-3 bg-card border-primary overflow-hidden">
               <div className="flex-grow rounded relative">
                 <Image
