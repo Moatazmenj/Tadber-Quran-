@@ -26,12 +26,9 @@ const defaultSettings: QuranSettings = {
 
 // This function safely gets settings from localStorage. It should only be called on the client.
 const getSettingsFromStorage = (): QuranSettings => {
-  if (typeof window === 'undefined') {
-    return defaultSettings;
-  }
+  // This function will only be called on the client, so window is available.
   try {
     const item = window.localStorage.getItem(SETTINGS_KEY);
-    // Merge stored settings with defaults to ensure all keys are present
     return item ? { ...defaultSettings, ...JSON.parse(item) } : defaultSettings;
   } catch (error) {
     console.warn(`Error reading localStorage key “${SETTINGS_KEY}”:`, error);
@@ -39,17 +36,19 @@ const getSettingsFromStorage = (): QuranSettings => {
   }
 };
 
-
 export function useQuranSettings() {
-  // Initialize state from storage to prevent hydration mismatch.
-  const [settings, setSettings] = useState<QuranSettings>(getSettingsFromStorage);
+  // Start with default settings on the server and for the initial client render.
+  const [settings, setSettings] = useState<QuranSettings>(defaultSettings);
 
-  // This effect synchronizes settings across tabs and updates the UI when they change.
+  // After the component mounts on the client, load the settings from localStorage.
   useEffect(() => {
+    setSettings(getSettingsFromStorage());
+
     const handleSettingsChange = () => {
       setSettings(getSettingsFromStorage());
     };
     
+    // Listen for changes from other tabs or from our own `setSetting` call.
     window.addEventListener('storage', handleSettingsChange);
     window.addEventListener('quran-settings-change', handleSettingsChange);
 
@@ -57,14 +56,16 @@ export function useQuranSettings() {
       window.removeEventListener('storage', handleSettingsChange);
       window.removeEventListener('quran-settings-change', handleSettingsChange);
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount and cleans up on unmount.
   
   const setSetting = useCallback(<K extends keyof QuranSettings>(key: K, value: QuranSettings[K]) => {
+    // This function only writes to localStorage and dispatches an event.
+    // The state update is handled by the listener in the useEffect above.
+    // This ensures a single source of truth for state updates.
     try {
       const currentSettings = getSettingsFromStorage();
       const newSettings = { ...currentSettings, [key]: value };
       window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
-      // Dispatch a custom event to notify all components using the hook to update their state.
       window.dispatchEvent(new Event('quran-settings-change'));
     } catch (error) {
       console.warn(`Error setting localStorage key “${SETTINGS_KEY}”:`, error);
