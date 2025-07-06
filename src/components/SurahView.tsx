@@ -95,7 +95,7 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
          </Card>
       )}
 
-      <div className="bg-muted rounded-lg p-4 md:p-8">
+      <div className="bg-muted/40 rounded-lg p-4 md:p-8">
         {verses.length === 0 && (
             <Alert variant="destructive">
                 <AlertTitle>Could Not Load Verses</AlertTitle>
@@ -108,19 +108,22 @@ export function SurahView({ surahInfo, verses, surahText }: SurahViewProps) {
         )}
 
         <div className="space-y-8">
-          {verses.map((ayah) => (
-            <div key={ayah.id} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0">
-              <p dir="rtl" className="font-arabic text-2xl md:text-3xl leading-loose text-foreground mb-4">
-                {ayah.text_uthmani}
-                <span className="text-primary font-sans font-bold text-lg mx-2">({ayah.verse_key.split(':')[1]})</span>
-              </p>
-              {showTranslation && (
-                <div className="text-muted-foreground text-lg leading-relaxed">
-                  <p><span className="text-primary font-bold mr-2">{ayah.verse_key.split(':')[1]}</span>{ayah.translation_en}</p>
-                </div>
-              )}
-            </div>
-          ))}
+          {verses.map((ayah) => {
+            const verseNumber = ayah.verse_key.split(':')[1];
+            return (
+              <div key={ayah.id} id={`verse-${verseNumber}`} className="border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24">
+                <p dir="rtl" className="font-arabic text-2xl md:text-3xl leading-loose text-foreground mb-4">
+                  {ayah.text_uthmani}
+                  <span className="text-primary font-sans font-bold text-lg mx-2">({verseNumber})</span>
+                </p>
+                {showTranslation && (
+                  <div className="text-muted-foreground text-lg leading-relaxed">
+                    <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation_en}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
