@@ -10,12 +10,14 @@ interface QuranSettings {
   fontSize: number;
   fontStyle: FontStyleOption;
   showTranslation: boolean;
+  translationId: string;
 }
 
 const defaultSettings: QuranSettings = {
   fontSize: 28,
   fontStyle: 'default',
   showTranslation: true,
+  translationId: 'tr',
 };
 
 function getInitialSettings(): QuranSettings {

@@ -85,7 +85,7 @@ export default function SettingsPage() {
             <div className="bg-card rounded-lg">
                 <SettingsListItem label="Font & Size" href="/settings/font-size" />
                 <Separator className="bg-border/20 mx-4" />
-                <SettingsListItem label="Translation" />
+                <SettingsListItem label="Translation" href="/settings/translation" />
             </div>
 
             <SectionTitle>Audio</SectionTitle>

@@ -21,3 +21,11 @@ export interface Juz {
     [key: string]: string;
   };
 }
+
+export interface TranslationOption {
+  id: string;
+  language: string;
+  nativeName: string;
+  translator: string;
+  flag: string;
+}
