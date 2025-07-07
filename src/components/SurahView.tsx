@@ -48,7 +48,7 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
 
 export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
@@ -282,7 +282,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         });
       }
     } finally {
-        const { dismiss } = useToast();
         dismiss(toastId);
     }
   };
