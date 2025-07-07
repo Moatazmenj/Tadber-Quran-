@@ -261,16 +261,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        toast({
-          title: "Ready to Share",
-          description: "Your share dialog should now be open.",
-        });
         await navigator.share({
           files: [file],
           title: `Quran - ${verseReference}`,
         });
       } else {
-        throw new Error('Your browser does not support sharing images.');
+        toast({
+          variant: "destructive",
+          title: "Sharing Not Supported",
+          description: "Your browser does not support sharing images directly.",
+        });
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
