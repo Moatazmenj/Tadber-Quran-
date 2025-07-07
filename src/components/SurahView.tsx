@@ -202,25 +202,61 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         title: "Copy Failed",
         description: "Could not copy text to clipboard.",
       });
+    }).finally(() => {
+      setOpenPopoverKey(null);
     });
-    setOpenPopoverKey(null);
   };
 
   const handleShare = (textToShare: string) => {
+    const closePopover = () => setOpenPopoverKey(null);
+
     if (navigator.share) {
       navigator.share({
         title: `Quran - Surah ${surahInfo.name}`,
         text: textToShare,
         url: window.location.href,
-      }).catch(err => console.error('Error sharing:', err));
-    } else {
-        handleCopy(textToShare);
-        toast({
-            title: "Share not supported",
+      })
+      .then(closePopover)
+      .catch((err) => {
+        // Don't show an error if the user just cancelled the share.
+        if (err.name === 'AbortError') {
+          console.log('Share cancelled');
+          closePopover();
+          return;
+        }
+
+        // For other errors, fallback to copy
+        console.error('Error sharing:', err);
+        navigator.clipboard.writeText(textToShare).then(() => {
+          toast({
+            title: "Sharing failed",
             description: "The verse has been copied to your clipboard instead.",
+          });
+        }).catch(copyErr => {
+          console.error('Failed to copy text on fallback: ', copyErr);
+          toast({
+            variant: "destructive",
+            title: "Action Failed",
+            description: "Could not share or copy the text.",
+          });
+        }).finally(closePopover);
+      });
+    } else {
+      // Fallback for browsers that don't support navigator.share
+      navigator.clipboard.writeText(textToShare).then(() => {
+        toast({
+          title: "Share not supported",
+          description: "The verse has been copied to your clipboard instead.",
         });
+      }).catch(copyErr => {
+        console.error('Failed to copy text: ', copyErr);
+        toast({
+          variant: "destructive",
+          title: "Copy Failed",
+          description: "Could not copy text to clipboard.",
+        });
+      }).finally(closePopover);
     }
-    setOpenPopoverKey(null);
   };
 
   const handlePlayFromPopover = (index: number) => {
