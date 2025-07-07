@@ -18,6 +18,12 @@ import { translationOptions } from '@/lib/translations';
 import { reciters } from '@/lib/reciters';
 import { AudioPlayerBar } from './AudioPlayerBar';
 import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -44,6 +50,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [activePopoverKey, setActivePopoverKey] = useState<string | null>(null);
+
+  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
+  const [textToShare, setTextToShare] = useState('');
 
   useEffect(() => {
     setDisplayVerses(initialVerses);
@@ -94,13 +103,15 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [fetchTranslations, settings.showTranslation, initialVerses]);
 
   const fetchAudio = useCallback(async () => {
-    setAudioFiles([]);
-    setIsPlaying(false);
+    // Stop any currently playing audio and reset state
     if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
     }
+    setAudioFiles([]);
+    setIsPlaying(false);
     setActivePopoverKey(null);
+    setCurrentVerseIndex(0); // Reset verse index on new audio fetch
 
     setIsLoadingAudio(true);
     setAudioError('');
@@ -119,6 +130,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       setIsLoadingAudio(false);
     }
   }, [surahInfo.id, settings.reciterId]);
+
 
   useEffect(() => {
     fetchAudio();
@@ -154,6 +166,11 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         description: "Could not copy the text.",
       });
     });
+  };
+
+  const handleShareIconClick = (text: string) => {
+    setTextToShare(text);
+    setIsShareSheetOpen(true);
     setActivePopoverKey(null);
   };
 
@@ -184,7 +201,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       });
       handleCopy(textToShare);
     }
-    setActivePopoverKey(null);
   };
 
   const playVerse = useCallback((index: number) => {
@@ -215,7 +231,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       }
     } else {
       setIsPlaying(false);
-      setCurrentVerseIndex(0);
+      // If we reach the end, reset index but don't auto-set to 0
     }
   }, [audioFiles, toast]);
 
@@ -225,24 +241,30 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       setIsPlaying(false);
     } else {
       if (audioFiles.length > 0) {
+        // If no verse is selected (index 0) or it's paused, play current/first verse.
         playVerse(currentVerseIndex);
       }
     }
   }, [isPlaying, audioFiles, currentVerseIndex, playVerse]);
 
   const handleNext = useCallback(() => {
-    if (currentVerseIndex < audioFiles.length - 1) {
-      playVerse(currentVerseIndex + 1);
+    const nextIndex = currentVerseIndex + 1;
+    if (nextIndex < audioFiles.length) {
+      playVerse(nextIndex);
     } else {
+      // Reached the end of the surah
       setIsPlaying(false);
+      setCurrentVerseIndex(0); // Optional: reset to beginning
     }
   }, [currentVerseIndex, playVerse, audioFiles.length]);
 
   const handlePrev = useCallback(() => {
-    if (currentVerseIndex > 0) {
-      playVerse(currentVerseIndex - 1);
+    const prevIndex = currentVerseIndex - 1;
+    if (prevIndex >= 0) {
+      playVerse(prevIndex);
     }
   }, [currentVerseIndex, playVerse]);
+
 
   const handleAudioEnded = () => {
     handleNext();
@@ -267,6 +289,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const currentVerseNumber = audioFiles[currentVerseIndex] 
     ? parseInt(audioFiles[currentVerseIndex].verse_key.split(':')[1], 10) 
     : 1;
+    
+  const [arabicPart, translationPart] = textToShare.split('\n\n');
 
   return (
     <>
@@ -375,10 +399,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
                                     <BookText className="h-5 w-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleCopy(textToShareAndCopy)}>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToShareAndCopy); setActivePopoverKey(null); }}>
                                     <Copy className="h-5 w-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShare(textToShareAndCopy)}>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShareIconClick(textToShareAndCopy)}>
                                     <Share2 className="h-5 w-5" />
                                 </Button>
                             </div>
@@ -428,10 +452,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
                                         <BookText className="h-5 w-5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleCopy(textToShareAndCopy)}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToShareAndCopy); setActivePopoverKey(null); }}>
                                         <Copy className="h-5 w-5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShare(textToShareAndCopy)}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShareIconClick(textToShareAndCopy)}>
                                         <Share2 className="h-5 w-5" />
                                     </Button>
                                 </div>
@@ -500,6 +524,33 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           reciterName={selectedReciter?.name || 'Loading...'}
         />
       )}
+      <Sheet open={isShareSheetOpen} onOpenChange={setIsShareSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-lg max-w-4xl mx-auto border-none bg-card/90 backdrop-blur-md p-6">
+          <SheetHeader className="text-center mb-4">
+            <SheetTitle className="text-2xl">Share Verse</SheetTitle>
+          </SheetHeader>
+          <div className="py-4 px-2 rounded-md bg-background/50 text-center text-lg max-h-48 overflow-y-auto">
+              <p className="font-arabic">{arabicPart}</p>
+              {translationPart && <p className="text-base text-muted-foreground mt-2">{translationPart}</p>}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
+            <Button variant="outline" size="lg" onClick={() => {
+              handleCopy(textToShare);
+              setIsShareSheetOpen(false);
+            }}>
+              <Copy className="mr-2 h-5 w-5" />
+              Copy
+            </Button>
+            <Button size="lg" onClick={() => {
+              handleShare(textToShare);
+              setIsShareSheetOpen(false);
+            }}>
+              <Share2 className="mr-2 h-5 w-5" />
+              Share
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
