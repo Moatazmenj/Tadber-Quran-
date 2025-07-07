@@ -7,7 +7,7 @@ import type { Ayah, Surah, AudioFile } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, PlayCircle, Copy, Share2, ImageIcon } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, PlayCircle, Copy, Share2 } from 'lucide-react';
 import { getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -74,7 +74,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
   const [textToShare, setTextToShare] = useState('');
-  const [isSharingImage, setIsSharingImage] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   useEffect(() => {
     setDisplayVerses(initialVerses);
@@ -191,6 +192,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   const handleShareIconClick = (text: string) => {
     setTextToShare(text);
+    setGeneratedImage(null); // Reset on each open
     setIsShareSheetOpen(true);
     setActivePopoverKey(null);
   };
@@ -224,15 +226,19 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
   };
 
-  const handleShareAsImage = async () => {
-    setIsSharingImage(true);
-    try {
+  useEffect(() => {
+    const generateImage = async () => {
+      if (!isShareSheetOpen || !textToShare) {
+        return;
+      }
+      setIsGeneratingImage(true);
+      try {
         const [arabicPartFull, translationPart] = textToShare.split('\n\n');
         
         const arabicMatch = arabicPartFull.match(/(.+) \((.+:.+)\)/);
         if (!arabicMatch) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not parse verse text for image generation.' });
-            setIsSharingImage(false);
+            setIsGeneratingImage(false);
             return;
         }
         const arabicText = arabicMatch[1];
@@ -246,7 +252,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         image.crossOrigin = 'anonymous';
         image.src = 'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png';
 
-        image.onload = async () => {
+        image.onload = () => {
             canvas.width = 1080;
             canvas.height = 1080;
             ctx.drawImage(image, 0, 0, 1080, 1080);
@@ -297,30 +303,51 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
             }
 
             const dataUrl = canvas.toDataURL('image/png');
-            const blob = await fetch(dataUrl).then(res => res.blob());
-            const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file],
-                    title: `Quran - ${verseReference}`,
-                });
-            } else {
-                toast({ variant: 'destructive', title: 'Cannot Share Image', description: 'Your browser does not support sharing images.' });
-            }
-            setIsShareSheetOpen(false);
-            setIsSharingImage(false);
+            setGeneratedImage(dataUrl);
+            setIsGeneratingImage(false);
         };
 
         image.onerror = () => {
              toast({ variant: 'destructive', title: 'Image Load Error', description: 'Could not load the background image.' });
-             setIsSharingImage(false);
+             setIsGeneratingImage(false);
         }
 
-    } catch (error: any) {
-        console.error('Error sharing as image:', error);
-        toast({ variant: 'destructive', title: 'Share Failed', description: error.message || 'An unknown error occurred.' });
-        setIsSharingImage(false);
+      } catch (error: any) {
+          console.error('Error generating image:', error);
+          toast({ variant: 'destructive', title: 'Image Generation Failed', description: error.message || 'An unknown error occurred.' });
+          setIsGeneratingImage(false);
+      }
+    };
+
+    generateImage();
+  }, [isShareSheetOpen, textToShare, toast]);
+
+  const handleShareGeneratedImage = async () => {
+    if (!generatedImage || isGeneratingImage) return;
+
+    try {
+        const blob = await fetch(generatedImage).then(res => res.blob());
+        const verseReference = textToShare.match(/\((.+:.+)\)/)?.[1] || 'verse';
+        const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: `Quran - ${verseReference}`,
+            });
+        } else {
+            toast({ variant: 'destructive', title: 'Cannot Share Image', description: 'Your browser does not support sharing images.' });
+        }
+        setIsShareSheetOpen(false);
+    } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to share:', err);
+          toast({
+            variant: "destructive",
+            title: "Share Failed",
+            description: "Could not share image. Please try again.",
+          });
+        }
     }
   };
 
@@ -409,8 +436,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     ? parseInt(audioFiles[currentVerseIndex].verse_key.split(':')[1], 10) 
     : 1;
     
-  const [arabicPart, translationPart] = textToShare.split('\n\n');
-
   return (
     <>
       <div className="max-w-4xl mx-auto pb-28">
@@ -651,33 +676,29 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       <Sheet open={isShareSheetOpen} onOpenChange={setIsShareSheetOpen}>
         <SheetContent side="bottom" className="rounded-t-lg max-w-4xl mx-auto border-none bg-card/90 backdrop-blur-md p-6">
           <SheetHeader className="text-center mb-4">
-            <SheetTitle className="text-2xl">Share Verse</SheetTitle>
+            <SheetTitle className="text-2xl">Share as Image</SheetTitle>
           </SheetHeader>
-          <div className="py-4 px-2 rounded-md bg-background/50 text-center text-lg max-h-48 overflow-y-auto">
-              <p className="font-arabic">{arabicPart}</p>
-              {translationPart && <p className="text-base text-muted-foreground mt-2">{translationPart}</p>}
-          </div>
-          <div className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button
-                size="lg"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  handleShare(textToShare);
-                  setIsShareSheetOpen(false);
-                }}
-            >
-              <Share2 className="mr-2 h-5 w-5" />
-              Share Text
-            </Button>
-            <Button size="lg" className="w-full" onClick={handleShareAsImage} disabled={isSharingImage}>
-              {isSharingImage ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                  <ImageIcon className="mr-2 h-5 w-5" />
-              )}
-              Share as Image
-            </Button>
+          <div
+            className="py-4 px-2 rounded-md bg-background/50 flex justify-center items-center min-h-[300px] cursor-pointer group"
+            onClick={handleShareGeneratedImage}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleShareGeneratedImage(); }}
+          >
+            {isGeneratingImage && <Loader2 className="h-10 w-10 animate-spin text-primary" />}
+            {!isGeneratingImage && generatedImage && (
+              <div className="relative">
+                  <img src={generatedImage} alt="Verse share preview" className="rounded-md w-full object-contain max-h-96" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                      <Share2 className="h-12 w-12 text-white" />
+                  </div>
+              </div>
+            )}
+            {!isGeneratingImage && !generatedImage && (
+              <div className="text-center text-muted-foreground">
+                <p>Could not generate image preview.</p>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>
