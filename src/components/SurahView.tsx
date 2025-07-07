@@ -18,12 +18,6 @@ import { translationOptions } from '@/lib/translations';
 import { reciters } from '@/lib/reciters';
 import { AudioPlayerBar } from './AudioPlayerBar';
 import { cn } from '@/lib/utils';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -71,11 +65,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [activePopoverKey, setActivePopoverKey] = useState<string | null>(null);
-
-  const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
-  const [textToShare, setTextToShare] = useState('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   useEffect(() => {
     setDisplayVerses(initialVerses);
@@ -190,135 +179,111 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     });
   };
 
-  const handleShareIconClick = (text: string) => {
-    setTextToShare(text);
-    setGeneratedImage(null); // Reset on each open
-    setIsShareSheetOpen(true);
+  const handleShareAsImage = async (textToShare: string) => {
     setActivePopoverKey(null);
-  };
-
-  useEffect(() => {
-    const generateImage = async () => {
-      if (!isShareSheetOpen || !textToShare) {
-        return;
-      }
-      setIsGeneratingImage(true);
-      try {
-        const [arabicPartFull, translationPart] = textToShare.split('\n\n');
-        
-        const arabicMatch = arabicPartFull.match(/(.+) \((.+:.+)\)/);
-        if (!arabicMatch) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not parse verse text for image generation.' });
-            setIsGeneratingImage(false);
-            return;
-        }
-        const arabicText = arabicMatch[1];
-        const verseReference = arabicMatch[2];
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not get canvas context');
-
-        const image = new Image();
-        image.crossOrigin = 'anonymous';
-        image.src = 'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png';
-
-        image.onload = () => {
-            canvas.width = 1080;
-            canvas.height = 1080;
-            ctx.drawImage(image, 0, 0, 1080, 1080);
-
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            const arabicFont = '56px Noto Kufi Arabic';
-            const refFont = '28px Alegreya';
-            const translationFont = '32px PT Sans';
-
-            ctx.font = arabicFont;
-            const arabicLines = wrapText(ctx, arabicText, canvas.width - 200);
-            
-            ctx.font = translationFont;
-            const hasTranslation = !!translationPart;
-            const translationLines = hasTranslation ? wrapText(ctx, translationPart, canvas.width - 250) : [];
-            
-            const arabicLineHeight = 70;
-            const refLineHeight = 40;
-            const translationLineHeight = 45;
-            const totalTextHeight = (arabicLines.length * arabicLineHeight) + refLineHeight + (translationLines.length * translationLineHeight);
-            let currentY = (canvas.height - totalTextHeight) / 2 + 30;
-
-            ctx.font = arabicFont;
-            ctx.fillStyle = '#0B345B';
-            ctx.direction = 'rtl';
-            arabicLines.forEach((line) => {
-                ctx.fillText(line, canvas.width / 2, currentY);
-                currentY += arabicLineHeight;
-            });
-
-            currentY += refLineHeight / 2 - 15;
-            ctx.font = refFont;
-            ctx.fillStyle = '#3E6B8E';
-            ctx.direction = 'ltr';
-            ctx.fillText(`- ${verseReference} -`, canvas.width / 2, currentY);
-            currentY += refLineHeight / 2;
-
-            if (hasTranslation) {
-                currentY += 25;
-                ctx.font = translationFont;
-                ctx.fillStyle = '#3E6B8E';
-                translationLines.forEach((line) => {
-                    ctx.fillText(line, canvas.width / 2, currentY);
-                    currentY += translationLineHeight;
-                });
-            }
-
-            const dataUrl = canvas.toDataURL('image/png');
-            setGeneratedImage(dataUrl);
-            setIsGeneratingImage(false);
-        };
-
-        image.onerror = () => {
-             toast({ variant: 'destructive', title: 'Image Load Error', description: 'Could not load the background image.' });
-             setIsGeneratingImage(false);
-        }
-
-      } catch (error: any) {
-          console.error('Error generating image:', error);
-          toast({ variant: 'destructive', title: 'Image Generation Failed', description: error.message || 'An unknown error occurred.' });
-          setIsGeneratingImage(false);
-      }
-    };
-
-    generateImage();
-  }, [isShareSheetOpen, textToShare, toast]);
-
-  const handleShareGeneratedImage = async () => {
-    if (!generatedImage || isGeneratingImage) return;
+    const { id: toastId } = toast({
+      title: 'Generating Image...',
+      description: 'Please wait while we prepare your image for sharing.',
+    });
 
     try {
-        const blob = await fetch(generatedImage).then(res => res.blob());
-        const verseReference = textToShare.match(/\((.+:.+)\)/)?.[1] || 'verse';
-        const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
+      const [arabicPartFull, translationPart] = textToShare.split('\n\n');
+      const arabicMatch = arabicPartFull.match(/(.+) \((.+:.+)\)/);
+      if (!arabicMatch) throw new Error('Could not parse verse text.');
+      
+      const arabicText = arabicMatch[1];
+      const verseReference = arabicMatch[2];
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: `Quran - ${verseReference}`,
-            });
-        } else {
-            toast({ variant: 'destructive', title: 'Cannot Share Image', description: 'Your browser does not support sharing images.' });
-        }
-        setIsShareSheetOpen(false);
-    } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Failed to share:', err);
-          toast({
-            variant: "destructive",
-            title: "Share Failed",
-            description: "Could not share image. Please try again.",
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Could not load background image.'));
+        img.src = 'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png';
+      });
+
+      canvas.width = 1080;
+      canvas.height = 1080;
+      ctx.drawImage(image, 0, 0, 1080, 1080);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const arabicFont = '56px Noto Kufi Arabic';
+      const refFont = '28px Alegreya';
+      const translationFont = '32px PT Sans';
+
+      ctx.font = arabicFont;
+      const arabicLines = wrapText(ctx, arabicText, canvas.width - 200);
+      
+      ctx.font = translationFont;
+      const hasTranslation = !!translationPart;
+      const translationLines = hasTranslation ? wrapText(ctx, translationPart, canvas.width - 250) : [];
+      
+      const arabicLineHeight = 70;
+      const refLineHeight = 40;
+      const translationLineHeight = 45;
+      const totalTextHeight = (arabicLines.length * arabicLineHeight) + refLineHeight + (translationLines.length * translationLineHeight);
+      let currentY = (canvas.height - totalTextHeight) / 2 + 30;
+
+      ctx.font = arabicFont;
+      ctx.fillStyle = '#0B345B';
+      ctx.direction = 'rtl';
+      arabicLines.forEach((line) => {
+          ctx.fillText(line, canvas.width / 2, currentY);
+          currentY += arabicLineHeight;
+      });
+
+      currentY += refLineHeight / 2 - 15;
+      ctx.font = refFont;
+      ctx.fillStyle = '#3E6B8E';
+      ctx.direction = 'ltr';
+      ctx.fillText(`- ${verseReference} -`, canvas.width / 2, currentY);
+      currentY += refLineHeight / 2;
+
+      if (hasTranslation) {
+          currentY += 25;
+          ctx.font = translationFont;
+          ctx.fillStyle = '#3E6B8E';
+          translationLines.forEach((line) => {
+              ctx.fillText(line, canvas.width / 2, currentY);
+              currentY += translationLineHeight;
           });
-        }
+      }
+
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Failed to create image blob.');
+
+      const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        toast({
+          title: "Ready to Share",
+          description: "Your share dialog should now be open.",
+        });
+        await navigator.share({
+          files: [file],
+          title: `Quran - ${verseReference}`,
+        });
+      } else {
+        throw new Error('Your browser does not support sharing images.');
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Failed to share:', err);
+        toast({
+          variant: "destructive",
+          title: "Share Failed",
+          description: err.message || "Could not share image. Please try again.",
+        });
+      }
+    } finally {
+        const { dismiss } = useToast();
+        dismiss(toastId);
     }
   };
 
@@ -521,7 +486,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToShareAndCopy); setActivePopoverKey(null); }}>
                                     <Copy className="h-5 w-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShareIconClick(textToShareAndCopy)}>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShareAsImage(textToShareAndCopy)}>
                                     <Share2 className="h-5 w-5" />
                                 </Button>
                             </div>
@@ -575,7 +540,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToShareAndCopy); setActivePopoverKey(null); }}>
                                         <Copy className="h-5 w-5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShareIconClick(textToShareAndCopy)}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShareAsImage(textToShareAndCopy)}>
                                         <Share2 className="h-5 w-5" />
                                     </Button>
                                 </div>
@@ -644,35 +609,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           reciterName={selectedReciter?.name || 'Loading...'}
         />
       )}
-      <Sheet open={isShareSheetOpen} onOpenChange={setIsShareSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-lg max-w-4xl mx-auto border-none bg-card/90 backdrop-blur-md p-6">
-          <SheetHeader className="text-center mb-4">
-            <SheetTitle className="text-2xl">Share as Image</SheetTitle>
-          </SheetHeader>
-          <div
-            className="py-4 px-2 rounded-md bg-background/50 flex justify-center items-center min-h-[300px] cursor-pointer group"
-            onClick={handleShareGeneratedImage}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleShareGeneratedImage(); }}
-          >
-            {isGeneratingImage && <Loader2 className="h-10 w-10 animate-spin text-primary" />}
-            {!isGeneratingImage && generatedImage && (
-              <div className="relative">
-                  <img src={generatedImage} alt="Verse share preview" className="rounded-md w-full object-contain max-h-96" />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                      <Share2 className="h-12 w-12 text-white" />
-                  </div>
-              </div>
-            )}
-            {!isGeneratingImage && !generatedImage && (
-              <div className="text-center text-muted-foreground">
-                <p>Could not generate image preview.</p>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
     </>
   );
 }
