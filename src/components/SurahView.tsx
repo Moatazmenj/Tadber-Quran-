@@ -90,9 +90,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [fetchTranslations]);
 
   const fetchAudio = useCallback(async () => {
+    // Clear old audio files and stop playback when surah or reciter changes.
+    setIsPlaying(false);
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+    }
+    setAudioFiles([]);
+    setCurrentVerseIndex(0);
+
     setIsLoadingAudio(true);
     setAudioError('');
-    setAudioFiles([]); // Clear old files to prevent using stale data
     try {
       const response = await fetch(`https://api.quran.com/api/v4/recitations/${settings.reciterId}/by_chapter/${surahInfo.id}`);
       if (!response.ok) {
@@ -110,16 +118,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [surahInfo.id, settings.reciterId]);
 
   useEffect(() => {
-    // Clear old audio files and stop playback when surah or reciter changes.
-    setAudioFiles([]);
-    if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-    }
-    setIsPlaying(false);
-    setCurrentVerseIndex(0);
-    
-    // Fetch new audio files
     fetchAudio();
   }, [fetchAudio]);
 
@@ -345,7 +343,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const fullVerseText = `"${ayah.text_uthmani}" — (Surah ${surahInfo.name} ${surahInfo.id}:${verseNumber})\n\nTranslation: ${ayah.translation || ''}`;
                       
                       return (
-                          <div key={ayah.id} id={`verse-${verseNumber}`} className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300", isCurrentVerse && "bg-yellow-400/20 rounded-lg p-2")}>
+                          <div key={ayah.id} id={`verse-${verseNumber}`} className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300", isCurrentVerse && "bg-orange-500/20 rounded-lg p-2")}>
                             <Popover open={openPopoverKey === ayah.verse_key} onOpenChange={(isOpen) => setOpenPopoverKey(isOpen ? ayah.verse_key : null)}>
                                 <PopoverTrigger asChild>
                                     <p 
@@ -409,7 +407,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             <PopoverTrigger asChild>
                                 <span 
                                     id={`verse-${verseNumber}`} 
-                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isCurrentVerse && "bg-yellow-400/20")}
+                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isCurrentVerse && "bg-orange-500/20")}
                                     onClick={() => playVerse(index)}
                                 >
                                     {ayah.text_uthmani}
