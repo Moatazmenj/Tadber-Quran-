@@ -266,10 +266,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           title: `Quran - ${verseReference}`,
         });
       } else {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `verse-${verseReference.replace(':', '_')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        
         toast({
-          variant: "destructive",
-          title: "Sharing Not Supported",
-          description: "Your browser does not support sharing images directly.",
+          title: "Image Downloaded",
+          description: "Direct sharing is not supported, so the image was downloaded instead.",
         });
       }
     } catch (err: any) {
