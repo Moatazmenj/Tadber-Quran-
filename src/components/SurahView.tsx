@@ -110,15 +110,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [surahInfo.id, settings.reciterId]);
 
   useEffect(() => {
-    fetchAudio();
-
-    // Reset audio state whenever the reciter or surah changes
-    setIsPlaying(false);
-    setCurrentVerseIndex(0);
+    // Clear old audio files and stop playback when surah or reciter changes.
+    setAudioFiles([]);
     if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
     }
+    setIsPlaying(false);
+    setCurrentVerseIndex(0);
+    
+    // Fetch new audio files
+    fetchAudio();
   }, [fetchAudio]);
 
 
@@ -307,7 +309,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const fullVerseText = `"${ayah.text_uthmani}" — (Surah ${surahInfo.name} ${surahInfo.id}:${verseNumber})\n\nTranslation: ${ayah.translation || ''}`;
                       
                       return (
-                          <div key={ayah.id} id={`verse-${verseNumber}`} className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300", isCurrentVerse && "bg-primary/10 rounded-lg p-2")}>
+                          <div key={ayah.id} id={`verse-${verseNumber}`} className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300", isCurrentVerse && "bg-[hsl(var(--foreground)_/_0.1)] rounded-lg p-2")}>
                             <Popover open={openPopoverKey === ayah.verse_key} onOpenChange={(isOpen) => setOpenPopoverKey(isOpen ? ayah.verse_key : null)}>
                                 <PopoverTrigger asChild>
                                     <p 
@@ -370,7 +372,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             <PopoverTrigger asChild>
                                 <span 
                                     id={`verse-${verseNumber}`} 
-                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isCurrentVerse && "bg-primary/20")}
+                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isCurrentVerse && "bg-[hsl(var(--foreground)_/_0.2)]")}
                                 >
                                     {ayah.text_uthmani}
                                     <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
