@@ -676,5 +676,3 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
-
-    
