@@ -6,8 +6,7 @@ import Link from 'next/link';
 import type { Ayah, Surah, AudioFile } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, PlayCircle, Copy, Share2 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import { getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -44,12 +43,11 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const [openPopoverKey, setOpenPopoverKey] = useState<string | null>(null);
-
   // Effect to reset display verses when initialVerses (surah) changes.
   useEffect(() => {
     setDisplayVerses(initialVerses);
-    setOpenPopoverKey(null);
+    setCurrentVerseIndex(0);
+    setIsPlaying(false);
   }, [initialVerses]);
   
   const fetchTranslations = useCallback(async () => {
@@ -86,18 +84,22 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [settings.translationId, initialVerses, surahInfo.id]);
 
   useEffect(() => {
-    fetchTranslations();
-  }, [fetchTranslations]);
+    if (settings.showTranslation) {
+      fetchTranslations();
+    } else {
+      setDisplayVerses(initialVerses);
+    }
+  }, [fetchTranslations, settings.showTranslation, initialVerses]);
 
   const fetchAudio = useCallback(async () => {
     // Clear old audio files and stop playback when surah or reciter changes.
-    setIsPlaying(false);
+    setAudioFiles([]);
+    setCurrentVerseIndex(0);
     if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
     }
-    setAudioFiles([]);
-    setCurrentVerseIndex(0);
+    setIsPlaying(false);
 
     setIsLoadingAudio(true);
     setAudioError('');
@@ -154,7 +156,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       }
     } else {
       setIsPlaying(false);
-      setCurrentVerseIndex(0); // Reset to start
+      // If we've reached the end, reset to the start of the surah.
+      setCurrentVerseIndex(0);
     }
   }, [audioFiles]);
 
@@ -164,6 +167,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       setIsPlaying(false);
     } else {
       if (audioFiles.length > 0) {
+        // If nothing is playing, play from the current selected verse index
         playVerse(currentVerseIndex);
       }
     }
@@ -187,79 +191,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     handleNext();
   };
 
-  const handleCopy = (textToCopy: string) => {
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      toast({
-        title: "Copied to clipboard",
-        description: "The verse has been copied.",
-      });
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
-      toast({
-        variant: "destructive",
-        title: "Copy Failed",
-        description: "Could not copy text to clipboard.",
-      });
-    }).finally(() => {
-      setOpenPopoverKey(null);
-    });
-  };
-
-  const handleShare = (textToShare: string) => {
-    const closePopover = () => setOpenPopoverKey(null);
-
-    if (navigator.share) {
-      navigator.share({
-        title: `Quran - Surah ${surahInfo.name}`,
-        text: textToShare,
-        url: window.location.href,
-      })
-      .then(closePopover)
-      .catch((err) => {
-        // Don't show an error if the user just cancelled the share.
-        if (err.name === 'AbortError') {
-          console.log('Share cancelled');
-          closePopover();
-          return;
-        }
-
-        // For other errors, fallback to copy
-        console.error('Error sharing:', err);
-        navigator.clipboard.writeText(textToShare).then(() => {
-          toast({
-            title: "Sharing failed",
-            description: "The verse has been copied to your clipboard instead.",
-          });
-        }).catch(copyErr => {
-          console.error('Failed to copy text on fallback: ', copyErr);
-          toast({
-            variant: "destructive",
-            title: "Action Failed",
-            description: "Could not share or copy the text.",
-          });
-        }).finally(closePopover);
-      });
-    } else {
-      // Fallback for browsers that don't support navigator.share
-      navigator.clipboard.writeText(textToShare).then(() => {
-        toast({
-          title: "Share not supported",
-          description: "The verse has been copied to your clipboard instead.",
-        });
-      }).catch(copyErr => {
-        console.error('Failed to copy text: ', copyErr);
-        toast({
-          variant: "destructive",
-          title: "Copy Failed",
-          description: "Could not copy text to clipboard.",
-        });
-      }).finally(closePopover);
+  const handleVerseSelect = (index: number) => {
+    setCurrentVerseIndex(index);
+    if (isPlaying) {
+      setIsPlaying(false);
+      audioRef.current?.pause();
     }
-  };
-
-  const handlePlayFromPopover = (index: number) => {
-    playVerse(index);
-    setOpenPopoverKey(null);
   };
 
   const VerseSkeleton = () => (
@@ -339,44 +276,23 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                   {displayVerses.map((ayah, index) => {
                       const verseNumber = ayah.verse_key.split(':')[1];
                       const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
-                      const isCurrentVerse = isPlaying && index === currentVerseIndex;
-                      const fullVerseText = `"${ayah.text_uthmani}" — (Surah ${surahInfo.name} ${surahInfo.id}:${verseNumber})\n\nTranslation: ${ayah.translation || ''}`;
+                      const isSelectedOrPlayingVerse = index === currentVerseIndex;
                       
                       return (
-                          <div key={ayah.id} id={`verse-${verseNumber}`} className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300", isCurrentVerse && "bg-orange-500/20 rounded-lg p-2")}>
-                            <Popover open={openPopoverKey === ayah.verse_key} onOpenChange={(isOpen) => setOpenPopoverKey(isOpen ? ayah.verse_key : null)}>
-                                <PopoverTrigger asChild>
-                                    <p 
-                                        dir="rtl" 
-                                        className="font-arabic leading-loose text-foreground mb-4 text-center cursor-pointer"
-                                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                                        onClick={() => playVerse(index)}
-                                    >
-                                        {ayah.text_uthmani}
-                                        <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
-                                    </p>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-1" align="center" side="bottom">
-                                    <div className="flex items-center gap-1">
-                                        <Button variant="ghost" size="icon" className="h-9 w-9">
-                                            <BookText className="h-4 w-4" />
-                                            <span className="sr-only">Tafsir</span>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handlePlayFromPopover(index)}>
-                                            <PlayCircle className="h-4 w-4" />
-                                            <span className="sr-only">Play</span>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleCopy(fullVerseText)}>
-                                            <Copy className="h-4 w-4" />
-                                            <span className="sr-only">Copy</span>
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShare(fullVerseText)}>
-                                            <Share2 className="h-4 w-4" />
-                                            <span className="sr-only">Share</span>
-                                        </Button>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
+                          <div 
+                              key={ayah.id} 
+                              id={`verse-${verseNumber}`} 
+                              className={cn("border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg cursor-pointer", isSelectedOrPlayingVerse && "bg-orange-500/20 p-4")}
+                              onClick={() => handleVerseSelect(index)}
+                            >
+                              <p 
+                                  dir="rtl" 
+                                  className="font-arabic leading-loose text-foreground mb-4 text-center"
+                                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                              >
+                                  {ayah.text_uthmani}
+                                  <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                              </p>
                             <div className="text-muted-foreground text-lg leading-relaxed text-center">
                                 {ayah.translation ? (
                                   <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
@@ -399,43 +315,19 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                   {displayVerses.map((ayah, index) => {
                       const verseNumber = ayah.verse_key.split(':')[1];
                       const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
-                      const isCurrentVerse = isPlaying && index === currentVerseIndex;
-                      const fullVerseText = `"${ayah.text_uthmani}" — (Surah ${surahInfo.name} ${surahInfo.id}:${verseNumber})`;
+                      const isSelectedOrPlayingVerse = index === currentVerseIndex;
 
                       return (
-                        <Popover key={ayah.id} open={openPopoverKey === ayah.verse_key} onOpenChange={(isOpen) => setOpenPopoverKey(isOpen ? ayah.verse_key : null)}>
-                            <PopoverTrigger asChild>
-                                <span 
-                                    id={`verse-${verseNumber}`} 
-                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isCurrentVerse && "bg-orange-500/20")}
-                                    onClick={() => playVerse(index)}
-                                >
-                                    {ayah.text_uthmani}
-                                    <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
-                                    {' '}
-                                </span>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-1" align="center" side="bottom">
-                                <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-9 w-9">
-                                        <BookText className="h-4 w-4" />
-                                        <span className="sr-only">Tafsir</span>
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handlePlayFromPopover(index)}>
-                                        <PlayCircle className="h-4 w-4" />
-                                        <span className="sr-only">Play</span>
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleCopy(fullVerseText)}>
-                                        <Copy className="h-4 w-4" />
-                                        <span className="sr-only">Copy</span>
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleShare(fullVerseText)}>
-                                        <Share2 className="h-4 w-4" />
-                                        <span className="sr-only">Share</span>
-                                    </Button>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                        <span 
+                            key={ayah.id}
+                            id={`verse-${verseNumber}`} 
+                            className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isSelectedOrPlayingVerse && "bg-orange-500/20")}
+                            onClick={() => handleVerseSelect(index)}
+                        >
+                            {ayah.text_uthmani}
+                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                            {' '}
+                        </span>
                       );
                   })}
               </div>
