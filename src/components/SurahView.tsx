@@ -26,6 +26,7 @@ import {
   SheetDescription,
   SheetFooter,
 } from '@/components/ui/sheet';
+import Image from 'next/image';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -74,11 +75,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const audioRef = useRef<HTMLAudioElement>(null);
   const [activePopoverKey, setActivePopoverKey] = useState<string | null>(null);
 
-  // State for the new share sheet
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
   const [verseToShareText, setVerseToShareText] = useState('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [selectedShareBackground, setSelectedShareBackground] = useState<string | null>(null);
+
+  const shareBackgrounds = [
+    'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png',
+    'https://i.postimg.cc/bwwg0Q43/20250708-005544.png',
+  ];
 
 
   useEffect(() => {
@@ -162,10 +168,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     fetchAudio();
   }, [fetchAudio]);
 
-  // Effect to generate the image when the share sheet is opened
   useEffect(() => {
     const generateImage = async () => {
-      if (isShareSheetOpen && verseToShareText) {
+      if (isShareSheetOpen && verseToShareText && selectedShareBackground) {
         setIsGeneratingImage(true);
         setGeneratedImageUrl(null);
 
@@ -186,7 +191,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
             img.crossOrigin = 'anonymous';
             img.onload = () => resolve(img);
             img.onerror = () => reject(new Error('Could not load background image.'));
-            img.src = 'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png';
+            img.src = selectedShareBackground;
           });
 
           canvas.width = 1080;
@@ -254,7 +259,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     };
 
     generateImage();
-  }, [isShareSheetOpen, verseToShareText, toast]);
+  }, [isShareSheetOpen, verseToShareText, selectedShareBackground, toast]);
 
 
   const handleSummarize = async () => {
@@ -652,13 +657,21 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         />
       )}
 
-      {/* Share Sheet Component */}
-      <Sheet open={isShareSheetOpen} onOpenChange={setIsShareSheetOpen}>
+      <Sheet 
+        open={isShareSheetOpen} 
+        onOpenChange={(isOpen) => {
+          setIsShareSheetOpen(isOpen);
+          if (!isOpen) {
+            setGeneratedImageUrl(null);
+            setSelectedShareBackground(null);
+          }
+        }}
+      >
         <SheetContent side="bottom" className="w-full max-w-xl mx-auto h-[90vh] flex flex-col rounded-t-2xl">
             <SheetHeader className="text-center">
                 <SheetTitle>Share Verse</SheetTitle>
                 <SheetDescription>
-                    A beautiful image has been generated for you to share.
+                    {generatedImageUrl || isGeneratingImage ? 'Your image is ready to share.' : 'Choose a style for your shareable image.'}
                 </SheetDescription>
             </SheetHeader>
             <div className="flex-grow flex flex-col items-center justify-center p-4 min-h-0">
@@ -667,26 +680,55 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                         <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                         <p className="text-muted-foreground">Generating Image...</p>
                     </div>
+                ) : generatedImageUrl ? (
+                    <div className="relative w-full h-full flex items-center justify-center">
+                        <img
+                            src={generatedImageUrl}
+                            alt="Generated verse to share"
+                            className="object-contain max-w-full max-h-full rounded-lg shadow-lg"
+                        />
+                    </div>
                 ) : (
-                    generatedImageUrl && (
-                        <div className="relative w-full h-full flex items-center justify-center">
-                            <img
-                                src={generatedImageUrl}
-                                alt="Generated verse to share"
-                                className="object-contain max-w-full max-h-full rounded-lg shadow-lg"
-                            />
-                        </div>
-                    )
+                  <div className="w-full space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        {shareBackgrounds.map((bg, index) => (
+                            <div 
+                                key={index} 
+                                className="relative aspect-square rounded-lg overflow-hidden cursor-pointer ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 group"
+                                onClick={() => setSelectedShareBackground(bg)}
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedShareBackground(bg)}}
+                            >
+                                <Image
+                                    src={bg}
+                                    alt={`Background option ${index + 1}`}
+                                    fill
+                                    className="object-cover transition-transform group-hover:scale-105"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                  </div>
                 )}
             </div>
-            <SheetFooter className="p-4">
-                <Button 
-                    onClick={handlePerformShare} 
-                    className="w-full" 
-                    disabled={isGeneratingImage || !generatedImageUrl}
-                >
-                    {isGeneratingImage ? 'Please wait...' : 'Share Now'}
-                </Button>
+            <SheetFooter className="p-4 border-t border-border/20">
+                {generatedImageUrl && !isGeneratingImage && (
+                    <div className="w-full space-y-2">
+                        <Button onClick={handlePerformShare} className="w-full">
+                            Share Now
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            onClick={() => {
+                                setGeneratedImageUrl(null);
+                                setSelectedShareBackground(null);
+                            }} 
+                            className="w-full"
+                        >
+                            Change Style
+                        </Button>
+                    </div>
+                )}
             </SheetFooter>
         </SheetContent>
       </Sheet>
