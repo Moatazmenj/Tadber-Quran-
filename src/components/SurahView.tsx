@@ -197,35 +197,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setActivePopoverKey(null);
   };
 
-  const handleShare = async (textToShare: string) => {
-    const shareData = {
-      title: `Quran - Surah ${surahInfo.name}`,
-      text: textToShare,
-      url: window.location.href,
-    };
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Failed to share:', err);
-          toast({
-            variant: "destructive",
-            title: "Share Failed",
-            description: "Could not share. Copied to clipboard instead.",
-          });
-          handleCopy(textToShare);
-        }
-      }
-    } else {
-      toast({
-        title: "Share Not Available",
-        description: "Web Share is not supported on your browser. Copied to clipboard instead.",
-      });
-      handleCopy(textToShare);
-    }
-  };
-
   useEffect(() => {
     const generateImage = async () => {
       if (!isShareSheetOpen || !textToShare) {
@@ -705,3 +676,5 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
+
+    
