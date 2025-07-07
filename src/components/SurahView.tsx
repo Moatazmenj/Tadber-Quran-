@@ -352,6 +352,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                         dir="rtl" 
                                         className="font-arabic leading-loose text-foreground mb-4 text-center cursor-pointer"
                                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                                        onClick={() => playVerse(index)}
                                     >
                                         {ayah.text_uthmani}
                                         <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
@@ -409,6 +410,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 <span 
                                     id={`verse-${verseNumber}`} 
                                     className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isCurrentVerse && "bg-yellow-400/20")}
+                                    onClick={() => playVerse(index)}
                                 >
                                     {ayah.text_uthmani}
                                     <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
@@ -502,5 +504,3 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
-
-    
