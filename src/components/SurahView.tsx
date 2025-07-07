@@ -86,6 +86,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const fetchAudio = useCallback(async () => {
     setIsLoadingAudio(true);
     setAudioError('');
+    setAudioFiles([]); // Clear old files to prevent using stale data
     try {
       const response = await fetch(`https://api.quran.com/api/v4/recitations/${settings.reciterId}/by_chapter/${surahInfo.id}`);
       if (!response.ok) {
