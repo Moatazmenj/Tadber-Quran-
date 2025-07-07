@@ -533,15 +533,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               <p className="font-arabic">{arabicPart}</p>
               {translationPart && <p className="text-base text-muted-foreground mt-2">{translationPart}</p>}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
-            <Button variant="outline" size="lg" onClick={() => {
-              handleCopy(textToShare);
-              setIsShareSheetOpen(false);
-            }}>
-              <Copy className="mr-2 h-5 w-5" />
-              Copy
-            </Button>
-            <Button size="lg" onClick={() => {
+          <div className="pt-6">
+            <Button size="lg" className="w-full" onClick={() => {
               handleShare(textToShare);
               setIsShareSheetOpen(false);
             }}>
