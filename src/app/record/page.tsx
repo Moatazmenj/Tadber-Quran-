@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -63,6 +64,7 @@ export default function RecordPage() {
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>('');
@@ -348,33 +350,53 @@ export default function RecordPage() {
         }
         
         if (verses.length > 0) {
-          return (
-              <Card className="w-full max-w-2xl p-6 min-h-[350px] flex flex-col">
-                  <div className="text-center mb-4 pb-4 border-b-2 border-primary flex-shrink-0">
-                      <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
-                      <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
-                  </div>
-                  <ScrollArea className="flex-grow pr-4">
-                      <div dir="rtl" className="font-arabic text-xl text-foreground/90 text-right leading-loose py-4">
-                          {selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                              <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
-                          )}
-                          {verses.map((verse) => {
-                              const verseNumberDisplay = verse.verse_key.split(':')[1].toLocaleString('ar-EG');
-                              const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
-                              return (
-                                  <span key={verse.id}>
-                                      {verse.text_uthmani}
-                                      <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '1rem' }}>{verseEndSymbol}</span>
-                                      {' '}
-                                  </span>
-                              );
-                          })}
-                      </div>
-                  </ScrollArea>
-                  <p className="text-sm text-muted-foreground mt-4 text-center flex-shrink-0">Press the record button to start reciting from this Surah.</p>
-              </Card>
-          )
+            const versesPerPage = 10;
+            const totalPages = Math.ceil(verses.length / versesPerPage);
+            const startIndex = currentPage * versesPerPage;
+            const versesForCurrentPage = verses.slice(startIndex, startIndex + versesPerPage);
+            
+            return (
+                <div className="w-full max-w-2xl flex flex-col items-center">
+                    <Card className="w-full p-6 min-h-[450px] flex flex-col">
+                        <div className="text-center mb-4 pb-4 border-b-2 border-primary flex-shrink-0">
+                            <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
+                            <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
+                        </div>
+                        <div className="flex-grow">
+                            <div dir="rtl" className="font-arabic text-xl text-foreground/90 text-right leading-loose py-4">
+                                {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                                    <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                                )}
+                                {versesForCurrentPage.map((verse) => {
+                                    const verseNumberDisplay = verse.verse_key.split(':')[1].toLocaleString('ar-EG');
+                                    const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
+                                    return (
+                                        <span key={verse.id}>
+                                            {verse.text_uthmani}
+                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '1rem' }}>{verseEndSymbol}</span>
+                                            {' '}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-4 text-center flex-shrink-0">Press the record button to start reciting from this Surah.</p>
+                    </Card>
+                     <div className="flex items-center justify-center gap-4 mt-4">
+                        <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 0}>
+                            <ChevronLeft className="h-5 w-5" />
+                            <span className="sr-only">Previous Page</span>
+                        </Button>
+                        <p className="text-muted-foreground text-sm font-medium tabular-nums">
+                            Page {currentPage + 1} of {totalPages}
+                        </p>
+                        <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages - 1}>
+                            <ChevronRight className="h-5 w-5" />
+                            <span className="sr-only">Next Page</span>
+                        </Button>
+                    </div>
+                </div>
+            )
         }
   
         // Fallback for when no verses are loaded but a surah is selected (e.g. initial state before fetch)
@@ -389,7 +411,7 @@ export default function RecordPage() {
                         <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
                     </div>
                 </div>
-                <p className="text-muted-foreground">{selectedSurah.versesCount} verses</p>
+                <p className="text-muted-foreground">{selectedSurah.versesCount}</p>
                 <p className="text-sm text-muted-foreground mt-4">Press the record button to start reciting from this Surah.</p>
             </Card>
         )
@@ -430,6 +452,7 @@ export default function RecordPage() {
                       setSelectedSurah(surah);
                       setIsSheetOpen(false);
                       setSearchResult(null);
+                      setCurrentPage(0);
                     }}
                     className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
                   >
@@ -484,3 +507,6 @@ export default function RecordPage() {
     </div>
   );
 }
+
+
+    
