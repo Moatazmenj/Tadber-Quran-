@@ -21,7 +21,7 @@ const defaultSettings: QuranSettings = {
   showTranslation: true,
   translationId: 'en',
   theme: 'theme1',
-  reciterId: 5, // Maher Al Muaiqly
+  reciterId: 5, // Adjusted to Maher Al Muaiqly
 };
 
 export function useQuranSettings() {
