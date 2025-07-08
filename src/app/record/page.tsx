@@ -49,7 +49,6 @@ const SpeechRecognitionAPI =
 
 export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcript, setTranscript] = useState('');
   const [isSupported, setIsSupported] = useState(SpeechRecognitionAPI != null);
   
   const [searchResult, setSearchResult] = useState<VerseSearchResult | null>(null);
@@ -89,6 +88,7 @@ export default function RecordPage() {
 
       if (!topResult) {
           setSearchError("No matching verse found for your recitation.");
+          setIsSearching(false); // Make sure to stop searching
           return;
       }
       
@@ -151,8 +151,7 @@ export default function RecordPage() {
             .map(result => result[0].transcript)
             .join('');
 
-        finalTranscriptRef.current = finalTranscript;
-        setTranscript(finalTranscript + (finalTranscript ? ' ' : '') + interimTranscript);
+        finalTranscriptRef.current = finalTranscript + (finalTranscript ? ' ' : '') + interimTranscript;
     };
 
     recognition.onend = () => {
@@ -161,7 +160,7 @@ export default function RecordPage() {
         if (finalTranscriptRef.current.trim()) {
           performSearch(finalTranscriptRef.current.trim());
         }
-      } else {
+      } else if (isRecording) {
         // If it was an automatic stop, restart recognition to keep listening
         try {
           if (recognitionRef.current) {
@@ -193,19 +192,24 @@ export default function RecordPage() {
         recognitionRef.current.stop();
       }
     };
-  }, [isSupported, performSearch]);
+  }, [isSupported, performSearch, isRecording]);
 
   const handleStartRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
-      setTranscript('');
       finalTranscriptRef.current = '';
       setSearchResult(null);
       setSearchError(null);
       setIsSearching(false);
       
       isStoppingRef.current = false;
-      recognitionRef.current.start();
-      setIsRecording(true);
+      setIsRecording(true); // Set recording to true before starting
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error("Error starting recognition:", e);
+        setIsRecording(false);
+        setSearchError("Could not start microphone. Please check permissions.");
+      }
     }
   }, [isRecording]);
 
@@ -251,6 +255,9 @@ export default function RecordPage() {
     }
 
     if (searchResult) {
+        const verseNumberDisplay = searchResult.verseNumber.toLocaleString('ar-EG');
+        const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
+
         return (
             <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-2xl">
                 <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full">
@@ -260,16 +267,35 @@ export default function RecordPage() {
                     </div>
                     <p dir="rtl" className="font-arabic text-2xl leading-loose text-foreground/90">
                         {searchResult.text_ar}
+                        <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '1.2rem' }}>{verseEndSymbol}</span>
                     </p>
                 </Card>
             </Link>
         )
     }
 
+    if (isRecording) {
+      return (
+          <div className="flex flex-col items-center justify-center text-center gap-6">
+              <div className="relative flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-destructive/20" />
+                  <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
+                  <Mic className="h-10 w-10 text-destructive-foreground absolute" />
+              </div>
+              <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed">
+                  جارِ الاستماع...
+              </p>
+          </div>
+      );
+    }
+
     return (
-        <p dir="rtl" className="text-2xl font-arabic text-justify text-foreground/80 leading-relaxed w-full max-w-2xl px-4">
-            {transcript || (isRecording ? "جارِ الاستماع..." : "انقر على الميكروفون لبدء التسجيل")}
-        </p>
+        <div className="flex flex-col items-center justify-center text-center gap-4">
+            <Mic className="h-16 w-16 text-muted-foreground" />
+            <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed max-w-md">
+                انقر على الميكروفون لبدء تلاوة الآية التي تريد البحث عنها
+            </p>
+        </div>
     );
   };
 
@@ -293,10 +319,7 @@ export default function RecordPage() {
             <Button 
                 variant="destructive" 
                 size="icon" 
-                className={cn(
-                    "w-20 h-20 rounded-full",
-                    isRecording && "animate-pulse"
-                )}
+                className="w-20 h-20 rounded-full"
                 onClick={handleStartRecording}
                 disabled={isRecording || !isSupported}
             >
