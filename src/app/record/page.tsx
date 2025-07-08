@@ -358,7 +358,7 @@ export default function RecordPage() {
                 <div className="w-full max-w-3xl flex flex-col items-center">
                     <Card className="w-full p-6 min-h-[450px] flex flex-col">
                         <div className="flex-grow">
-                            <div dir="rtl" className="font-arabic text-justify text-foreground/90 leading-relaxed py-4" style={{fontSize: '14px'}}>
+                            <div dir="rtl" className="font-arabic text-center text-foreground/90 leading-relaxed py-4" style={{fontSize: '14px'}}>
                                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                                     <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                                 )}
