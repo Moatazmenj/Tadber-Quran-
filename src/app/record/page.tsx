@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -45,7 +44,7 @@ let SpeechRecognitionAPI: any = null;
 export default function RecordPage() {
   const { settings, setSetting } = useQuranSettings();
   const [isRecording, setIsRecording] = useState(false);
-  const [isSupported, setIsSupported] = useState(true); // Assume supported initially
+  const [isSupported, setIsSupported] = useState(true);
   const [liveTranscript, setLiveTranscript] = useState('');
   
   const [isSearching, setIsSearching] = useState(false);
@@ -63,11 +62,8 @@ export default function RecordPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>('');
   
-  // This ref is to signal to the onend handler that we stopped manually
   const stoppingRef = useRef(false);
 
-  // This ref is to keep track of the recording state inside the onend handler
-  // to avoid stale closures.
   const isRecordingRef = useRef(isRecording);
   useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -75,7 +71,8 @@ export default function RecordPage() {
 
   useEffect(() => {
     // Select Al-Fatiha by default
-    setSelectedSurah(surahs[0]);
+    const alFatiha = surahs.find(s => s.id === 1);
+    setSelectedSurah(alFatiha || surahs[0]);
   }, []);
 
   useEffect(() => {
@@ -83,7 +80,6 @@ export default function RecordPage() {
         const recognitionIsSupported = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (recognitionIsSupported) {
           SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-          setIsSupported(true);
         } else {
           setIsSupported(false);
         }
@@ -115,7 +111,6 @@ export default function RecordPage() {
       
       const data: SearchApiResponse = JSON.parse(responseText);
       
-      // Find the first result that is in the currently selected Surah
       const resultInSurah = data.search.results.find(res => {
           const [surahIdStr] = res.verse_key.split(':');
           return parseInt(surahIdStr, 10) === selectedSurah.id;
@@ -156,7 +151,7 @@ export default function RecordPage() {
 
         if (currentPage !== targetPage) {
           setCurrentPage(targetPage);
-          setTimeout(scrollAndHighlight, 100); // Allow time for page to render
+          setTimeout(scrollAndHighlight, 100);
         } else {
           scrollAndHighlight();
         }
@@ -192,18 +187,16 @@ export default function RecordPage() {
     fetchVerses();
   }, [selectedSurah]);
 
-  useEffect(() => {
-    if (!isSupported || !SpeechRecognitionAPI) {
+  const setupRecognition = useCallback(() => {
+    if (!SpeechRecognitionAPI) {
       return;
     }
-
-    recognitionRef.current = new SpeechRecognitionAPI();
-    const recognition = recognitionRef.current;
+    const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'ar-SA';
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       let final_transcript = '';
       let interim_transcript = '';
 
@@ -216,67 +209,75 @@ export default function RecordPage() {
       }
       
       finalTranscriptRef.current = final_transcript;
-      setLiveTranscript(finalTranscriptRef.current + interim_transcript);
+      setLiveTranscript(final_transcript + interim_transcript);
     };
 
     recognition.onend = () => {
-      // Check if we stopped manually. If so, perform the search.
       if (stoppingRef.current) {
         setIsRecording(false);
         if (finalTranscriptRef.current.trim()) {
           performSearch(finalTranscriptRef.current.trim());
         }
-        stoppingRef.current = false; // Reset for next time
+        stoppingRef.current = false;
       } 
-      // Check if recognition stopped on its own while we were supposed to be recording.
       else if (isRecordingRef.current) {
         try {
-          recognition.start(); // Restart it
+          recognitionRef.current?.start();
         } catch (error) {
           console.error("Speech recognition restart failed:", error);
-          setIsRecording(false); // Stop if restart fails
+          setIsRecording(false);
         }
       }
     };
     
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
        if (event.error !== 'no-speech') {
         setSearchError(`Speech recognition error: ${event.error}`);
         setIsRecording(false);
       }
     };
+    
+    recognitionRef.current = recognition;
+  }, [performSearch]);
 
+  useEffect(() => {
+    if (!isSupported) {
+      return;
+    }
+    setupRecognition();
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onend = null;
-        recognitionRef.current.onerror = null;
         recognitionRef.current.stop();
         recognitionRef.current = null;
       }
     };
-  }, [isSupported, performSearch]);
+  }, [isSupported, setupRecognition]);
 
   const handleStartRecording = useCallback(() => {
-    if (recognitionRef.current && !isRecording) {
-      finalTranscriptRef.current = '';
-      setLiveTranscript('');
-      setSearchError(null);
-      setIsSearching(false);
-      setHighlightedVerseKey(null);
-      
-      stoppingRef.current = false;
-      setIsRecording(true);
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        console.error("Error starting recognition:", e);
-        setIsRecording(false);
-        setSearchError("Could not start microphone. Please check permissions.");
-      }
+    if (isRecording || !isSupported) return;
+
+    finalTranscriptRef.current = '';
+    setLiveTranscript('');
+    setSearchError(null);
+    setIsSearching(false);
+    setHighlightedVerseKey(null);
+    
+    stoppingRef.current = false;
+    setIsRecording(true);
+    
+    if (!recognitionRef.current) {
+      setupRecognition();
     }
-  }, [isRecording]);
+    
+    try {
+      recognitionRef.current?.start();
+    } catch (e) {
+      console.error("Error starting recognition:", e);
+      setIsRecording(false);
+      setSearchError("Could not start microphone. Please check permissions.");
+    }
+  }, [isRecording, isSupported, setupRecognition]);
 
   const handleStopRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
@@ -400,7 +401,10 @@ export default function RecordPage() {
                                         {verse.text_uthmani}
                                       </span>
                                       <span 
-                                          className="text-primary font-sans font-normal mx-1"
+                                          className={cn(
+                                            "text-primary font-sans font-normal mx-1",
+                                            isHighlighted && "bg-primary text-primary-foreground rounded-full px-1"
+                                          )}
                                           style={{ fontSize: `${settings.fontSize * 0.8}px` }}
                                       >
                                           {verseEndSymbol}
@@ -577,5 +581,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
-    
