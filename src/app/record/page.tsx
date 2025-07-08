@@ -276,24 +276,9 @@ export default function RecordPage() {
         );
     }
 
-    if (isRecording) {
-      return (
-          <div className="w-full max-w-5xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[450px]">
-              <div className="relative flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full bg-destructive/20" />
-                  <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
-                  <Mic className="h-10 w-10 text-destructive-foreground absolute" />
-              </div>
-              <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl">
-                  {liveTranscript || ''}
-              </p>
-          </div>
-      );
-    }
-
     if (isSearching) {
         return (
-            <div className="w-full max-w-5xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
+            <div className="w-full max-w-7xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
             </div>
@@ -317,7 +302,7 @@ export default function RecordPage() {
         const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
 
         return (
-            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-5xl">
+            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-7xl">
                 <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full bg-background/80">
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <BookOpen className="h-6 w-6 text-primary"/>
@@ -362,9 +347,21 @@ export default function RecordPage() {
             return (
                 <>
                     <div className="w-full flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+                      {isRecording ? (
+                        <div className="h-full flex flex-col items-center justify-center gap-6 text-center">
+                            <div className="relative flex items-center justify-center">
+                                <div className="w-20 h-20 rounded-full bg-destructive/20" />
+                                <div className="w-20 h-20 rounded-full bg-destructive/20 animate-ping absolute" />
+                                <Mic className="h-8 w-8 text-destructive-foreground absolute" />
+                            </div>
+                            <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
+                                {liveTranscript || ''}
+                            </p>
+                        </div>
+                      ) : (
                         <p 
                           dir="rtl" 
-                          className="font-arabic text-foreground text-center leading-loose"
+                          className="font-arabic text-2xl text-foreground/80 text-center leading-loose"
                           style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                         >
                             {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
@@ -387,17 +384,20 @@ export default function RecordPage() {
                                 );
                             })}
                         </p>
+                      )}
                     </div>
-                     <div className="flex items-center justify-between mt-4 px-4 w-full">
-                        <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
-                            <ChevronRight className="h-6 w-6" />
-                            <span className="sr-only">Previous Page</span>
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
-                            <ChevronLeft className="h-6 w-6" />
-                            <span className="sr-only">Next Page</span>
-                        </Button>
-                    </div>
+                    {!isRecording && totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 px-4 w-full">
+                          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                              <ChevronRight className="h-6 w-6" />
+                              <span className="sr-only">Previous Page</span>
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
+                              <ChevronLeft className="h-6 w-6" />
+                              <span className="sr-only">Next Page</span>
+                          </Button>
+                      </div>
+                    )}
                 </>
             )
         }
@@ -409,9 +409,24 @@ export default function RecordPage() {
             </div>
         );
       }
+    
+    if (isRecording) {
+      return (
+        <div className="w-full flex-grow flex flex-col items-center justify-center gap-6 text-center">
+            <div className="relative flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-destructive/20" />
+                <div className="w-20 h-20 rounded-full bg-destructive/20 animate-ping absolute" />
+                <Mic className="h-8 w-8 text-destructive-foreground absolute" />
+            </div>
+            <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
+                {liveTranscript || ''}
+            </p>
+        </div>
+      );
+    }
 
     return (
-        <div className="w-full max-w-5xl flex-grow flex items-center justify-center min-h-[450px]">
+        <div className="w-full max-w-7xl flex-grow flex items-center justify-center min-h-[450px]">
             {/* Empty by default */}
         </div>
     );
@@ -507,7 +522,7 @@ export default function RecordPage() {
         </div>
       </header>
       
-      {selectedSurah && (
+      {selectedSurah && !isRecording && (
         <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border">
           <span>Juz {selectedSurah.juz[0]} | Page {currentPage + 1}</span>
           <span>{totalPages > 0 ? `${currentPage + 1} / ${totalPages}` : ''}</span>
