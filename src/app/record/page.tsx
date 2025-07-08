@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, Settings } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, FontSize } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -12,6 +11,8 @@ import { Card } from '@/components/ui/card';
 import type { Surah } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { Slider } from '@/components/ui/slider';
 
 // --- API Types ---
 interface ApiSearchResult {
@@ -51,6 +52,7 @@ const SpeechRecognitionAPI =
     : null;
 
 export default function RecordPage() {
+  const { settings, setSetting } = useQuranSettings();
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(SpeechRecognitionAPI != null);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -64,6 +66,7 @@ export default function RecordPage() {
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -358,7 +361,11 @@ export default function RecordPage() {
             return (
                 <>
                     <div className="w-full flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
-                        <p dir="rtl" className="font-arabic text-2xl text-foreground text-justify leading-loose">
+                        <p 
+                          dir="rtl" 
+                          className="font-arabic text-foreground text-center leading-loose"
+                          style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                        >
                             {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                                 <span className="block text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</span>
                             )}
@@ -368,7 +375,12 @@ export default function RecordPage() {
                                 return (
                                     <span key={verse.id}>
                                         {verse.text_uthmani}
-                                        <span className="text-primary font-sans font-normal mx-1 text-lg">{verseEndSymbol}</span>
+                                        <span 
+                                            className="text-primary font-sans font-normal mx-1"
+                                            style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                        >
+                                            {verseEndSymbol}
+                                        </span>
                                         {' '}
                                     </span>
                                 );
@@ -465,12 +477,32 @@ export default function RecordPage() {
                     <Info className="h-5 w-5" />
                     <span className="sr-only">Info</span>
                 </Button>
-                <Link href="/settings" passHref>
-                    <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                        <Settings className="h-5 w-5" />
-                        <span className="sr-only">Settings</span>
-                    </Button>
-                </Link>
+                <Sheet open={isFontSizeSheetOpen} onOpenChange={setIsFontSizeSheetOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                            <FontSize className="h-5 w-5" />
+                            <span className="sr-only">Font Size</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-auto rounded-t-lg">
+                        <SheetHeader>
+                            <SheetTitle className="text-center">Font Size</SheetTitle>
+                        </SheetHeader>
+                        <div className="p-6">
+                            <div className="flex items-center gap-4">
+                                <span className="text-lg">A</span>
+                                <Slider
+                                    value={[settings.fontSize]}
+                                    min={18}
+                                    max={48}
+                                    step={2}
+                                    onValueChange={(value) => setSetting('fontSize', value[0])}
+                                />
+                                <span className="text-3xl">A</span>
+                            </div>
+                        </div>
+                    </SheetContent>
+                </Sheet>
             </div>
         </div>
       </header>
@@ -511,5 +543,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
-    
