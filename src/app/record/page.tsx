@@ -139,15 +139,23 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
 
     recognition.onresult = (event) => {
+      let finalTranscript = '';
       let interimTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+
+      // Rebuild the transcript from the beginning of the results list
+      // to prevent duplication of words.
+      for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscriptRef.current += event.results[i][0].transcript + ' ';
+          finalTranscript += event.results[i][0].transcript + ' ';
         } else {
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      setTranscript(finalTranscriptRef.current + interimTranscript);
+      
+      // Update the ref with the complete final transcript for the search
+      finalTranscriptRef.current = finalTranscript;
+      // Update the display with both final and interim results for live feedback
+      setTranscript(finalTranscript + interimTranscript);
     };
 
     recognition.onend = () => {
