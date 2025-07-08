@@ -58,6 +58,7 @@ export default function RecordPage() {
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>('');
+  const isStoppingRef = useRef(false);
 
   const performSearch = useCallback(async (query: string) => {
     if (query.trim().length < 3) {
@@ -150,25 +151,36 @@ export default function RecordPage() {
     };
 
     recognition.onend = () => {
-      setIsRecording(false);
-      if (finalTranscriptRef.current.trim()) {
-        performSearch(finalTranscriptRef.current.trim());
+      if (isStoppingRef.current) {
+        setIsRecording(false);
+        if (finalTranscriptRef.current.trim()) {
+          performSearch(finalTranscriptRef.current.trim());
+        }
+      } else {
+        // If it was an automatic stop, restart recognition to keep listening
+        try {
+          if (recognitionRef.current) {
+            recognitionRef.current.start();
+          }
+        } catch (error) {
+          console.error("Speech recognition restart failed:", error);
+          setIsRecording(false); // Fallback to stopping if restart fails
+        }
       }
     };
     
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-      if (event.error === 'no-speech') {
-        setSearchError("No speech was detected. Please try again.");
-      } else {
+       if (event.error !== 'no-speech') {
         setSearchError(`Speech recognition error: ${event.error}`);
+        setIsRecording(false);
       }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      isStoppingRef.current = true;
       if (recognitionRef.current) {
         recognitionRef.current.onresult = null;
         recognitionRef.current.onend = null;
@@ -186,6 +198,7 @@ export default function RecordPage() {
       setSearchError(null);
       setIsSearching(false);
       
+      isStoppingRef.current = false;
       recognitionRef.current.start();
       setIsRecording(true);
     }
@@ -193,6 +206,7 @@ export default function RecordPage() {
 
   const handleStopRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
+      isStoppingRef.current = true;
       recognitionRef.current.stop();
     }
   }, [isRecording]);
