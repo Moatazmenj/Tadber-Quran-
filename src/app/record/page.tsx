@@ -28,15 +28,6 @@ interface SearchApiResponse {
   }
 }
 
-interface VerseSearchResult {
-  verse_key: string;
-  text_ar: string;
-  surahId: number;
-  surahName: string;
-  arabicName: string;
-  verseNumber: number;
-}
-
 interface UthmaniVerse {
   id: number;
   verse_key: string;
@@ -54,7 +45,7 @@ let SpeechRecognitionAPI: any = null;
 export default function RecordPage() {
   const { settings, setSetting } = useQuranSettings();
   const [isRecording, setIsRecording] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported, setIsSupported] = useState(true); // Assume supported initially
   const [liveTranscript, setLiveTranscript] = useState('');
   
   const [isSearching, setIsSearching] = useState(false);
@@ -84,17 +75,17 @@ export default function RecordPage() {
 
   useEffect(() => {
     // Select Al-Fatiha by default
-    if (!selectedSurah) {
-        setSelectedSurah(surahs[0]);
-    }
-  }, [selectedSurah]);
+    setSelectedSurah(surahs[0]);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const recognitionIsSupported = window.SpeechRecognition || window.webkitSpeechRecognition;
-        setIsSupported(!!recognitionIsSupported);
-        if (!!recognitionIsSupported) {
+        if (recognitionIsSupported) {
           SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+          setIsSupported(true);
+        } else {
+          setIsSupported(false);
         }
     }
   }, []);
@@ -582,4 +573,3 @@ export default function RecordPage() {
       </footer>
     </div>
   );
-}
