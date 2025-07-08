@@ -358,7 +358,7 @@ export default function RecordPage() {
                 <div className="w-full max-w-3xl flex flex-col items-center">
                     <Card className="w-full p-6 min-h-[450px] flex flex-col">
                         <div className="flex-grow">
-                            <div dir="rtl" className="font-arabic text-justify text-foreground/90 leading-relaxed py-4" style={{fontSize: '8px'}}>
+                            <div dir="rtl" className="font-arabic text-justify text-foreground/90 leading-relaxed py-4" style={{fontSize: '12px'}}>
                                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                                     <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                                 )}
@@ -368,7 +368,7 @@ export default function RecordPage() {
                                     return (
                                         <span key={verse.id}>
                                             {verse.text_uthmani}
-                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '0.6rem' }}>{verseEndSymbol}</span>
+                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '10px' }}>{verseEndSymbol}</span>
                                             {' '}
                                         </span>
                                     );
@@ -471,21 +471,21 @@ export default function RecordPage() {
             <Button 
                 variant="destructive" 
                 size="icon" 
-                className="w-16 h-16 rounded-full"
+                className="w-14 h-14 rounded-full"
                 onClick={handleStartRecording}
                 disabled={isRecording || !isSupported}
             >
-                <Mic className="h-7 w-7" />
+                <Mic className="h-6 w-6" />
                 <span className="sr-only">Record</span>
             </Button>
             <Button 
                 variant="outline" 
                 size="icon" 
-                className="w-12 h-12 rounded-full"
+                className="w-10 h-10 rounded-full"
                 onClick={handleStopRecording}
                 disabled={!isRecording || !isSupported}
             >
-                <Square className="h-5 w-5" />
+                <Square className="h-4 w-4" />
                 <span className="sr-only">Stop</span>
             </Button>
         </div>
@@ -493,8 +493,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
-
-    
-
-    
