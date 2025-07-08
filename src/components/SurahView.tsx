@@ -300,7 +300,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           verseTranslation: fullVerse.translation || 'No translation available.',
           targetLanguage: tafsirLanguage,
         });
-        setTafsirContent(result);
+        setTafsirContent(result.tafsir);
       } catch (e: any) {
         setTafsirError(e.message || 'Failed to generate Tafsir. Please try again later.');
         console.error(e);
@@ -319,8 +319,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setSummary('');
     try {
       if (!surahText) throw new Error("Surah text is not available to summarize.");
-      const result = await getSurahSummary(surahInfo.name, surahText);
-      setSummary(result);
+      const result = await getSurahSummary({ surahName: surahInfo.name, surahText: surahText });
+      setSummary(result.summary);
     } catch (e) {
       setSummaryError('Failed to generate summary. Please try again later.');
       console.error(e);
@@ -449,14 +449,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     handleNext();
   };
 
-  const handleVerseClick = (index: number) => {
-    setCurrentVerseIndex(index);
-    if (isPlaying) {
-        audioRef.current?.pause();
-        setIsPlaying(false);
-    }
-  };
-
   const handleTafsir = (ayah: Ayah) => {
     setSelectedVerseForTafsir(ayah);
     setTafsirLanguage('Arabic'); // Always default to Arabic when opening
@@ -551,7 +543,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             open={activePopoverKey === ayah.verse_key}
                             onOpenChange={(isOpen) => {
                                 setActivePopoverKey(isOpen ? ayah.verse_key : null);
-                                if (isOpen) handleVerseClick(index);
+                                // This logic creates a toggle: click a verse to play, click it again to pause.
+                                if (isOpen) { // Popover is opening, so play the verse
+                                    playVerse(index);
+                                } else { // Popover is closing
+                                    // Only pause if the closing popover corresponds to the currently playing verse
+                                    if (currentVerseIndex === index) {
+                                        audioRef.current?.pause();
+                                        setIsPlaying(false);
+                                    }
+                                }
                             }}
                         >
                           <PopoverTrigger asChild>
@@ -581,9 +582,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-1" side="bottom" align="center">
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => playVerse(index)}>
-                                    <PlayCircle className="h-5 w-5" />
-                                </Button>
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                     <BookText className="h-5 w-5" />
                                 </Button>
@@ -619,9 +617,18 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                         <Popover 
                             key={ayah.id}
                             open={activePopoverKey === ayah.verse_key}
-                            onOpenChange={(isOpen) => {
+                             onOpenChange={(isOpen) => {
                                 setActivePopoverKey(isOpen ? ayah.verse_key : null);
-                                if (isOpen) handleVerseClick(index);
+                                // This logic creates a toggle: click a verse to play, click it again to pause.
+                                if (isOpen) { // Popover is opening, so play the verse
+                                    playVerse(index);
+                                } else { // Popover is closing
+                                    // Only pause if the closing popover corresponds to the currently playing verse
+                                    if (currentVerseIndex === index) {
+                                        audioRef.current?.pause();
+                                        setIsPlaying(false);
+                                    }
+                                }
                             }}
                         >
                             <PopoverTrigger asChild>
@@ -636,9 +643,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-1" side="bottom" align="center">
                                 <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => playVerse(index)}>
-                                        <PlayCircle className="h-5 w-5" />
-                                    </Button>
                                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                         <BookText className="h-5 w-5" />
                                     </Button>
