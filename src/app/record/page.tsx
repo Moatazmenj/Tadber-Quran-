@@ -422,7 +422,7 @@ export default function RecordPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <header className="sticky top-0 z-20 bg-primary text-primary-foreground p-2 flex-shrink-0 shadow-md">
+      <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 via-primary/20 to-transparent text-primary-foreground p-2">
         <div className="flex items-center justify-between w-full">
             <Link href="/" passHref>
                 <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
