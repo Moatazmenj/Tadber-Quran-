@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Mic, Square } from 'lucide-react';
 
 export default function RecordPage() {
   return (
@@ -13,7 +13,17 @@ export default function RecordPage() {
           </Button>
         </Link>
       </header>
-      <main className="flex-grow flex flex-col items-center justify-center text-center">
+      <main className="flex-grow flex flex-col items-center justify-end text-center pb-8">
+        <div className="flex items-center gap-6">
+            <Button variant="destructive" size="icon" className="w-20 h-20 rounded-full">
+                <Mic className="h-8 w-8" />
+                <span className="sr-only">Record</span>
+            </Button>
+            <Button variant="outline" size="icon" className="w-16 h-16 rounded-full">
+                <Square className="h-6 w-6" />
+                <span className="sr-only">Stop</span>
+            </Button>
+        </div>
       </main>
     </div>
   );
