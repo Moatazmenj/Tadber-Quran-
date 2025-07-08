@@ -16,11 +16,12 @@ const GetVerseTafsirInputSchema = z.object({
   verseNumber: z.string().describe('The verse number.'),
   verseText: z.string().describe('The Arabic text of the verse.'),
   verseTranslation: z.string().describe('The English translation of the verse.'),
+  targetLanguage: z.string().optional().default('Arabic').describe('The target language for the Tafsir. Can be "Arabic" or "English".'),
 });
 export type GetVerseTafsirInput = z.infer<typeof GetVerseTafsirInputSchema>;
 
 const GetVerseTafsirOutputSchema = z.object({
-  tafsir: z.string().describe('A concise interpretation (Tafsir) of the verse, explaining its meaning, context, and key lessons. The response must be in Arabic.'),
+  tafsir: z.string().describe('A concise interpretation (Tafsir) of the verse, explaining its meaning, context, and key lessons.'),
 });
 export type GetVerseTafsirOutput = z.infer<typeof GetVerseTafsirOutputSchema>;
 
@@ -32,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'getVerseTafsirPrompt',
   input: {schema: GetVerseTafsirInputSchema},
   output: {schema: GetVerseTafsirOutputSchema},
-  prompt: `You are an expert in Islamic studies, specializing in Quranic interpretation (Tafsir). Your task is to provide a clear and concise Tafsir for the given Quranic verse. The entire response must be in Arabic.
+  prompt: `You are an expert in Islamic studies, specializing in Quranic interpretation (Tafsir). Your task is to provide a clear and concise Tafsir for the given Quranic verse. The entire response must be in {{targetLanguage}}.
 
   Surah: {{surahName}}
   Verse: {{verseNumber}}
