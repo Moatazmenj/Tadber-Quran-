@@ -56,10 +56,9 @@ const SpeechRecognitionAPI =
 export default function RecordPage() {
   const { settings, setSetting } = useQuranSettings();
   const [isRecording, setIsRecording] = useState(false);
-  const [isSupported, setIsSupported] = useState(SpeechRecognitionAPI != null);
+  const [isSupported, setIsSupported] = useState(true);
   const [liveTranscript, setLiveTranscript] = useState('');
   
-  const [searchResult, setSearchResult] = useState<VerseSearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   
@@ -70,21 +69,25 @@ export default function RecordPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [highlightedVerseKey, setHighlightedVerseKey] = useState<string | null>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>('');
   const isStoppingRef = useRef(false);
 
+  useEffect(() => {
+    setIsSupported(SpeechRecognitionAPI != null);
+  }, []);
+
   const performSearch = useCallback(async (query: string) => {
     if (query.trim().length < 3) {
-      setSearchResult(null);
       setSearchError(null);
       return;
     }
 
     setIsSearching(true);
     setSearchError(null);
-    setSearchResult(null);
+    setHighlightedVerseKey(null);
     
     try {
       const response = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&language=ar`);
@@ -104,32 +107,21 @@ export default function RecordPage() {
 
       if (!topResult) {
           setSearchError("No matching verse found for your recitation.");
-          setIsSearching(false); // Make sure to stop searching
+          setIsSearching(false);
           return;
       }
       
-      const [surahIdStr, verseNumStr] = topResult.verse_key.split(':');
+      const [surahIdStr] = topResult.verse_key.split(':');
       const surahId = parseInt(surahIdStr, 10);
-
-      const arabicTextResponse = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
-      if (!arabicTextResponse.ok) {
-        throw new Error("Could not fetch the verse text.");
-      }
-      const arabicTextData: UthmaniVerseApiResponse = await arabicTextResponse.json();
-      const verseInfo = arabicTextData.verses.find(v => v.verse_key === topResult.verse_key);
       const surahInfo = surahs.find(s => s.id === surahId);
       
-      if (verseInfo && surahInfo) {
-        setSearchResult({
-          verse_key: verseInfo.verse_key,
-          text_ar: verseInfo.text_uthmani,
-          surahId: surahId,
-          surahName: surahInfo.name,
-          arabicName: surahInfo.arabicName,
-          verseNumber: parseInt(verseNumStr, 10),
-        });
+      if (surahInfo) {
+        if (selectedSurah?.id !== surahId) {
+            setSelectedSurah(surahInfo);
+        }
+        setHighlightedVerseKey(topResult.verse_key);
       } else {
-        throw new Error("Could not assemble verse information.");
+        throw new Error("Could not find Surah information for the verse.");
       }
     } catch (error) {
       console.error('Verse search error:', error);
@@ -138,11 +130,35 @@ export default function RecordPage() {
       } else {
         setSearchError(error instanceof Error ? error.message : "An unknown error occurred during search.");
       }
-      setSearchResult(null);
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [selectedSurah]);
+
+  useEffect(() => {
+    if (highlightedVerseKey && verses.length > 0) {
+      const verseIndex = verses.findIndex(v => v.verse_key === highlightedVerseKey);
+      
+      if (verseIndex !== -1) {
+        const versesPerPage = 10;
+        const targetPage = Math.floor(verseIndex / versesPerPage);
+
+        const scrollAndHighlight = () => {
+          const verseNum = highlightedVerseKey.split(':')[1];
+          const verseElement = document.getElementById(`verse-${verseNum}`);
+          if (verseElement) {
+            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        };
+
+        if (currentPage !== targetPage) {
+          setCurrentPage(targetPage);
+        } else {
+          scrollAndHighlight();
+        }
+      }
+    }
+  }, [highlightedVerseKey, verses, currentPage]);
 
   useEffect(() => {
     const fetchVerses = async () => {
@@ -241,9 +257,9 @@ export default function RecordPage() {
     if (recognitionRef.current && !isRecording) {
       finalTranscriptRef.current = '';
       setLiveTranscript('');
-      setSearchResult(null);
       setSearchError(null);
       setIsSearching(false);
+      setHighlightedVerseKey(null);
       
       isStoppingRef.current = false;
       setIsRecording(true);
@@ -298,26 +314,6 @@ export default function RecordPage() {
         );
     }
 
-    if (searchResult) {
-        const verseNumberDisplay = toArabicNumerals(String(searchResult.verseNumber));
-        const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
-
-        return (
-            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-7xl">
-                <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full bg-background/80">
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                        <BookOpen className="h-6 w-6 text-primary"/>
-                        <p className="text-xl font-bold text-foreground">{searchResult.surahName} ({searchResult.verseNumber})</p>
-                    </div>
-                    <p dir="rtl" className="font-arabic text-2xl leading-loose text-foreground/90">
-                        {searchResult.text_ar}
-                        <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '1.2rem' }}>{verseEndSymbol}</span>
-                    </p>
-                </Card>
-            </Link>
-        )
-    }
-
     if (selectedSurah) {
         if (isLoadingVerses) {
           return (
@@ -349,20 +345,28 @@ export default function RecordPage() {
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className="font-arabic text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          <p className="font-arabic text-center text-3xl mb-8 border-b border-border/20 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
                       <div 
                         dir="rtl" 
-                        className={cn(
-                          "font-arabic text-justify leading-loose"
-                        )}
+                        className="font-arabic text-justify leading-loose"
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
                           {versesForCurrentPage.map((verse) => {
-                              const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
+                              const verseNumberStr = verse.verse_key.split(':')[1];
+                              const verseNumberDisplay = toArabicNumerals(String(verseNumberStr));
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
+                              const isHighlighted = verse.verse_key === highlightedVerseKey;
+
                               return (
-                                  <span key={verse.id}>
+                                  <span 
+                                    key={verse.id} 
+                                    id={`verse-${verseNumberStr}`} 
+                                    className={cn(
+                                        "transition-colors duration-500 rounded-md p-1 scroll-mt-24",
+                                        isHighlighted && "bg-primary/20"
+                                    )}
+                                  >
                                       <span className={cn("transition-opacity duration-300", isRecording ? 'opacity-0' : 'opacity-100')}>
                                         {verse.text_uthmani}
                                       </span>
@@ -459,7 +463,7 @@ export default function RecordPage() {
                                 onClick={() => {
                                     setSelectedSurah(surah);
                                     setIsSheetOpen(false);
-                                    setSearchResult(null);
+                                    setHighlightedVerseKey(null);
                                     setCurrentPage(0);
                                 }}
                                 className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
