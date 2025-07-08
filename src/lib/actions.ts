@@ -22,6 +22,9 @@ export async function getVerseTafsir(input: GetVerseTafsirInput): Promise<string
         return result.tafsir;
     } catch (error) {
         console.error('Error in getVerseTafsir action:', error);
+        if (error instanceof Error) {
+            throw error;
+        }
         throw new Error('Failed to generate Tafsir due to a server error.');
     }
 }

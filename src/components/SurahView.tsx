@@ -445,8 +445,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         verseTranslation: fullAyah.translation || 'No translation available.',
       });
       setTafsirContent(result);
-    } catch (e) {
-      setTafsirError('Failed to generate Tafsir. Please try again later.');
+    } catch (e: any) {
+      setTafsirError(e.message || 'Failed to generate Tafsir. Please try again later.');
       console.error(e);
     } finally {
       setIsLoadingTafsir(false);

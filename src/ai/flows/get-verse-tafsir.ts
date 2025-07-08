@@ -32,22 +32,34 @@ const prompt = ai.definePrompt({
   name: 'getVerseTafsirPrompt',
   input: {schema: GetVerseTafsirInputSchema},
   output: {schema: GetVerseTafsirOutputSchema},
-  prompt: `You are an expert in Islamic studies, specializing in Quranic interpretation (Tafsir). Your task is to provide a clear and concise Tafsir for the given Quranic verse.
-
-  The response must be in Arabic.
+  prompt: `You are an expert in Islamic studies, specializing in Quranic interpretation (Tafsir). Your task is to provide a clear and concise Tafsir for the given Quranic verse. The entire response must be in Arabic.
 
   Surah: {{surahName}}
   Verse: {{verseNumber}}
   Arabic Text: {{verseText}}
   English Translation: {{verseTranslation}}
 
-  Please provide a Tafsir that covers the following points:
-  1.  The literal meaning of the verse.
-  2.  The historical context of its revelation (if known and relevant).
-  3.  The key themes and lessons.
-  4.  Connections to other verses if applicable.
-
-  Keep the explanation accessible to a general audience. The entire response should be in Arabic.`,
+  Your Tafsir should explain the meaning, context, and key lessons of the verse. Keep the explanation accessible to a general audience.`,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_NONE',
+      },
+       {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+       {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      },
+    ],
+  },
 });
 
 const getVerseTafsirFlow = ai.defineFlow(
@@ -58,6 +70,9 @@ const getVerseTafsirFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("The AI model did not return a valid Tafsir. This may be due to content safety filters.");
+    }
+    return output;
   }
 );
