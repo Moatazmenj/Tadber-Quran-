@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -20,6 +21,8 @@ export default function RecordPage() {
   
   // Use a ref for the recognition object to persist it across re-renders
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // Use a ref to store the final transcript between onresult events
+  const finalTranscriptRef = useRef<string>('');
 
   useEffect(() => {
     // Only run this setup on the client if the API is supported
@@ -34,13 +37,19 @@ export default function RecordPage() {
 
     // This event fires when a speech result is returned
     recognition.onresult = (event) => {
-      let fullTranscript = '';
-      // The event.results object is a list of all results so far.
-      // We iterate through them to build the complete transcript.
-      for (let i = 0; i < event.results.length; i++) {
-        fullTranscript += event.results[i][0].transcript;
+      let interimTranscript = '';
+      // Loop through the results from the current result index
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        // If the result is final, append it to our final transcript ref
+        if (event.results[i].isFinal) {
+          finalTranscriptRef.current += event.results[i][0].transcript + ' ';
+        } else {
+          // Otherwise, it's an interim result
+          interimTranscript += event.results[i][0].transcript;
+        }
       }
-      setTranscript(fullTranscript);
+      // Update the display with the final transcript and the current interim result
+      setTranscript(finalTranscriptRef.current + interimTranscript);
     };
 
     // This event fires when the recognition service has disconnected
@@ -68,6 +77,7 @@ export default function RecordPage() {
   const handleStartRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
       setTranscript(''); // Clear any previous transcript
+      finalTranscriptRef.current = ''; // Reset the final transcript
       recognitionRef.current.start();
       setIsRecording(true);
     }
