@@ -327,21 +327,6 @@ export default function RecordPage() {
         );
     }
 
-    if (isRecording) {
-      return (
-        <div className="w-full flex-grow flex flex-col items-center justify-center gap-6 text-center">
-            <div className="relative flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-destructive/20" />
-                <div className="w-14 h-14 rounded-full bg-destructive/20 animate-ping absolute" />
-                <Mic className="h-6 w-6 text-destructive-foreground absolute" />
-            </div>
-            <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
-                {liveTranscript || ''}
-            </p>
-        </div>
-      );
-    }
-
     if (selectedSurah) {
         if (isLoadingVerses) {
           return (
@@ -373,7 +358,7 @@ export default function RecordPage() {
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className={cn("font-arabic text-center text-3xl mb-8 pb-4 transition-opacity duration-300")}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          <p className={cn("font-arabic text-center text-3xl mb-8 pb-4 transition-opacity duration-300", isRecording ? "opacity-0" : "opacity-100")}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
                       <div 
                         dir="rtl" 
@@ -549,27 +534,37 @@ export default function RecordPage() {
         {renderContent()}
       </main>
 
-      <footer className="flex items-center justify-center gap-6 py-4 border-t border-border flex-shrink-0">
-          <Button 
-              variant="destructive" 
-              size="lg" 
-              className="w-16 h-16 rounded-full"
-              onClick={handleStartRecording}
-              disabled={isRecording || !isSupported}
-          >
-              <Mic className="h-7 w-7" />
-              <span className="sr-only">Record</span>
-          </Button>
-          <Button 
-              variant="outline" 
-              size="icon" 
-              className="w-12 h-12 rounded-full"
-              onClick={handleStopRecording}
-              disabled={!isRecording || !isSupported}
-          >
-              <Square className="h-5 w-5" />
-              <span className="sr-only">Stop</span>
-          </Button>
+      <footer className="flex flex-col items-center justify-center gap-2 py-4 border-t border-border flex-shrink-0">
+        <div className="h-8 px-4 text-center">
+            {isRecording && (
+            <p dir="rtl" className="font-arabic text-xl text-muted-foreground">
+                {liveTranscript || '...'}
+            </p>
+            )}
+        </div>
+        <div className="flex items-center justify-center gap-6">
+            <Button 
+                variant="destructive" 
+                size="lg" 
+                className="w-16 h-16 rounded-full"
+                onClick={handleStartRecording}
+                disabled={isRecording || !isSupported}
+            >
+                <Mic className="h-7 w-7" />
+                <span className="sr-only">Record</span>
+            </Button>
+            <Button 
+                variant="outline" 
+                size="icon" 
+                className="w-12 h-12 rounded-full"
+                onClick={handleStopRecording}
+                disabled={!isRecording || !isSupported}
+            >
+                <Square className="h-5 w-5" />
+                <span className="sr-only">Stop</span>
+            </Button>
+        </div>
       </footer>
     </div>
   );
+}
