@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
 import { Card } from '@/components/ui/card';
@@ -309,7 +309,7 @@ export default function RecordPage() {
     }
 
     if (searchResult) {
-        const verseNumberDisplay = searchResult.verseNumber.toLocaleString('ar-EG');
+        const verseNumberDisplay = toArabicNumerals(searchResult.verseNumber);
         const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
 
         return (
@@ -363,7 +363,7 @@ export default function RecordPage() {
                                     <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                                 )}
                                 {versesForCurrentPage.map((verse) => {
-                                    const verseNumberDisplay = verse.verse_key.split(':')[1].toLocaleString('ar-EG');
+                                    const verseNumberDisplay = toArabicNumerals(verse.verse_key.split(':')[1]);
                                     const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
                                     return (
                                         <span key={verse.id}>

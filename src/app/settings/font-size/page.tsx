@@ -10,6 +10,7 @@ import { getLocalVersesForSurah } from '@/lib/quran-verses';
 import { surahs } from '@/lib/quran';
 import type { Ayah } from '@/types';
 import { useQuranSettings, type FontStyleOption } from '@/hooks/use-quran-settings';
+import { toArabicNumerals } from '@/lib/utils';
 
 const FontStyleItem = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
   <div onClick={onClick} className="flex items-center justify-between py-4 cursor-pointer px-4 hover:bg-card/80 transition-colors">
@@ -87,7 +88,7 @@ export default function FontSizePage() {
                     
                     <div className="space-y-8">
                         {verses.map((ayah, index) => {
-                            const verseNumber = Number(ayah.verse_key.split(':')[1]).toLocaleString('ar-EG');
+                            const verseNumber = toArabicNumerals(ayah.verse_key.split(':')[1]);
                             const verseEndSymbol = `\u06dd${verseNumber}`;
 
                             return (

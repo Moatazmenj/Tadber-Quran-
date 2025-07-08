@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { translationOptions } from '@/lib/translations';
 import { reciters } from '@/lib/reciters';
 import { AudioPlayerBar } from './AudioPlayerBar';
-import { cn } from '@/lib/utils';
+import { cn, toArabicNumerals } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -542,7 +542,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               <div className="space-y-8">
                   {displayVerses.map((ayah, index) => {
                       const verseNumber = ayah.verse_key.split(':')[1];
-                      const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
+                      const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
                       
                       const audioIndexForThisVerse = audioFiles.findIndex(f => f.verse_key === ayah.verse_key);
                       const currentPlayingVerseKey = audioFiles[currentVerseAudioIndex]?.verse_key;
@@ -623,7 +623,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               >
                   {displayVerses.map((ayah, index) => {
                       const verseNumber = ayah.verse_key.split(':')[1];
-                      const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
+                      const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
                       
                       const audioIndexForThisVerse = audioFiles.findIndex(f => f.verse_key === ayah.verse_key);
                       const currentPlayingVerseKey = audioFiles[currentVerseAudioIndex]?.verse_key;
