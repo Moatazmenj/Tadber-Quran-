@@ -293,10 +293,6 @@ export default function RecordPage() {
 
     return (
         <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[250px]">
-            <Mic className="h-16 w-16 text-muted-foreground" />
-            <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed max-w-md">
-                انقر على الميكروفون لبدء تلاوة الآية التي تريد البحث عنها
-            </p>
         </Card>
     );
   };
