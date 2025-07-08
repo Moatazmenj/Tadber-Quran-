@@ -333,7 +333,7 @@ export default function RecordPage() {
           return (
             <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-lg text-muted-foreground">Loading verses for {selectedSurah.name}...</p>
+              <p className="text-lg text-muted-foreground">Loading verses...</p>
             </Card>
           );
         }
@@ -357,10 +357,6 @@ export default function RecordPage() {
             return (
                 <div className="w-full max-w-2xl flex flex-col items-center">
                     <Card className="w-full p-6 min-h-[450px] flex flex-col">
-                        <div className="text-center mb-4 pb-4 border-b-2 border-primary flex-shrink-0">
-                            <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
-                            <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
-                        </div>
                         <div className="flex-grow">
                             <div dir="rtl" className="font-arabic text-xs text-foreground/90 text-justify leading-relaxed py-4">
                                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
@@ -398,22 +394,13 @@ export default function RecordPage() {
             )
         }
   
-        // Fallback for when no verses are loaded but a surah is selected (e.g. initial state before fetch)
+        // Fallback for when no verses are loaded but a surah is selected
         return (
-            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-xl">
-                        {selectedSurah.id}
-                    </div>
-                    <div>
-                        <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
-                        <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
-                    </div>
-                </div>
-                <p className="text-muted-foreground">{selectedSurah.versesCount}</p>
-                <p className="text-sm text-muted-foreground mt-4">Press the record button to start reciting from this Surah.</p>
+            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-lg text-muted-foreground">Loading verses...</p>
             </Card>
-        )
+        );
       }
 
     return (
@@ -435,7 +422,7 @@ export default function RecordPage() {
           <SheetTrigger asChild>
             <Button variant="outline">
               <List className="mr-2 h-4 w-4" />
-              Select Surah
+              {selectedSurah ? selectedSurah.name : 'Select Surah'}
             </Button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[80vh] flex flex-col">
@@ -507,5 +494,7 @@ export default function RecordPage() {
   );
 }
 
+
+    
 
     
