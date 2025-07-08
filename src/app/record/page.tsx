@@ -13,7 +13,7 @@ export default function RecordPage() {
           </Button>
         </Link>
       </header>
-      <main className="flex-grow flex flex-col items-center justify-end text-center pb-8">
+      <main className="flex-grow flex flex-col items-center justify-center text-center">
         <div className="relative w-36 h-36 flex items-center justify-center">
             <div className="absolute inset-0 bg-destructive/10 rounded-full animate-ping"></div>
             <div className="absolute inset-2 bg-destructive/20 rounded-full animate-ping delay-200"></div>
