@@ -84,6 +84,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const shareBackgrounds = [
     'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png',
     'https://i.postimg.cc/bwwg0Q43/20250708-005544.png',
+    'https://i.postimg.cc/pTn91NnB/20250708-005053.png',
   ];
 
 
@@ -690,7 +691,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     </div>
                 ) : (
                   <div className="w-full space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         {shareBackgrounds.map((bg, index) => (
                             <div 
                                 key={index} 
