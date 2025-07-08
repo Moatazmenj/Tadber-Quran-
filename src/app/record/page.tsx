@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, FontSize } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, Baseline } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -61,7 +62,7 @@ export default function RecordPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   
-  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(surahs[0]); // Default to Al-Fatihah
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
   const [verses, setVerses] = useState<UthmaniVerse[]>([]);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
@@ -277,14 +278,14 @@ export default function RecordPage() {
 
     if (isRecording) {
       return (
-          <div className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[450px]">
+          <div className="w-full max-w-5xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[450px]">
               <div className="relative flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-destructive/20" />
                   <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
                   <Mic className="h-10 w-10 text-destructive-foreground absolute" />
               </div>
-              <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl min-h-[3.5rem] text-right">
-                  {liveTranscript || 'جارِ الاستماع...'}
+              <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl">
+                  {liveTranscript || ''}
               </p>
           </div>
       );
@@ -292,7 +293,7 @@ export default function RecordPage() {
 
     if (isSearching) {
         return (
-            <div className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
+            <div className="w-full max-w-5xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
             </div>
@@ -316,7 +317,7 @@ export default function RecordPage() {
         const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
 
         return (
-            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-4xl">
+            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-5xl">
                 <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full bg-background/80">
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <BookOpen className="h-6 w-6 text-primary"/>
@@ -411,8 +412,8 @@ export default function RecordPage() {
       }
 
     return (
-        <div className="w-full flex-grow flex items-center justify-center">
-            <p className="text-muted-foreground">Please select a Surah to begin.</p>
+        <div className="w-full max-w-5xl flex-grow flex items-center justify-center min-h-[450px]">
+            {/* Empty by default */}
         </div>
     );
   };
@@ -480,7 +481,7 @@ export default function RecordPage() {
                 <Sheet open={isFontSizeSheetOpen} onOpenChange={setIsFontSizeSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                            <FontSize className="h-5 w-5" />
+                            <Baseline className="h-5 w-5" />
                             <span className="sr-only">Font Size</span>
                         </Button>
                     </SheetTrigger>
