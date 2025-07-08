@@ -178,20 +178,19 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
 
     recognition.onresult = (event) => {
-        const transcriptArray = Array.from(event.results);
-        
-        const finalTranscript = transcriptArray
-            .filter(result => result.isFinal)
-            .map(result => result[0].transcript)
-            .join('');
-            
-        const interimTranscript = transcriptArray
-            .filter(result => !result.isFinal)
-            .map(result => result[0].transcript)
-            .join('');
+      let final_transcript = '';
+      let interim_transcript = '';
 
-        finalTranscriptRef.current = finalTranscript + interimTranscript;
-        setLiveTranscript(finalTranscriptRef.current);
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          final_transcript += event.results[i][0].transcript;
+        } else {
+          interim_transcript += event.results[i][0].transcript;
+        }
+      }
+      
+      finalTranscriptRef.current = final_transcript;
+      setLiveTranscript(finalTranscriptRef.current + interim_transcript);
     };
 
     recognition.onend = () => {
@@ -363,7 +362,7 @@ export default function RecordPage() {
                             <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
                         </div>
                         <div className="flex-grow">
-                            <div dir="rtl" className="font-arabic text-xl text-foreground/90 text-right leading-loose py-4">
+                            <div dir="rtl" className="font-arabic text-xs text-foreground/90 text-justify leading-relaxed py-4">
                                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                                     <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                                 )}
@@ -373,7 +372,7 @@ export default function RecordPage() {
                                     return (
                                         <span key={verse.id}>
                                             {verse.text_uthmani}
-                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '1rem' }}>{verseEndSymbol}</span>
+                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '0.6rem' }}>{verseEndSymbol}</span>
                                             {' '}
                                         </span>
                                     );
@@ -384,14 +383,14 @@ export default function RecordPage() {
                     </Card>
                      <div className="flex items-center justify-center gap-4 mt-4">
                         <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 0}>
-                            <ChevronLeft className="h-5 w-5" />
+                            <ChevronRight className="h-5 w-5" />
                             <span className="sr-only">Previous Page</span>
                         </Button>
                         <p className="text-muted-foreground text-sm font-medium tabular-nums">
                             Page {currentPage + 1} of {totalPages}
                         </p>
                         <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages - 1}>
-                            <ChevronRight className="h-5 w-5" />
+                            <ChevronLeft className="h-5 w-5" />
                             <span className="sr-only">Next Page</span>
                         </Button>
                     </div>
