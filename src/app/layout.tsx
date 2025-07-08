@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import ThemeManager from '@/components/ThemeManager';
+import { RecordButton } from '@/components/RecordButton';
 
 export const metadata: Metadata = {
   title: 'Tadber Quran',
@@ -29,6 +30,7 @@ export default function RootLayout({
           <main className="flex-grow">{children}</main>
         </div>
         <Toaster />
+        <RecordButton />
       </body>
     </html>
   );
