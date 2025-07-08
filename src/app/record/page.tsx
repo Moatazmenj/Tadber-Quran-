@@ -274,7 +274,7 @@ export default function RecordPage() {
 
     if (isRecording) {
       return (
-          <Card className="w-full max-w-3xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
+          <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
               <div className="relative flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-destructive/20" />
                   <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
@@ -289,7 +289,7 @@ export default function RecordPage() {
 
     if (isSearching) {
         return (
-            <Card className="w-full max-w-3xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+            <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
             </Card>
@@ -313,7 +313,7 @@ export default function RecordPage() {
         const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
 
         return (
-            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-3xl">
+            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-4xl">
                 <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full">
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <BookOpen className="h-6 w-6 text-primary"/>
@@ -331,7 +331,7 @@ export default function RecordPage() {
     if (selectedSurah) {
         if (isLoadingVerses) {
           return (
-            <Card className="w-full max-w-3xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+            <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-lg text-muted-foreground">Loading verses...</p>
             </Card>
@@ -355,10 +355,10 @@ export default function RecordPage() {
             const versesForCurrentPage = verses.slice(startIndex, startIndex + versesPerPage);
             
             return (
-                <div className="w-full max-w-3xl flex flex-col items-center">
+                <div className="w-full max-w-4xl flex flex-col items-center">
                     <Card className="w-full p-6 min-h-[450px] flex flex-col">
                         <div className="flex-grow">
-                            <div dir="rtl" className="font-arabic text-center text-foreground/90 leading-relaxed py-4" style={{fontSize: '14px'}}>
+                            <div dir="rtl" className="font-arabic text-center text-foreground/90 leading-relaxed py-4" style={{fontSize: '12px'}}>
                                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                                     <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                                 )}
@@ -368,7 +368,7 @@ export default function RecordPage() {
                                     return (
                                         <span key={verse.id}>
                                             {verse.text_uthmani}
-                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '12px' }}>{verseEndSymbol}</span>
+                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '10px' }}>{verseEndSymbol}</span>
                                             {' '}
                                         </span>
                                     );
@@ -396,7 +396,7 @@ export default function RecordPage() {
   
         // Fallback for when no verses are loaded but a surah is selected
         return (
-            <Card className="w-full max-w-3xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+            <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-lg text-muted-foreground">Loading verses...</p>
             </Card>
@@ -404,13 +404,13 @@ export default function RecordPage() {
       }
 
     return (
-        <Card className="w-full max-w-3xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+        <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
         </Card>
     );
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl flex flex-col h-screen">
+    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-5xl flex flex-col h-screen">
       <header className="flex items-center justify-between flex-shrink-0">
         <Link href="/" passHref>
           <Button variant="ghost" size="icon" className="h-10 w-10">
