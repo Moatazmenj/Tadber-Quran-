@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, Settings } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -59,7 +59,7 @@ export default function RecordPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   
-  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(surahs[0]); // Default to Al-Fatihah
   const [verses, setVerses] = useState<UthmaniVerse[]>([]);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
@@ -274,7 +274,7 @@ export default function RecordPage() {
 
     if (isRecording) {
       return (
-          <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
+          <div className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[450px]">
               <div className="relative flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-destructive/20" />
                   <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
@@ -283,16 +283,16 @@ export default function RecordPage() {
               <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl min-h-[3.5rem] text-right">
                   {liveTranscript || 'جارِ الاستماع...'}
               </p>
-          </Card>
+          </div>
       );
     }
 
     if (isSearching) {
         return (
-            <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+            <div className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
-            </Card>
+            </div>
         );
     }
 
@@ -314,7 +314,7 @@ export default function RecordPage() {
 
         return (
             <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-4xl">
-                <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full">
+                <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full bg-background/80">
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <BookOpen className="h-6 w-6 text-primary"/>
                         <p className="text-xl font-bold text-foreground">{searchResult.surahName} ({searchResult.verseNumber})</p>
@@ -331,20 +331,21 @@ export default function RecordPage() {
     if (selectedSurah) {
         if (isLoadingVerses) {
           return (
-            <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
+            <div className="w-full flex-grow flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-lg text-muted-foreground">Loading verses...</p>
-            </Card>
+            </div>
           );
         }
         
         if (verseFetchError) {
           return (
-            <Alert variant="destructive" className="max-w-md">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error Loading Verses</AlertTitle>
-              <AlertDescription>{verseFetchError}</AlertDescription>
-            </Alert>
+            <div className="w-full flex-grow flex items-center justify-center">
+              <Alert variant="destructive" className="max-w-md">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading Verses</AlertTitle>
+                <AlertDescription>{verseFetchError}</AlertDescription>
+              </Alert>
+            </div>
           );
         }
         
@@ -355,141 +356,160 @@ export default function RecordPage() {
             const versesForCurrentPage = verses.slice(startIndex, startIndex + versesPerPage);
             
             return (
-                <div className="w-full max-w-4xl flex flex-col items-center">
-                    <Card className="w-full p-6 min-h-[450px] flex flex-col">
-                        <div className="flex-grow">
-                            <div dir="rtl" className="font-arabic text-center text-foreground/90 leading-relaxed py-4" style={{fontSize: '12px'}}>
-                                {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                                    <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
-                                )}
-                                {versesForCurrentPage.map((verse) => {
-                                    const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
-                                    const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
-                                    return (
-                                        <span key={verse.id}>
-                                            {verse.text_uthmani}
-                                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '10px' }}>{verseEndSymbol}</span>
-                                            {' '}
-                                        </span>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-4 text-center flex-shrink-0">Press the record button to start reciting from this Surah.</p>
-                    </Card>
-                     <div className="flex items-center justify-center gap-4 mt-4">
-                        <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 0}>
-                            <ChevronRight className="h-5 w-5" />
+                <>
+                    <div className="w-full flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+                        <p dir="rtl" className="font-arabic text-2xl text-foreground text-justify leading-loose">
+                            {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                                <span className="block text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</span>
+                            )}
+                            {versesForCurrentPage.map((verse) => {
+                                const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
+                                const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
+                                return (
+                                    <span key={verse.id}>
+                                        {verse.text_uthmani}
+                                        <span className="text-primary font-sans font-normal mx-1 text-lg">{verseEndSymbol}</span>
+                                        {' '}
+                                    </span>
+                                );
+                            })}
+                        </p>
+                    </div>
+                     <div className="flex items-center justify-between mt-4 px-4 w-full">
+                        <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                            <ChevronRight className="h-6 w-6" />
                             <span className="sr-only">Previous Page</span>
                         </Button>
-                        <p className="text-muted-foreground text-sm font-medium tabular-nums">
-                            Page {currentPage + 1} of {totalPages}
-                        </p>
-                        <Button variant="outline" size="icon" onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage >= totalPages - 1}>
-                            <ChevronLeft className="h-5 w-5" />
+                        <span className="text-sm text-muted-foreground">Swipe Page</span>
+                        <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
+                            <ChevronLeft className="h-6 w-6" />
                             <span className="sr-only">Next Page</span>
                         </Button>
                     </div>
-                </div>
+                </>
             )
         }
   
         // Fallback for when no verses are loaded but a surah is selected
         return (
-            <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
+           <div className="w-full flex-grow flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-lg text-muted-foreground">Loading verses...</p>
-            </Card>
+            </div>
         );
       }
 
     return (
-        <Card className="w-full max-w-4xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
-        </Card>
+        <div className="w-full flex-grow flex items-center justify-center">
+            <p className="text-muted-foreground">Please select a Surah to begin.</p>
+        </div>
     );
   };
 
+  const totalPages = selectedSurah ? Math.ceil(verses.length / 10) : 0;
+
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-5xl flex flex-col h-screen">
-      <header className="flex items-center justify-between flex-shrink-0">
-        <Link href="/" passHref>
-          <Button variant="ghost" size="icon" className="h-10 w-10">
-            <ChevronLeft className="h-6 w-6" />
-            <span className="sr-only">Back</span>
-          </Button>
-        </Link>
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline">
-              <List className="mr-2 h-4 w-4" />
-              {selectedSurah ? selectedSurah.name : 'Select Surah'}
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80vh] flex flex-col">
-            <SheetHeader>
-              <SheetTitle className="text-center">Select Surah</SheetTitle>
-            </SheetHeader>
-            <ScrollArea className="flex-grow pr-2">
-              <div className="flex flex-col gap-1 py-4">
-                {surahs.map((surah) => (
-                  <div
-                    key={surah.id}
-                    onClick={() => {
-                      setSelectedSurah(surah);
-                      setIsSheetOpen(false);
-                      setSearchResult(null);
-                      setCurrentPage(0);
-                    }}
-                    className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-sm">
-                          {surah.id}
-                        </div>
-                        <div>
-                          <p className="font-headline text-lg text-foreground">{surah.name}</p>
-                        </div>
-                      </div>
-                      <p className="font-arabic text-2xl text-primary">{surah.arabicName}</p>
+    <div className="flex flex-col h-screen bg-background">
+      <header className="sticky top-0 z-20 bg-primary text-primary-foreground p-2 flex-shrink-0 shadow-md">
+        <div className="flex items-center justify-between w-full">
+            <Link href="/" passHref>
+                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                    <ChevronLeft className="h-6 w-6" />
+                    <span className="sr-only">Back</span>
+                </Button>
+            </Link>
+
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
+                    <div className="text-center cursor-pointer p-2 rounded-md hover:bg-primary/80">
+                        <p className="font-bold text-lg">{selectedSurah ? `${selectedSurah.id}. ${selectedSurah.name}` : 'Select Surah'}</p>
+                        {selectedSurah && <p className="text-sm opacity-80">{selectedSurah.revelationPlace} - {selectedSurah.versesCount} verses</p>}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-        <div className="w-10" />
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[80vh] flex flex-col">
+                    <SheetHeader>
+                        <SheetTitle className="text-center">Select Surah</SheetTitle>
+                    </SheetHeader>
+                    <ScrollArea className="flex-grow pr-2">
+                        <div className="flex flex-col gap-1 py-4">
+                            {surahs.map((surah) => (
+                            <div
+                                key={surah.id}
+                                onClick={() => {
+                                    setSelectedSurah(surah);
+                                    setIsSheetOpen(false);
+                                    setSearchResult(null);
+                                    setCurrentPage(0);
+                                }}
+                                className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
+                            >
+                                <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-sm">
+                                    {surah.id}
+                                    </div>
+                                    <div>
+                                    <p className="font-headline text-lg text-foreground">{surah.name}</p>
+                                    </div>
+                                </div>
+                                <p className="font-arabic text-2xl text-primary">{surah.arabicName}</p>
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </SheetContent>
+            </Sheet>
+
+            <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                    <Info className="h-5 w-5" />
+                    <span className="sr-only">Info</span>
+                </Button>
+                <Link href="/settings" passHref>
+                    <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                        <Settings className="h-5 w-5" />
+                        <span className="sr-only">Settings</span>
+                    </Button>
+                </Link>
+            </div>
+        </div>
       </header>
       
-      <main className="flex-grow flex flex-col items-center justify-center text-center">
-        <div className="w-full flex-grow flex items-center justify-center p-4">
-            {renderContent()}
+      {selectedSurah && (
+        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border">
+          <span>Juz {selectedSurah.juz[0]} | Page {currentPage + 1}</span>
+          <span>{totalPages > 0 ? `${currentPage + 1} / ${totalPages}` : ''}</span>
         </div>
+      )}
 
-        <div className="flex items-center justify-center gap-6 mb-8">
-            <Button 
-                variant="destructive" 
-                size="icon" 
-                className="w-14 h-14 rounded-full"
-                onClick={handleStartRecording}
-                disabled={isRecording || !isSupported}
-            >
-                <Mic className="h-6 w-6" />
-                <span className="sr-only">Record</span>
-            </Button>
-            <Button 
-                variant="outline" 
-                size="icon" 
-                className="w-10 h-10 rounded-full"
-                onClick={handleStopRecording}
-                disabled={!isRecording || !isSupported}
-            >
-                <Square className="h-4 w-4" />
-                <span className="sr-only">Stop</span>
-            </Button>
-        </div>
+      <main className="flex-grow flex flex-col items-center justify-center text-center overflow-y-auto">
+        {renderContent()}
       </main>
+
+      <footer className="flex items-center justify-center gap-6 py-4 border-t border-border flex-shrink-0">
+          <Button 
+              variant="destructive" 
+              size="icon" 
+              className="w-14 h-14 rounded-full"
+              onClick={handleStartRecording}
+              disabled={isRecording || !isSupported}
+          >
+              <Mic className="h-6 w-6" />
+              <span className="sr-only">Record</span>
+          </Button>
+          <Button 
+              variant="outline" 
+              size="icon" 
+              className="w-10 h-10 rounded-full"
+              onClick={handleStopRecording}
+              disabled={!isRecording || !isSupported}
+          >
+              <Square className="h-4 w-4" />
+              <span className="sr-only">Stop</span>
+          </Button>
+      </footer>
     </div>
   );
 }
+
+    
