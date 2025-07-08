@@ -139,23 +139,20 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
 
     recognition.onresult = (event) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
+        const transcriptArray = Array.from(event.results);
+        
+        const finalTranscript = transcriptArray
+            .filter(result => result.isFinal)
+            .map(result => result[0].transcript)
+            .join(' ');
+            
+        const interimTranscript = transcriptArray
+            .filter(result => !result.isFinal)
+            .map(result => result[0].transcript)
+            .join('');
 
-      // Rebuild the transcript from the beginning of the results list
-      // to prevent duplication of words.
-      for (let i = 0; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript + ' ';
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-      
-      // Update the ref with the complete final transcript for the search
-      finalTranscriptRef.current = finalTranscript;
-      // Update the display with both final and interim results for live feedback
-      setTranscript(finalTranscript + interimTranscript);
+        finalTranscriptRef.current = finalTranscript;
+        setTranscript(finalTranscript + (finalTranscript ? ' ' : '') + interimTranscript);
     };
 
     recognition.onend = () => {
