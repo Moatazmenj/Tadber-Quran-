@@ -48,10 +48,8 @@ interface UthmaniVerseApiResponse {
 }
 // --- End of API Types ---
 
-const SpeechRecognitionAPI =
-  typeof window !== 'undefined'
-    ? window.SpeechRecognition || window.webkitSpeechRecognition
-    : null;
+let SpeechRecognitionAPI: any = null;
+
 
 export default function RecordPage() {
   const { settings, setSetting } = useQuranSettings();
@@ -62,7 +60,7 @@ export default function RecordPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   
-  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(surahs[0]);
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
   const [verses, setVerses] = useState<UthmaniVerse[]>([]);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
@@ -76,9 +74,17 @@ export default function RecordPage() {
   const isStoppingRef = useRef(false);
 
   useEffect(() => {
+    // Select Al-Fatiha by default
+    setSelectedSurah(surahs[0]);
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== 'undefined') {
         const recognitionIsSupported = window.SpeechRecognition || window.webkitSpeechRecognition;
         setIsSupported(!!recognitionIsSupported);
+        if (!!recognitionIsSupported) {
+          SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+        }
     }
   }, []);
 
@@ -100,7 +106,7 @@ export default function RecordPage() {
 
       const responseText = await response.text();
       if (!responseText) {
-          setSearchError("No matching verse found for your recitation.");
+          setSearchError("No matching verse found in this Surah.");
           setIsSearching(false);
           return;
       }
@@ -109,7 +115,7 @@ export default function RecordPage() {
       const topResult = data.search.results[0];
 
       if (!topResult) {
-          setSearchError("No matching verse found for your recitation.");
+          setSearchError("No matching verse found in this Surah.");
           setIsSearching(false);
           return;
       }
@@ -120,11 +126,7 @@ export default function RecordPage() {
       if (selectedSurah.id === surahId) {
         setHighlightedVerseKey(topResult.verse_key);
       } else {
-        const foundSurahInfo = surahs.find(s => s.id === surahId);
-        const errorMessage = foundSurahInfo
-          ? `The recited verse is from Surah ${foundSurahInfo.name}, not ${selectedSurah.name}. Please select the correct Surah.`
-          : 'The recited verse was found, but in a different Surah.';
-        setSearchError(errorMessage);
+        setSearchError("The recited verse was not found in the current Surah.");
       }
     } catch (error) {
       console.error('Verse search error:', error);
@@ -156,6 +158,7 @@ export default function RecordPage() {
 
         if (currentPage !== targetPage) {
           setCurrentPage(targetPage);
+          setTimeout(scrollAndHighlight, 100); // Allow time for page to render
         } else {
           scrollAndHighlight();
         }
@@ -295,6 +298,14 @@ export default function RecordPage() {
             </Alert>
         );
     }
+    
+    if (!selectedSurah) {
+        return (
+            <div className="w-full flex-grow flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     if (isSearching) {
         return (
@@ -348,7 +359,7 @@ export default function RecordPage() {
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className={cn("font-arabic text-center text-3xl mb-8 border-b border-border/20 pb-4", isRecording ? 'opacity-0' : 'opacity-100')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          <p className={cn("font-arabic text-center text-3xl mb-8 pb-4 transition-opacity duration-300", isRecording ? 'opacity-100' : 'opacity-100')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
                       <div 
                         dir="rtl" 
