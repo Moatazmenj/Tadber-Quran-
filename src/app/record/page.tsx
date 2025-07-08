@@ -354,8 +354,7 @@ export default function RecordPage() {
                       <div 
                         dir="rtl" 
                         className={cn(
-                          "font-arabic text-justify leading-loose transition-opacity duration-300",
-                          isRecording ? "opacity-0" : "opacity-100"
+                          "font-arabic text-justify leading-loose"
                         )}
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
@@ -364,7 +363,9 @@ export default function RecordPage() {
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
                               return (
                                   <span key={verse.id}>
-                                      {verse.text_uthmani}
+                                      <span className={cn("transition-opacity duration-300", isRecording ? 'opacity-0' : 'opacity-100')}>
+                                        {verse.text_uthmani}
+                                      </span>
                                       <span 
                                           className="text-primary font-sans font-normal mx-1"
                                           style={{ fontSize: `${settings.fontSize * 0.8}px` }}
