@@ -393,7 +393,6 @@ export default function RecordPage() {
                             <ChevronRight className="h-6 w-6" />
                             <span className="sr-only">Previous Page</span>
                         </Button>
-                        <span className="text-sm text-muted-foreground">Swipe Page</span>
                         <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
                             <ChevronLeft className="h-6 w-6" />
                             <span className="sr-only">Next Page</span>
