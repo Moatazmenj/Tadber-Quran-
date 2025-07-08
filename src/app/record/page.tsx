@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Slider } from '@/components/ui/slider';
+import { Separator } from '@/components/ui/separator';
 
 // --- API Types ---
 interface ApiSearchResult {
@@ -350,31 +351,34 @@ export default function RecordPage() {
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                           <p className="font-arabic text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
-                      <p 
+                      <div 
                         dir="rtl" 
                         className={cn(
                           "font-arabic text-center leading-loose transition-opacity duration-300",
                           isRecording ? "opacity-0" : "opacity-100"
                         )}
-                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
-                          {versesForCurrentPage.map((verse) => {
+                          {versesForCurrentPage.map((verse, index) => {
                               const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
                               return (
-                                  <span key={verse.id}>
-                                      {verse.text_uthmani}
-                                      <span 
-                                          className="text-primary font-sans font-normal mx-1"
-                                          style={{ fontSize: `${settings.fontSize * 0.8}px` }}
-                                      >
-                                          {verseEndSymbol}
-                                      </span>
-                                      {' '}
-                                  </span>
+                                  <div key={verse.id}>
+                                      <p style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}>
+                                          {verse.text_uthmani}
+                                          <span 
+                                              className="text-primary font-sans font-normal mx-1"
+                                              style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                          >
+                                              {verseEndSymbol}
+                                          </span>
+                                      </p>
+                                      {index < versesForCurrentPage.length - 1 && (
+                                          <Separator className="bg-border/20 my-6" />
+                                      )}
+                                  </div>
                               );
                           })}
-                      </p>
+                      </div>
                     </div>
                     {totalPages > 1 && (
                       <div className={cn(
@@ -515,12 +519,16 @@ export default function RecordPage() {
         </div>
       </header>
       
-      {selectedSurah && !isRecording && (
-        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border">
+      {selectedSurah && (
+        <div className={cn(
+          "flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border",
+          isRecording ? 'invisible' : 'visible'
+        )}>
           <span>Juz {selectedSurah.juz[0]} | Page {currentPage + 1}</span>
           <span>{totalPages > 0 ? `${currentPage + 1} / ${totalPages}` : ''}</span>
         </div>
       )}
+
 
       <main className="flex-grow flex flex-col items-center justify-center text-center overflow-y-auto">
         {renderContent()}
