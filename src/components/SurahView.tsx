@@ -64,6 +64,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [summaryError, setSummaryError] = useState('');
   
   const [displayVerses, setDisplayVerses] = useState<Ayah[]>(initialVerses);
+  const [fullVerseData, setFullVerseData] = useState<Ayah[]>(initialVerses);
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState('');
 
@@ -90,12 +91,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   useEffect(() => {
     setDisplayVerses(initialVerses);
+    setFullVerseData(initialVerses);
     setCurrentVerseIndex(0);
     setIsPlaying(false);
     setActivePopoverKey(null);
   }, [initialVerses]);
   
-  const fetchTranslations = useCallback(async () => {
+  const fetchAndStoreTranslations = useCallback(async () => {
     if (initialVerses.length === 0) return;
 
     setIsLoadingTranslation(true);
@@ -105,7 +107,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (!selectedTranslation) {
       setTranslationError('Selected translation not found.');
       setIsLoadingTranslation(false);
-      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+      setFullVerseData(initialVerses.map(v => ({ ...v, translation: undefined })));
       return;
     }
 
@@ -118,23 +120,28 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         ...verse,
         translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
       }));
-      setDisplayVerses(versesWithTranslations);
+      setFullVerseData(versesWithTranslations);
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
-      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: undefined })));
+      setFullVerseData(initialVerses.map(v => ({ ...v, translation: undefined })));
     } finally {
       setIsLoadingTranslation(false);
     }
   }, [settings.translationId, initialVerses, surahInfo.id]);
 
   useEffect(() => {
+    fetchAndStoreTranslations();
+  }, [fetchAndStoreTranslations]);
+
+  useEffect(() => {
     if (settings.showTranslation) {
-      fetchTranslations();
+      setDisplayVerses(fullVerseData);
     } else {
       setDisplayVerses(initialVerses);
     }
-  }, [fetchTranslations, settings.showTranslation, initialVerses]);
+  }, [settings.showTranslation, fullVerseData, initialVerses]);
+
 
   const fetchAudio = useCallback(async () => {
     if (audioRef.current) {
@@ -216,7 +223,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           const arabicLineHeight = 70;
           const refLineHeight = 40;
           const translationLineHeight = 45;
-          const totalTextHeight = (arabicLines.length * arabicLineHeight) + refLineHeight + (translationLines.length * translationLineHeight);
+          const totalTextHeight = (arabicLines.length * arabicLineHeight) + refLineHeight + (translationLines.length * translationLineHeight) + (hasTranslation ? 25 : 0);
           let currentY = (canvas.height - totalTextHeight) / 2 + 30;
 
           ctx.font = arabicFont;
@@ -474,7 +481,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               <p className="text-center font-arabic text-3xl mb-8">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
           )}
 
-          {(isLoadingTranslation || (displayVerses.length === 0 && initialVerses.length > 0)) && (
+          {(isLoadingTranslation && settings.showTranslation) && (
               <div className="space-y-8">
                   {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
               </div>
@@ -487,7 +494,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
                       const isPlayingVerse = index === currentVerseIndex && isPlaying;
                       const isSelectedVerse = index === currentVerseIndex;
-                      const textToShareAndCopy = `${ayah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${ayah.translation || ''}`;
+                      const fullAyah = fullVerseData[index] || ayah;
+                      const textToShareAndCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
                       
                       return (
                         <Popover 
@@ -556,7 +564,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const verseEndSymbol = `\u06dd${Number(verseNumber).toLocaleString('ar-EG')}`;
                       const isPlayingVerse = index === currentVerseIndex && isPlaying;
                       const isSelectedVerse = index === currentVerseIndex;
-                      const textToShareAndCopy = `${ayah.text_uthmani} (${surahInfo.name}:${verseNumber})`;
+                      const fullAyah = fullVerseData[index] || ayah;
+                      const textToShareAndCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
 
                       return (
                         <Popover 
@@ -604,7 +613,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                   <AlertTitle>Translation Error</AlertTitle>
                   <AlertDescription className="flex items-center justify-between">
                       <span>{translationError}</span>
-                      <Button variant="secondary" size="sm" onClick={fetchTranslations}>
+                      <Button variant="secondary" size="sm" onClick={fetchAndStoreTranslations}>
                           <RefreshCw className="mr-2 h-4 w-4"/>
                           Retry
                       </Button>
