@@ -184,7 +184,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
         try {
           const [arabicPartFull, translationPart] = verseToShareText.split('\n\n');
-          const arabicMatch = arabicPartFull.match(/(.+) \((.+:.+)\)/);
+          const arabicMatch = arabicPartFull.match(/(.+) \((.+)\)/);
           if (!arabicMatch) throw new Error('Could not parse verse text.');
           
           const arabicText = arabicMatch[1];
@@ -226,6 +226,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           const totalTextHeight = (arabicLines.length * arabicLineHeight) + refLineHeight + (translationLines.length * translationLineHeight) + (hasTranslation ? 25 : 0);
           let currentY = (canvas.height - totalTextHeight) / 2 + 30;
 
+          // Draw Arabic
           ctx.font = arabicFont;
           ctx.fillStyle = '#0B345B';
           ctx.direction = 'rtl';
@@ -234,22 +235,25 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               currentY += arabicLineHeight;
           });
 
+          // Draw Translation
+          if (hasTranslation) {
+              currentY += 25;
+              ctx.font = translationFont;
+              ctx.fillStyle = '#3E6B8E';
+              ctx.direction = 'ltr';
+              translationLines.forEach((line) => {
+                  ctx.fillText(line, canvas.width / 2, currentY);
+                  currentY += translationLineHeight;
+              });
+          }
+
+          // Draw Reference (Surah Name and Verse Number)
           currentY += refLineHeight / 2 - 15;
           ctx.font = refFont;
           ctx.fillStyle = '#3E6B8E';
           ctx.direction = 'ltr';
           ctx.fillText(`- ${verseReference} -`, canvas.width / 2, currentY);
           currentY += refLineHeight / 2;
-
-          if (hasTranslation) {
-              currentY += 25;
-              ctx.font = translationFont;
-              ctx.fillStyle = '#3E6B8E';
-              translationLines.forEach((line) => {
-                  ctx.fillText(line, canvas.width / 2, currentY);
-                  currentY += translationLineHeight;
-              });
-          }
 
           setGeneratedImageUrl(canvas.toDataURL('image/png'));
         } catch (err) {
@@ -304,7 +308,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const handlePerformShare = async () => {
     if (!generatedImageUrl || !verseToShareText) return;
   
-    const verseReference = verseToShareText.match(/\((.+:.+)\)/)?.[1] || 'verse';
+    const verseReference = verseToShareText.match(/\((.+)\)/)?.[1] || 'verse';
   
     try {
       const blob = await (await fetch(generatedImageUrl)).blob();
