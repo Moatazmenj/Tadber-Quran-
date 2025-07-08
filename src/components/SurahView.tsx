@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, PlayCircle, Copy, Share2 } from 'lucide-react';
-import { getSurahSummary } from '@/lib/actions';
+import { getSurahSummary, getVerseTafsir } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -77,17 +77,22 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [activePopoverKey, setActivePopoverKey] = useState<string | null>(null);
 
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
-  const [verseToShareText, setVerseToShareText] = useState('');
+  const [verseToShare, setVerseToShare] = useState<Ayah | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedShareBackground, setSelectedShareBackground] = useState<string | null>(null);
+
+  const [isTafsirSheetOpen, setIsTafsirSheetOpen] = useState(false);
+  const [tafsirContent, setTafsirContent] = useState('');
+  const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
+  const [tafsirError, setTafsirError] = useState('');
+  const [selectedVerseForTafsir, setSelectedVerseForTafsir] = useState<{ text: string; key: string } | null>(null);
 
   const shareBackgrounds = [
     'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png',
     'https://i.postimg.cc/bwwg0Q43/20250708-005544.png',
     'https://i.postimg.cc/pTn91NnB/20250708-005053.png',
   ];
-
 
   useEffect(() => {
     setDisplayVerses(initialVerses);
@@ -178,17 +183,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   useEffect(() => {
     const generateImage = async () => {
-      if (isShareSheetOpen && verseToShareText && selectedShareBackground) {
+      if (isShareSheetOpen && verseToShare && selectedShareBackground) {
         setIsGeneratingImage(true);
         setGeneratedImageUrl(null);
 
         try {
-          const [arabicPartFull, translationPart] = verseToShareText.split('\n\n');
-          const arabicMatch = arabicPartFull.match(/(.+) \((.+)\)/);
-          if (!arabicMatch) throw new Error('Could not parse verse text.');
+          const verseNumber = verseToShare.verse_key.split(':')[1];
+          const fullVerse = fullVerseData.find(v => v.id === verseToShare.id) || verseToShare;
           
-          const arabicText = arabicMatch[1];
-          const verseReference = arabicMatch[2];
+          const arabicText = fullVerse.text_uthmani;
+          const translationText = fullVerse.translation || '';
+          const verseReference = `${surahInfo.name}: ${verseNumber}`;
 
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
@@ -217,13 +222,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           const arabicLines = wrapText(ctx, arabicText, canvas.width - 200);
           
           ctx.font = translationFont;
-          const hasTranslation = !!translationPart;
-          const translationLines = hasTranslation ? wrapText(ctx, translationPart, canvas.width - 250) : [];
+          const hasTranslation = !!translationText;
+          const translationLines = hasTranslation ? wrapText(ctx, translationText, canvas.width - 250) : [];
           
           const arabicLineHeight = 70;
           const refLineHeight = 40;
           const translationLineHeight = 45;
-          const totalTextHeight = (arabicLines.length * arabicLineHeight) + refLineHeight + (translationLines.length * translationLineHeight) + (hasTranslation ? 25 : 0);
+          const totalTextHeight = (arabicLines.length * arabicLineHeight) + (hasTranslation ? 25 : 0) + (translationLines.length * translationLineHeight) + refLineHeight;
           let currentY = (canvas.height - totalTextHeight) / 2 + 30;
 
           // Draw Arabic
@@ -248,13 +253,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           }
 
           // Draw Reference (Surah Name and Verse Number)
-          currentY += refLineHeight / 2 - 15;
+          currentY += refLineHeight;
           ctx.font = refFont;
           ctx.fillStyle = '#3E6B8E';
           ctx.direction = 'ltr';
           ctx.fillText(`- ${verseReference} -`, canvas.width / 2, currentY);
-          currentY += refLineHeight / 2;
-
+          
           setGeneratedImageUrl(canvas.toDataURL('image/png'));
         } catch (err) {
             console.error("Image generation failed:", err);
@@ -271,7 +275,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     };
 
     generateImage();
-  }, [isShareSheetOpen, verseToShareText, selectedShareBackground, toast]);
+  }, [isShareSheetOpen, verseToShare, selectedShareBackground, toast, surahInfo.name, fullVerseData]);
 
 
   const handleSummarize = async () => {
@@ -306,23 +310,23 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   };
 
   const handlePerformShare = async () => {
-    if (!generatedImageUrl || !verseToShareText) return;
+    if (!generatedImageUrl || !verseToShare) return;
   
-    const verseReference = verseToShareText.match(/\((.+)\)/)?.[1] || 'verse';
+    const verseReference = verseToShare.verse_key.replace(':', '_');
   
     try {
       const blob = await (await fetch(generatedImageUrl)).blob();
-      const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
+      const file = new File([blob], `verse-${verseReference}.png`, { type: 'image/png' });
   
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: `Quran - ${verseReference}`,
+          title: `Quran - ${verseToShare.verse_key}`,
         });
       } else {
         const link = document.createElement('a');
         link.href = generatedImageUrl;
-        link.download = `verse-${verseReference.replace(':', '_')}.png`;
+        link.download = `verse-${verseReference}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -406,7 +410,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
   }, [currentVerseIndex, playVerse]);
 
-
   const handleAudioEnded = () => {
     handleNext();
   };
@@ -416,6 +419,37 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (isPlaying) {
         audioRef.current?.pause();
         setIsPlaying(false);
+    }
+  };
+
+  const handleTafsir = async (ayah: Ayah) => {
+    const verseNumber = ayah.verse_key.split(':')[1];
+    const fullAyah = fullVerseData.find(v => v.id === ayah.id) || ayah;
+
+    if (!fullAyah) return;
+    
+    setSelectedVerseForTafsir({
+        text: fullAyah.text_uthmani,
+        key: `${surahInfo.name}:${verseNumber}`
+    });
+    setIsTafsirSheetOpen(true);
+    setIsLoadingTafsir(true);
+    setTafsirContent('');
+    setTafsirError('');
+
+    try {
+      const result = await getVerseTafsir({
+        surahName: surahInfo.name,
+        verseNumber: verseNumber,
+        verseText: fullAyah.text_uthmani,
+        verseTranslation: fullAyah.translation || 'No translation available.',
+      });
+      setTafsirContent(result);
+    } catch (e) {
+      setTafsirError('Failed to generate Tafsir. Please try again later.');
+      console.error(e);
+    } finally {
+      setIsLoadingTafsir(false);
     }
   };
 
@@ -499,7 +533,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const isPlayingVerse = index === currentVerseIndex && isPlaying;
                       const isSelectedVerse = index === currentVerseIndex;
                       const fullAyah = fullVerseData[index] || ayah;
-                      const textToShareAndCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
+                      const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
                       
                       return (
                         <Popover 
@@ -540,13 +574,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => playVerse(index)}>
                                     <PlayCircle className="h-5 w-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                     <BookText className="h-5 w-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToShareAndCopy); setActivePopoverKey(null); }}>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
                                     <Copy className="h-5 w-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShareText(textToShareAndCopy); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
                                     <Share2 className="h-5 w-5" />
                                 </Button>
                             </div>
@@ -569,7 +603,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const isPlayingVerse = index === currentVerseIndex && isPlaying;
                       const isSelectedVerse = index === currentVerseIndex;
                       const fullAyah = fullVerseData[index] || ayah;
-                      const textToShareAndCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
+                      const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
 
                       return (
                         <Popover 
@@ -595,13 +629,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => playVerse(index)}>
                                         <PlayCircle className="h-5 w-5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                         <BookText className="h-5 w-5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToShareAndCopy); setActivePopoverKey(null); }}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
                                         <Copy className="h-5 w-5" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShareText(textToShareAndCopy); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
                                         <Share2 className="h-5 w-5" />
                                     </Button>
                                 </div>
@@ -678,6 +712,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           if (!isOpen) {
             setGeneratedImageUrl(null);
             setSelectedShareBackground(null);
+            setVerseToShare(null);
           }
         }}
       >
@@ -744,6 +779,37 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     </div>
                 )}
             </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isTafsirSheetOpen} onOpenChange={setIsTafsirSheetOpen}>
+        <SheetContent side="bottom" className="w-full max-w-2xl mx-auto h-[75vh] flex flex-col rounded-t-2xl">
+            <SheetHeader className="text-left pb-4 border-b border-border/20" dir="rtl">
+                <SheetTitle className="text-right">تفسير الآية: {selectedVerseForTafsir?.key}</SheetTitle>
+                <SheetDescription className="font-arabic text-lg text-foreground/90 text-right pt-2">
+                    {selectedVerseForTafsir?.text}
+                </SheetDescription>
+            </SheetHeader>
+            <div className="flex-grow overflow-y-auto p-4" dir="rtl">
+                {isLoadingTafsir ? (
+                    <div className="space-y-4 pt-4">
+                        <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-5/6 animate-pulse"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-3/4 animate-pulse"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-5/6 animate-pulse"></div>
+                    </div>
+                ) : tafsirError ? (
+                    <Alert variant="destructive">
+                        <AlertTitle>خطأ</AlertTitle>
+                        <AlertDescription>{tafsirError}</AlertDescription>
+                    </Alert>
+                ) : (
+                    <p className="text-lg leading-relaxed whitespace-pre-wrap font-arabic text-right">
+                        {tafsirContent}
+                    </p>
+                )}
+            </div>
         </SheetContent>
       </Sheet>
     </>
