@@ -71,12 +71,23 @@ export default function RecordPage() {
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>('');
-  const isStoppingRef = useRef(false);
+  
+  // This ref is to signal to the onend handler that we stopped manually
+  const stoppingRef = useRef(false);
+
+  // This ref is to keep track of the recording state inside the onend handler
+  // to avoid stale closures.
+  const isRecordingRef = useRef(isRecording);
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
 
   useEffect(() => {
     // Select Al-Fatiha by default
-    setSelectedSurah(surahs[0]);
-  }, []);
+    if (!selectedSurah) {
+        setSelectedSurah(surahs[0]);
+    }
+  }, [selectedSurah]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -112,19 +123,15 @@ export default function RecordPage() {
       }
       
       const data: SearchApiResponse = JSON.parse(responseText);
-      const topResult = data.search.results[0];
+      
+      // Find the first result that is in the currently selected Surah
+      const resultInSurah = data.search.results.find(res => {
+          const [surahIdStr] = res.verse_key.split(':');
+          return parseInt(surahIdStr, 10) === selectedSurah.id;
+      });
 
-      if (!topResult) {
-          setSearchError("No matching verse found in this Surah.");
-          setIsSearching(false);
-          return;
-      }
-      
-      const [surahIdStr] = topResult.verse_key.split(':');
-      const surahId = parseInt(surahIdStr, 10);
-      
-      if (selectedSurah.id === surahId) {
-        setHighlightedVerseKey(topResult.verse_key);
+      if (resultInSurah) {
+        setHighlightedVerseKey(resultInSurah.verse_key);
       } else {
         setSearchError("The recited verse was not found in the current Surah.");
       }
@@ -199,7 +206,8 @@ export default function RecordPage() {
       return;
     }
 
-    const recognition = new SpeechRecognitionAPI();
+    recognitionRef.current = new SpeechRecognitionAPI();
+    const recognition = recognitionRef.current;
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'ar-SA';
@@ -221,19 +229,21 @@ export default function RecordPage() {
     };
 
     recognition.onend = () => {
-      if (isStoppingRef.current) {
+      // Check if we stopped manually. If so, perform the search.
+      if (stoppingRef.current) {
         setIsRecording(false);
         if (finalTranscriptRef.current.trim()) {
           performSearch(finalTranscriptRef.current.trim());
         }
-      } else if (isRecording) {
+        stoppingRef.current = false; // Reset for next time
+      } 
+      // Check if recognition stopped on its own while we were supposed to be recording.
+      else if (isRecordingRef.current) {
         try {
-          if (recognitionRef.current) {
-            recognitionRef.current.start();
-          }
+          recognition.start(); // Restart it
         } catch (error) {
           console.error("Speech recognition restart failed:", error);
-          setIsRecording(false);
+          setIsRecording(false); // Stop if restart fails
         }
       }
     };
@@ -246,18 +256,16 @@ export default function RecordPage() {
       }
     };
 
-    recognitionRef.current = recognition;
-
     return () => {
-      isStoppingRef.current = true;
       if (recognitionRef.current) {
         recognitionRef.current.onresult = null;
         recognitionRef.current.onend = null;
         recognitionRef.current.onerror = null;
         recognitionRef.current.stop();
+        recognitionRef.current = null;
       }
     };
-  }, [isSupported, performSearch, isRecording]);
+  }, [isSupported, performSearch]);
 
   const handleStartRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
@@ -267,7 +275,7 @@ export default function RecordPage() {
       setIsSearching(false);
       setHighlightedVerseKey(null);
       
-      isStoppingRef.current = false;
+      stoppingRef.current = false;
       setIsRecording(true);
       try {
         recognitionRef.current.start();
@@ -281,7 +289,7 @@ export default function RecordPage() {
 
   const handleStopRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
-      isStoppingRef.current = true;
+      stoppingRef.current = true;
       recognitionRef.current.stop();
     }
   }, [isRecording]);
@@ -328,6 +336,21 @@ export default function RecordPage() {
         );
     }
 
+    if (isRecording) {
+      return (
+        <div className="w-full flex-grow flex flex-col items-center justify-center gap-6 text-center">
+            <div className="relative flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-destructive/20" />
+                <div className="w-14 h-14 rounded-full bg-destructive/20 animate-ping absolute" />
+                <Mic className="h-6 w-6 text-destructive-foreground absolute" />
+            </div>
+            <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
+                {liveTranscript || ''}
+            </p>
+        </div>
+      );
+    }
+
     if (selectedSurah) {
         if (isLoadingVerses) {
           return (
@@ -359,14 +382,14 @@ export default function RecordPage() {
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className={cn("font-arabic text-center text-3xl mb-8 pb-4 transition-opacity duration-300", isRecording ? 'opacity-100' : 'opacity-100')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          <p className={cn("font-arabic text-center text-3xl mb-8 pb-4 transition-opacity duration-300")}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
                       <div 
                         dir="rtl" 
                         className="font-arabic text-justify leading-loose"
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
-                          {versesForCurrentPage.map((verse, index) => {
+                          {versesForCurrentPage.map((verse) => {
                               const verseNumberStr = verse.verse_key.split(':')[1];
                               const verseNumberDisplay = toArabicNumerals(String(verseNumberStr));
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
@@ -423,21 +446,6 @@ export default function RecordPage() {
         );
       }
     
-    if (isRecording) {
-      return (
-        <div className="w-full flex-grow flex flex-col items-center justify-center gap-6 text-center">
-            <div className="relative flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-destructive/20" />
-                <div className="w-14 h-14 rounded-full bg-destructive/20 animate-ping absolute" />
-                <Mic className="h-6 w-6 text-destructive-foreground absolute" />
-            </div>
-            <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
-                {liveTranscript || ''}
-            </p>
-        </div>
-      );
-    }
-
     return (
         <div className="w-full max-w-7xl flex-grow flex items-center justify-center" style={{minHeight: '60vh'}}>
             {/* Empty by default */}
