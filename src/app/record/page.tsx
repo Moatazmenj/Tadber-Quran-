@@ -306,6 +306,22 @@ export default function RecordPage() {
         );
     }
 
+    if (isRecording) {
+      return (
+        <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+            <div 
+              dir="rtl" 
+              className="font-arabic text-justify leading-loose text-foreground"
+              style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+            >
+                <p>
+                    {liveTranscript || <span className="text-muted-foreground">ابدأ التلاوة...</span>}
+                </p>
+            </div>
+        </div>
+      );
+    }
+
     if (isSearching) {
         return (
             <div className="w-full max-w-7xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
@@ -325,16 +341,6 @@ export default function RecordPage() {
                 </AlertDescription>
             </Alert>
         );
-    }
-
-    if (isRecording) {
-      return (
-        <div className="w-full max-w-5xl flex-grow p-4 md:p-6 flex items-center justify-center" style={{minHeight: '60vh'}}>
-            <div dir="rtl" className="font-arabic text-center leading-loose text-foreground" style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}>
-                <p>{liveTranscript || '...'}</p>
-            </div>
-        </div>
-      );
     }
 
     if (selectedSurah) {
@@ -537,7 +543,7 @@ export default function RecordPage() {
       )}
 
 
-      <main className="flex-grow flex flex-col items-center justify-center text-center overflow-y-auto">
+      <main className="flex-grow flex flex-col items-center overflow-y-auto">
         {renderContent()}
       </main>
 
