@@ -76,7 +76,14 @@ export default function RecordPage() {
         throw new Error("Could not reach the search service.");
       }
 
-      const data: SearchApiResponse = await response.json();
+      const responseText = await response.text();
+      if (!responseText) {
+          setSearchError("No matching verse found for your recitation.");
+          setIsSearching(false);
+          return;
+      }
+      
+      const data: SearchApiResponse = JSON.parse(responseText);
       const topResult = data.search.results[0];
 
       if (!topResult) {
@@ -109,7 +116,11 @@ export default function RecordPage() {
       }
     } catch (error) {
       console.error('Verse search error:', error);
-      setSearchError(error instanceof Error ? error.message : "An unknown error occurred during search.");
+      if (error instanceof SyntaxError) {
+        setSearchError("Received an invalid response from the search service. Please try again.");
+      } else {
+        setSearchError(error instanceof Error ? error.message : "An unknown error occurred during search.");
+      }
       setSearchResult(null);
     } finally {
       setIsSearching(false);
