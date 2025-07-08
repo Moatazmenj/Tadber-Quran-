@@ -354,28 +354,25 @@ export default function RecordPage() {
                       <div 
                         dir="rtl" 
                         className={cn(
-                          "font-arabic text-center leading-loose transition-opacity duration-300",
+                          "font-arabic text-justify leading-loose transition-opacity duration-300",
                           isRecording ? "opacity-0" : "opacity-100"
                         )}
+                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
-                          {versesForCurrentPage.map((verse, index) => {
+                          {versesForCurrentPage.map((verse) => {
                               const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
                               return (
-                                  <div key={verse.id}>
-                                      <p style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}>
-                                          {verse.text_uthmani}
-                                          <span 
-                                              className="text-primary font-sans font-normal mx-1"
-                                              style={{ fontSize: `${settings.fontSize * 0.8}px` }}
-                                          >
-                                              {verseEndSymbol}
-                                          </span>
-                                      </p>
-                                      {index < versesForCurrentPage.length - 1 && (
-                                          <Separator className="bg-border/20 my-6" />
-                                      )}
-                                  </div>
+                                  <span key={verse.id}>
+                                      {verse.text_uthmani}
+                                      <span 
+                                          className="text-primary font-sans font-normal mx-1"
+                                          style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                      >
+                                          {verseEndSymbol}
+                                      </span>
+                                      {' '}
+                                  </span>
                               );
                           })}
                       </div>
