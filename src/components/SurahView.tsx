@@ -187,7 +187,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           if (!ctx) throw new Error('Could not get canvas context');
 
           const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-            const img = new Image();
+            const img = new window.Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => resolve(img);
             img.onerror = () => reject(new Error('Could not load background image.'));
