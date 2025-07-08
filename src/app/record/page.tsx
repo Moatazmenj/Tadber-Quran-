@@ -346,48 +346,38 @@ export default function RecordPage() {
             
             return (
                 <>
-                    <div className="w-full flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
-                      {isRecording ? (
-                        <div className="h-full flex flex-col items-center justify-center gap-6 text-center">
-                            <div className="relative flex items-center justify-center">
-                                <div className="w-20 h-20 rounded-full bg-destructive/20" />
-                                <div className="w-20 h-20 rounded-full bg-destructive/20 animate-ping absolute" />
-                                <Mic className="h-8 w-8 text-destructive-foreground absolute" />
-                            </div>
-                            <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
-                                {liveTranscript || ''}
-                            </p>
-                        </div>
-                      ) : (
-                        <p 
-                          dir="rtl" 
-                          className="font-arabic text-2xl text-foreground/80 text-center leading-loose"
-                          style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                        >
-                            {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                                <span className="block text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</span>
-                            )}
-                            {versesForCurrentPage.map((verse) => {
-                                const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
-                                const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
-                                return (
-                                    <span key={verse.id}>
-                                        {verse.text_uthmani}
-                                        <span 
-                                            className="text-primary font-sans font-normal mx-1"
-                                            style={{ fontSize: `${settings.fontSize * 0.8}px` }}
-                                        >
-                                            {verseEndSymbol}
-                                        </span>
-                                        {' '}
-                                    </span>
-                                );
-                            })}
-                        </p>
-                      )}
+                    <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+                      <p 
+                        dir="rtl" 
+                        className={cn(
+                          "font-arabic text-center leading-loose transition-opacity duration-300",
+                          isRecording ? "opacity-0" : "opacity-100"
+                        )}
+                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                      >
+                          {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                              <span className="block text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</span>
+                          )}
+                          {versesForCurrentPage.map((verse) => {
+                              const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
+                              const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
+                              return (
+                                  <span key={verse.id}>
+                                      {verse.text_uthmani}
+                                      <span 
+                                          className="text-primary font-sans font-normal mx-1"
+                                          style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                      >
+                                          {verseEndSymbol}
+                                      </span>
+                                      {' '}
+                                  </span>
+                              );
+                          })}
+                      </p>
                     </div>
-                    {!isRecording && totalPages > 1 && (
-                      <div className="flex items-center justify-between mt-4 px-4 w-full">
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center mt-4 px-4 w-full">
                           <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
                               <ChevronRight className="h-6 w-6" />
                               <span className="sr-only">Previous Page</span>
@@ -414,9 +404,9 @@ export default function RecordPage() {
       return (
         <div className="w-full flex-grow flex flex-col items-center justify-center gap-6 text-center">
             <div className="relative flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-destructive/20" />
-                <div className="w-20 h-20 rounded-full bg-destructive/20 animate-ping absolute" />
-                <Mic className="h-8 w-8 text-destructive-foreground absolute" />
+                <div className="w-14 h-14 rounded-full bg-destructive/20" />
+                <div className="w-14 h-14 rounded-full bg-destructive/20 animate-ping absolute" />
+                <Mic className="h-6 w-6 text-destructive-foreground absolute" />
             </div>
             <p dir="rtl" className="font-arabic text-2xl text-foreground/80 leading-relaxed max-w-2xl mt-4">
                 {liveTranscript || ''}
@@ -426,7 +416,7 @@ export default function RecordPage() {
     }
 
     return (
-        <div className="w-full max-w-7xl flex-grow flex items-center justify-center min-h-[450px]">
+        <div className="w-full max-w-7xl flex-grow flex items-center justify-center" style={{minHeight: '60vh'}}>
             {/* Empty by default */}
         </div>
     );
@@ -536,25 +526,27 @@ export default function RecordPage() {
       <footer className="flex items-center justify-center gap-6 py-4 border-t border-border flex-shrink-0">
           <Button 
               variant="destructive" 
-              size="icon" 
-              className="w-14 h-14 rounded-full"
+              size="lg" 
+              className="w-16 h-16 rounded-full"
               onClick={handleStartRecording}
               disabled={isRecording || !isSupported}
           >
-              <Mic className="h-6 w-6" />
+              <Mic className="h-7 w-7" />
               <span className="sr-only">Record</span>
           </Button>
           <Button 
               variant="outline" 
               size="icon" 
-              className="w-10 h-10 rounded-full"
+              className="w-12 h-12 rounded-full"
               onClick={handleStopRecording}
               disabled={!isRecording || !isSupported}
           >
-              <Square className="h-4 w-4" />
+              <Square className="h-5 w-5" />
               <span className="sr-only">Stop</span>
           </Button>
       </footer>
     </div>
   );
 }
+
+    
