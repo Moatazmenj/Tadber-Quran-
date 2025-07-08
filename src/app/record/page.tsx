@@ -59,6 +59,9 @@ export default function RecordPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   
   const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
+  const [verses, setVerses] = useState<UthmaniVerse[]>([]);
+  const [isLoadingVerses, setIsLoadingVerses] = useState(false);
+  const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -133,6 +136,34 @@ export default function RecordPage() {
       setIsSearching(false);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchVerses = async () => {
+      if (!selectedSurah) {
+        setVerses([]);
+        return;
+      }
+
+      setIsLoadingVerses(true);
+      setVerseFetchError(null);
+      setVerses([]);
+      try {
+        const response = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`);
+        if (!response.ok) {
+          throw new Error("Could not fetch verses for the selected Surah.");
+        }
+        const data: UthmaniVerseApiResponse = await response.json();
+        setVerses(data.verses);
+      } catch (error) {
+        console.error("Verse fetch error:", error);
+        setVerseFetchError(error instanceof Error ? error.message : "An unknown error occurred.");
+      } finally {
+        setIsLoadingVerses(false);
+      }
+    };
+
+    fetchVerses();
+  }, [selectedSurah]);
 
   useEffect(() => {
     if (!isSupported || !SpeechRecognitionAPI) {
@@ -297,22 +328,72 @@ export default function RecordPage() {
     }
 
     if (selectedSurah) {
-      return (
-          <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-xl">
-                      {selectedSurah.id}
-                  </div>
-                  <div>
+        if (isLoadingVerses) {
+          return (
+            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-lg text-muted-foreground">Loading verses for {selectedSurah.name}...</p>
+            </Card>
+          );
+        }
+        
+        if (verseFetchError) {
+          return (
+            <Alert variant="destructive" className="max-w-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error Loading Verses</AlertTitle>
+              <AlertDescription>{verseFetchError}</AlertDescription>
+            </Alert>
+          );
+        }
+        
+        if (verses.length > 0) {
+          return (
+              <Card className="w-full max-w-2xl p-6 min-h-[350px] flex flex-col">
+                  <div className="text-center mb-4 pb-4 border-b-2 border-primary flex-shrink-0">
                       <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
                       <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
                   </div>
-              </div>
-              <p className="text-muted-foreground">{selectedSurah.versesCount} verses</p>
-              <p className="text-sm text-muted-foreground mt-4">Press the record button to start reciting from this Surah.</p>
-          </Card>
-      )
-    }
+                  <ScrollArea className="flex-grow pr-4">
+                      <div dir="rtl" className="font-arabic text-xl text-foreground/90 text-right leading-loose py-4">
+                          {selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                              <p className="text-center font-arabic text-2xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          )}
+                          {verses.map((verse) => {
+                              const verseNumberDisplay = verse.verse_key.split(':')[1].toLocaleString('ar-EG');
+                              const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
+                              return (
+                                  <span key={verse.id}>
+                                      {verse.text_uthmani}
+                                      <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: '1rem' }}>{verseEndSymbol}</span>
+                                      {' '}
+                                  </span>
+                              );
+                          })}
+                      </div>
+                  </ScrollArea>
+                  <p className="text-sm text-muted-foreground mt-4 text-center flex-shrink-0">Press the record button to start reciting from this Surah.</p>
+              </Card>
+          )
+        }
+  
+        // Fallback for when no verses are loaded but a surah is selected (e.g. initial state before fetch)
+        return (
+            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-xl">
+                        {selectedSurah.id}
+                    </div>
+                    <div>
+                        <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
+                        <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
+                    </div>
+                </div>
+                <p className="text-muted-foreground">{selectedSurah.versesCount} verses</p>
+                <p className="text-sm text-muted-foreground mt-4">Press the record button to start reciting from this Surah.</p>
+            </Card>
+        )
+      }
 
     return (
         <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
