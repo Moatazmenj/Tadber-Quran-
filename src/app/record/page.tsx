@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -238,7 +237,7 @@ export default function RecordPage() {
 
     if (isRecording) {
       return (
-          <div className="flex flex-col items-center justify-center text-center gap-6">
+          <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[250px]">
               <div className="relative flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-destructive/20" />
                   <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
@@ -247,16 +246,16 @@ export default function RecordPage() {
               <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed max-w-2xl min-h-[3.5rem] text-right">
                   {liveTranscript || 'جارِ الاستماع...'}
               </p>
-          </div>
+          </Card>
       );
     }
 
     if (isSearching) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4">
+            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[250px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
-            </div>
+            </Card>
         );
     }
 
@@ -293,12 +292,12 @@ export default function RecordPage() {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center text-center gap-4">
+        <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[250px]">
             <Mic className="h-16 w-16 text-muted-foreground" />
             <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed max-w-md">
                 انقر على الميكروفون لبدء تلاوة الآية التي تريد البحث عنها
             </p>
-        </div>
+        </Card>
     );
   };
 
