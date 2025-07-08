@@ -50,6 +50,7 @@ const SpeechRecognitionAPI =
 export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(SpeechRecognitionAPI != null);
+  const [liveTranscript, setLiveTranscript] = useState('');
   
   const [searchResult, setSearchResult] = useState<VerseSearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -144,14 +145,15 @@ export default function RecordPage() {
         const finalTranscript = transcriptArray
             .filter(result => result.isFinal)
             .map(result => result[0].transcript)
-            .join(' ');
+            .join('');
             
         const interimTranscript = transcriptArray
             .filter(result => !result.isFinal)
             .map(result => result[0].transcript)
             .join('');
 
-        finalTranscriptRef.current = finalTranscript + (finalTranscript ? ' ' : '') + interimTranscript;
+        finalTranscriptRef.current = finalTranscript + interimTranscript;
+        setLiveTranscript(finalTranscriptRef.current);
     };
 
     recognition.onend = () => {
@@ -197,6 +199,7 @@ export default function RecordPage() {
   const handleStartRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
       finalTranscriptRef.current = '';
+      setLiveTranscript('');
       setSearchResult(null);
       setSearchError(null);
       setIsSearching(false);
@@ -231,6 +234,21 @@ export default function RecordPage() {
                 </AlertDescription>
             </Alert>
         );
+    }
+
+    if (isRecording) {
+      return (
+          <div className="flex flex-col items-center justify-center text-center gap-6">
+              <div className="relative flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full bg-destructive/20" />
+                  <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
+                  <Mic className="h-10 w-10 text-destructive-foreground absolute" />
+              </div>
+              <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed max-w-2xl min-h-[3.5rem] text-right">
+                  {liveTranscript || 'جارِ الاستماع...'}
+              </p>
+          </div>
+      );
     }
 
     if (isSearching) {
@@ -272,21 +290,6 @@ export default function RecordPage() {
                 </Card>
             </Link>
         )
-    }
-
-    if (isRecording) {
-      return (
-          <div className="flex flex-col items-center justify-center text-center gap-6">
-              <div className="relative flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full bg-destructive/20" />
-                  <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
-                  <Mic className="h-10 w-10 text-destructive-foreground absolute" />
-              </div>
-              <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-relaxed">
-                  جارِ الاستماع...
-              </p>
-          </div>
-      );
     }
 
     return (
