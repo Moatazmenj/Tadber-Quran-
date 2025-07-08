@@ -3,11 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
 import { Card } from '@/components/ui/card';
+import type { Surah } from '@/types';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // --- API Types ---
 interface ApiSearchResult {
@@ -54,6 +57,9 @@ export default function RecordPage() {
   const [searchResult, setSearchResult] = useState<VerseSearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef<string>('');
@@ -162,14 +168,13 @@ export default function RecordPage() {
           performSearch(finalTranscriptRef.current.trim());
         }
       } else if (isRecording) {
-        // If it was an automatic stop, restart recognition to keep listening
         try {
           if (recognitionRef.current) {
             recognitionRef.current.start();
           }
         } catch (error) {
           console.error("Speech recognition restart failed:", error);
-          setIsRecording(false); // Fallback to stopping if restart fails
+          setIsRecording(false);
         }
       }
     };
@@ -204,7 +209,7 @@ export default function RecordPage() {
       setIsSearching(false);
       
       isStoppingRef.current = false;
-      setIsRecording(true); // Set recording to true before starting
+      setIsRecording(true);
       try {
         recognitionRef.current.start();
       } catch (e) {
@@ -237,7 +242,7 @@ export default function RecordPage() {
 
     if (isRecording) {
       return (
-          <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[250px]">
+          <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
               <div className="relative flex items-center justify-center">
                   <div className="w-24 h-24 rounded-full bg-destructive/20" />
                   <div className="w-24 h-24 rounded-full bg-destructive/20 animate-ping absolute" />
@@ -252,7 +257,7 @@ export default function RecordPage() {
 
     if (isSearching) {
         return (
-            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[250px]">
+            <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
             </Card>
@@ -291,21 +296,80 @@ export default function RecordPage() {
         )
     }
 
+    if (selectedSurah) {
+      return (
+          <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-6 min-h-[350px]">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-xl">
+                      {selectedSurah.id}
+                  </div>
+                  <div>
+                      <h2 className="font-headline text-2xl text-foreground">{selectedSurah.name}</h2>
+                      <p className="font-arabic text-3xl text-primary">{selectedSurah.arabicName}</p>
+                  </div>
+              </div>
+              <p className="text-muted-foreground">{selectedSurah.versesCount} verses</p>
+              <p className="text-sm text-muted-foreground mt-4">Press the record button to start reciting from this Surah.</p>
+          </Card>
+      )
+    }
+
     return (
-        <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[250px]">
+        <Card className="w-full max-w-2xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[350px]">
         </Card>
     );
   };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl flex flex-col h-screen">
-      <header className="flex items-center flex-shrink-0">
+      <header className="flex items-center justify-between flex-shrink-0">
         <Link href="/" passHref>
           <Button variant="ghost" size="icon" className="h-10 w-10">
             <ChevronLeft className="h-6 w-6" />
             <span className="sr-only">Back</span>
           </Button>
         </Link>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline">
+              <List className="mr-2 h-4 w-4" />
+              Select Surah
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-[80vh] flex flex-col">
+            <SheetHeader>
+              <SheetTitle className="text-center">Select Surah</SheetTitle>
+            </SheetHeader>
+            <ScrollArea className="flex-grow pr-2">
+              <div className="flex flex-col gap-1 py-4">
+                {surahs.map((surah) => (
+                  <div
+                    key={surah.id}
+                    onClick={() => {
+                      setSelectedSurah(surah);
+                      setIsSheetOpen(false);
+                      setSearchResult(null);
+                    }}
+                    className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold text-sm">
+                          {surah.id}
+                        </div>
+                        <div>
+                          <p className="font-headline text-lg text-foreground">{surah.name}</p>
+                        </div>
+                      </div>
+                      <p className="font-arabic text-2xl text-primary">{surah.arabicName}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+        <div className="w-10" />
       </header>
       
       <main className="flex-grow flex flex-col items-center justify-center text-center">
