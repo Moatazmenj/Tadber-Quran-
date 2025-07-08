@@ -347,6 +347,9 @@ export default function RecordPage() {
             return (
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+                      {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                          <p className="font-arabic text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                      )}
                       <p 
                         dir="rtl" 
                         className={cn(
@@ -355,9 +358,6 @@ export default function RecordPage() {
                         )}
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
-                          {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                              <span className="block text-center text-3xl mb-6">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</span>
-                          )}
                           {versesForCurrentPage.map((verse) => {
                               const verseNumberDisplay = toArabicNumerals(String(verse.verse_key.split(':')[1]));
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
@@ -377,7 +377,10 @@ export default function RecordPage() {
                       </p>
                     </div>
                     {totalPages > 1 && (
-                      <div className="flex items-center justify-center mt-4 px-4 w-full">
+                      <div className={cn(
+                        "flex items-center justify-center mt-4 px-4 w-full transition-opacity duration-300",
+                        isRecording ? "opacity-0 pointer-events-none" : "opacity-100"
+                        )}>
                           <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
                               <ChevronRight className="h-6 w-6" />
                               <span className="sr-only">Previous Page</span>
@@ -548,5 +551,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
-    
