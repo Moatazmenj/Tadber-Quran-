@@ -56,7 +56,7 @@ const SpeechRecognitionAPI =
 export default function RecordPage() {
   const { settings, setSetting } = useQuranSettings();
   const [isRecording, setIsRecording] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
+  const [isSupported, setIsSupported] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
   
   const [isSearching, setIsSearching] = useState(false);
@@ -76,11 +76,14 @@ export default function RecordPage() {
   const isStoppingRef = useRef(false);
 
   useEffect(() => {
-    setIsSupported(SpeechRecognitionAPI != null);
+    if (typeof window !== 'undefined') {
+        const recognitionIsSupported = window.SpeechRecognition || window.webkitSpeechRecognition;
+        setIsSupported(!!recognitionIsSupported);
+    }
   }, []);
 
   const performSearch = useCallback(async (query: string) => {
-    if (query.trim().length < 3) {
+    if (query.trim().length < 3 || !selectedSurah) {
       setSearchError(null);
       return;
     }
@@ -113,15 +116,15 @@ export default function RecordPage() {
       
       const [surahIdStr] = topResult.verse_key.split(':');
       const surahId = parseInt(surahIdStr, 10);
-      const surahInfo = surahs.find(s => s.id === surahId);
       
-      if (surahInfo) {
-        if (selectedSurah?.id !== surahId) {
-            setSelectedSurah(surahInfo);
-        }
+      if (selectedSurah.id === surahId) {
         setHighlightedVerseKey(topResult.verse_key);
       } else {
-        throw new Error("Could not find Surah information for the verse.");
+        const foundSurahInfo = surahs.find(s => s.id === surahId);
+        const errorMessage = foundSurahInfo
+          ? `The recited verse is from Surah ${foundSurahInfo.name}, not ${selectedSurah.name}. Please select the correct Surah.`
+          : 'The recited verse was found, but in a different Surah.';
+        setSearchError(errorMessage);
       }
     } catch (error) {
       console.error('Verse search error:', error);
@@ -345,14 +348,14 @@ export default function RecordPage() {
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className="font-arabic text-center text-3xl mb-8 border-b border-border/20 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          <p className={cn("font-arabic text-center text-3xl mb-8 border-b border-border/20 pb-4", isRecording ? 'opacity-0' : 'opacity-100')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
                       <div 
                         dir="rtl" 
                         className="font-arabic text-justify leading-loose"
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                       >
-                          {versesForCurrentPage.map((verse) => {
+                          {versesForCurrentPage.map((verse, index) => {
                               const verseNumberStr = verse.verse_key.split(':')[1];
                               const verseNumberDisplay = toArabicNumerals(String(verseNumberStr));
                               const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
