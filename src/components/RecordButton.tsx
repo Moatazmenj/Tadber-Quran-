@@ -9,6 +9,11 @@ import { cn } from '@/lib/utils';
 export function RecordButton() {
   const pathname = usePathname();
   const isSurahPage = pathname.startsWith('/surah/');
+  const isRecordPage = pathname === '/record';
+
+  if (isRecordPage) {
+    return null;
+  }
 
   return (
     <Link
