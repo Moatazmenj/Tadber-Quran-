@@ -57,7 +57,7 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
 
 export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   
   const [summary, setSummary] = useState('');
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
@@ -180,6 +180,116 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   useEffect(() => {
     fetchAudio();
   }, [fetchAudio]);
+
+  const generateAndShareImage = useCallback(async (ayah: Ayah) => {
+    const { id } = toast({
+      title: 'Generating Image...',
+      description: 'Please wait while we create your shareable image.',
+    });
+
+    try {
+        const verseNumber = ayah.verse_key.split(':')[1];
+        const fullVerse = fullVerseData.find(v => v.id === ayah.id) || ayah;
+        
+        const arabicText = fullVerse.text_uthmani;
+        const translationText = fullVerse.translation || '';
+        const verseReference = `${surahInfo.name}: ${verseNumber}`;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get canvas context');
+
+        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new window.Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('Could not load background image.'));
+          img.src = 'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png';
+        });
+
+        canvas.width = 1080;
+        canvas.height = 1080;
+        ctx.drawImage(image, 0, 0, 1080, 1080);
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const arabicFont = '56px Noto Kufi Arabic';
+        const translationFont = '32px PT Sans';
+        const refFont = '28px Alegreya';
+        
+        ctx.font = arabicFont;
+        const arabicLines = wrapText(ctx, arabicText, canvas.width - 200);
+        
+        ctx.font = translationFont;
+        const translationLines = wrapText(ctx, translationText, canvas.width - 250);
+        
+        const arabicLineHeight = 70;
+        const refLineHeight = 40;
+        const translationLineHeight = 45;
+        const totalTextHeight = (arabicLines.length * arabicLineHeight) + 25 + (translationLines.length * translationLineHeight) + refLineHeight;
+        let currentY = (canvas.height - totalTextHeight) / 2 + 30;
+
+        ctx.font = arabicFont;
+        ctx.fillStyle = '#0B345B';
+        ctx.direction = 'rtl';
+        arabicLines.forEach((line) => {
+            ctx.fillText(line, canvas.width / 2, currentY);
+            currentY += arabicLineHeight;
+        });
+
+        currentY += 25;
+
+        ctx.font = translationFont;
+        ctx.fillStyle = '#3E6B8E';
+        ctx.direction = 'ltr';
+        translationLines.forEach((line) => {
+            ctx.fillText(line, canvas.width / 2, currentY);
+            currentY += translationLineHeight;
+        });
+        
+        currentY += refLineHeight;
+
+        ctx.font = refFont;
+        ctx.fillStyle = '#3E6B8E';
+        ctx.direction = 'ltr';
+        ctx.fillText(`- ${verseReference} -`, canvas.width / 2, currentY);
+        
+        const imageUrl = canvas.toDataURL('image/png');
+        const blob = await (await fetch(imageUrl)).blob();
+        const file = new File([blob], `verse-${verseReference.replace(':', '_')}.png`, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Quran - ${verseReference}`,
+          });
+        } else {
+          const link = document.createElement('a');
+          link.href = imageUrl;
+          link.download = `verse-${verseReference.replace(':','_')}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+          toast({
+            title: 'Image Downloaded',
+            description: 'Direct sharing is not supported, so the image was downloaded instead.',
+          });
+        }
+    } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to share:', err);
+          toast({
+            variant: "destructive",
+            title: "Share Failed",
+            description: err.message || "Could not share the image. Please try again.",
+          });
+        }
+    } finally {
+      dismiss(id);
+    }
+  }, [fullVerseData, surahInfo.name, toast, dismiss]);
 
   useEffect(() => {
     const generateImage = async () => {
@@ -784,28 +894,28 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
       <Sheet open={isTafsirSheetOpen} onOpenChange={setIsTafsirSheetOpen}>
         <SheetContent side="bottom" className="w-full max-w-2xl mx-auto h-[75vh] flex flex-col rounded-t-2xl">
-            <SheetHeader className="text-left pb-4 border-b border-border/20" dir="rtl">
-                <SheetTitle className="text-right">تفسير الآية: {selectedVerseForTafsir?.key}</SheetTitle>
-                <SheetDescription className="font-arabic text-lg text-foreground/90 text-right pt-2">
+            <SheetHeader className="text-center pb-4 border-b border-border/20" dir="rtl">
+                <SheetTitle className="text-center">تفسير الآية: {selectedVerseForTafsir?.key}</SheetTitle>
+                <SheetDescription className="font-arabic text-lg text-foreground/90 text-center pt-2">
                     {selectedVerseForTafsir?.text}
                 </SheetDescription>
             </SheetHeader>
             <div className="flex-grow overflow-y-auto p-4" dir="rtl">
                 {isLoadingTafsir ? (
                     <div className="space-y-4 pt-4">
-                        <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse"></div>
-                        <div className="h-4 bg-muted-foreground/10 rounded w-5/6 animate-pulse"></div>
-                        <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse"></div>
-                        <div className="h-4 bg-muted-foreground/10 rounded w-3/4 animate-pulse"></div>
-                        <div className="h-4 bg-muted-foreground/10 rounded w-5/6 animate-pulse"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse mx-auto"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-5/6 animate-pulse mx-auto"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse mx-auto"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-3/4 animate-pulse mx-auto"></div>
+                        <div className="h-4 bg-muted-foreground/10 rounded w-5/6 animate-pulse mx-auto"></div>
                     </div>
                 ) : tafsirError ? (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" className="text-center">
                         <AlertTitle>خطأ</AlertTitle>
                         <AlertDescription>{tafsirError}</AlertDescription>
                     </Alert>
                 ) : (
-                    <p className="text-lg leading-relaxed whitespace-pre-wrap font-arabic text-right">
+                    <p className="text-lg leading-relaxed whitespace-pre-wrap font-arabic text-center">
                         {tafsirContent}
                     </p>
                 )}
