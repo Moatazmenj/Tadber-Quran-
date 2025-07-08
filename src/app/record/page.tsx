@@ -267,7 +267,7 @@ export default function RecordPage() {
     }
 
     return (
-        <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-loose">
+        <p dir="rtl" className="text-2xl font-arabic text-right text-foreground/80 leading-relaxed w-full max-w-2xl px-4">
             {transcript || (isRecording ? "جارِ الاستماع..." : "انقر على الميكروفون لبدء التسجيل")}
         </p>
     );
