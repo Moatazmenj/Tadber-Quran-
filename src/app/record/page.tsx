@@ -4,11 +4,44 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { surahs } from '@/lib/quran';
+import { Card } from '@/components/ui/card';
 
-// Check for SpeechRecognition API support in the browser
+// --- API Types ---
+interface ApiSearchResult {
+  verse_key: string;
+  text: string;
+}
+
+interface SearchApiResponse {
+  search: {
+    results: ApiSearchResult[];
+  }
+}
+
+interface VerseSearchResult {
+  verse_key: string;
+  text_ar: string;
+  surahId: number;
+  surahName: string;
+  arabicName: string;
+  verseNumber: number;
+}
+
+interface UthmaniVerse {
+  id: number;
+  verse_key: string;
+  text_uthmani: string;
+}
+
+interface UthmaniVerseApiResponse {
+    verses: UthmaniVerse[];
+}
+// --- End of API Types ---
+
 const SpeechRecognitionAPI =
   typeof window !== 'undefined'
     ? window.SpeechRecognition || window.webkitSpeechRecognition
@@ -19,65 +52,129 @@ export default function RecordPage() {
   const [transcript, setTranscript] = useState('');
   const [isSupported, setIsSupported] = useState(SpeechRecognitionAPI != null);
   
-  // Use a ref for the recognition object to persist it across re-renders
+  const [searchResult, setSearchResult] = useState<VerseSearchResult | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  // Use a ref to store the final transcript between onresult events
   const finalTranscriptRef = useRef<string>('');
 
+  const performSearch = useCallback(async (query: string) => {
+    if (query.trim().length < 3) {
+      setSearchResult(null);
+      setSearchError(null);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+    setSearchResult(null);
+    
+    try {
+      const response = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&language=ar`);
+      if (!response.ok) {
+        throw new Error("Could not reach the search service.");
+      }
+
+      const data: SearchApiResponse = await response.json();
+      const topResult = data.search.results[0];
+
+      if (!topResult) {
+          setSearchError("No matching verse found for your recitation.");
+          return;
+      }
+      
+      const [surahIdStr, verseNumStr] = topResult.verse_key.split(':');
+      const surahId = parseInt(surahIdStr, 10);
+
+      const arabicTextResponse = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
+      if (!arabicTextResponse.ok) {
+        throw new Error("Could not fetch the verse text.");
+      }
+      const arabicTextData: UthmaniVerseApiResponse = await arabicTextResponse.json();
+      const verseInfo = arabicTextData.verses.find(v => v.verse_key === topResult.verse_key);
+      const surahInfo = surahs.find(s => s.id === surahId);
+      
+      if (verseInfo && surahInfo) {
+        setSearchResult({
+          verse_key: verseInfo.verse_key,
+          text_ar: verseInfo.text_uthmani,
+          surahId: surahId,
+          surahName: surahInfo.name,
+          arabicName: surahInfo.arabicName,
+          verseNumber: parseInt(verseNumStr, 10),
+        });
+      } else {
+        throw new Error("Could not assemble verse information.");
+      }
+    } catch (error) {
+      console.error('Verse search error:', error);
+      setSearchError(error instanceof Error ? error.message : "An unknown error occurred during search.");
+      setSearchResult(null);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
   useEffect(() => {
-    // Only run this setup on the client if the API is supported
     if (!isSupported || !SpeechRecognitionAPI) {
       return;
     }
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true; // Keep recognizing even after pauses
-    recognition.interimResults = true; // Get results as they are being processed
-    recognition.lang = 'ar-SA'; // Set language to Arabic (Saudi Arabia)
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'ar-SA';
 
-    // This event fires when a speech result is returned
     recognition.onresult = (event) => {
       let interimTranscript = '';
-      // Loop through the results from the current result index
       for (let i = event.resultIndex; i < event.results.length; ++i) {
-        // If the result is final, append it to our final transcript ref
         if (event.results[i].isFinal) {
           finalTranscriptRef.current += event.results[i][0].transcript + ' ';
         } else {
-          // Otherwise, it's an interim result
           interimTranscript += event.results[i][0].transcript;
         }
       }
-      // Update the display with the final transcript and the current interim result
       setTranscript(finalTranscriptRef.current + interimTranscript);
     };
 
-    // This event fires when the recognition service has disconnected
     recognition.onend = () => {
       setIsRecording(false);
+      if (finalTranscriptRef.current.trim()) {
+        performSearch(finalTranscriptRef.current.trim());
+      }
     };
     
-    // Handle any errors from the recognition service
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
       setIsRecording(false);
+      if (event.error === 'no-speech') {
+        setSearchError("No speech was detected. Please try again.");
+      } else {
+        setSearchError(`Speech recognition error: ${event.error}`);
+      }
     };
 
-    // Store the recognition instance in the ref
     recognitionRef.current = recognition;
 
-    // Cleanup on component unmount: stop recognition to free up resources
     return () => {
       if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
         recognitionRef.current.stop();
       }
     };
-  }, [isSupported]); // Dependency array ensures this effect runs only once
+  }, [isSupported, performSearch]);
 
   const handleStartRecording = useCallback(() => {
     if (recognitionRef.current && !isRecording) {
-      setTranscript(''); // Clear any previous transcript
-      finalTranscriptRef.current = ''; // Reset the final transcript
+      setTranscript('');
+      finalTranscriptRef.current = '';
+      setSearchResult(null);
+      setSearchError(null);
+      setIsSearching(false);
+      
       recognitionRef.current.start();
       setIsRecording(true);
     }
@@ -86,9 +183,65 @@ export default function RecordPage() {
   const handleStopRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
-      // The onend event will handle setting isRecording to false
     }
   }, [isRecording]);
+
+  const renderContent = () => {
+    if (!isSupported) {
+        return (
+            <Alert variant="destructive" className="max-w-md">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>Browser Not Supported</AlertTitle>
+                <AlertDescription>
+                    Speech recognition is not supported by your browser. Please try using Chrome or Safari.
+                </AlertDescription>
+            </Alert>
+        );
+    }
+
+    if (isSearching) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
+            </div>
+        );
+    }
+
+    if (searchError) {
+        return (
+             <Alert variant="destructive" className="max-w-md">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Search Failed</AlertTitle>
+                <AlertDescription>
+                    {searchError}
+                </AlertDescription>
+            </Alert>
+        );
+    }
+
+    if (searchResult) {
+        return (
+            <Link href={`/surah/${searchResult.surahId}#verse-${searchResult.verseNumber}`} passHref className="w-full max-w-2xl">
+                <Card className="text-center p-6 hover:bg-card/80 transition-colors w-full">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <BookOpen className="h-6 w-6 text-primary"/>
+                        <p className="text-xl font-bold text-foreground">{searchResult.surahName} ({searchResult.verseNumber})</p>
+                    </div>
+                    <p dir="rtl" className="font-arabic text-2xl leading-loose text-foreground/90">
+                        {searchResult.text_ar}
+                    </p>
+                </Card>
+            </Link>
+        )
+    }
+
+    return (
+        <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-loose">
+            {transcript || (isRecording ? "جارِ الاستماع..." : "انقر على الميكروفون لبدء التسجيل")}
+        </p>
+    );
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl flex flex-col h-screen">
@@ -101,24 +254,12 @@ export default function RecordPage() {
         </Link>
       </header>
       
-      <main className="flex-grow flex flex-col items-center justify-between text-center py-8">
+      <main className="flex-grow flex flex-col items-center justify-center text-center">
         <div className="w-full flex-grow flex items-center justify-center p-4">
-            {!isSupported ? (
-                <Alert variant="destructive" className="max-w-md">
-                    <WifiOff className="h-4 w-4" />
-                    <AlertTitle>Browser Not Supported</AlertTitle>
-                    <AlertDescription>
-                        Speech recognition is not supported by your browser. Please try using Chrome or Safari.
-                    </AlertDescription>
-                </Alert>
-            ) : (
-                <p dir="rtl" className="text-2xl font-arabic text-foreground/80 leading-loose">
-                    {transcript || (isRecording ? "جارِ الاستماع..." : "انقر على الميكروفون لبدء التسجيل")}
-                </p>
-            )}
+            {renderContent()}
         </div>
 
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex items-center justify-center gap-6 mb-8">
             <Button 
                 variant="destructive" 
                 size="icon" 
