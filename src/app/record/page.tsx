@@ -315,7 +315,7 @@ export default function RecordPage() {
         );
     }
 
-    if (searchError) {
+    if (searchError && !isRecording) {
         return (
              <Alert variant="destructive" className="max-w-md">
                 <AlertCircle className="h-4 w-4" />
@@ -325,6 +325,16 @@ export default function RecordPage() {
                 </AlertDescription>
             </Alert>
         );
+    }
+
+    if (isRecording) {
+      return (
+        <div className="w-full max-w-5xl flex-grow p-4 md:p-6 flex items-center justify-center" style={{minHeight: '60vh'}}>
+            <div dir="rtl" className="font-arabic text-center leading-loose text-foreground" style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}>
+                <p>{liveTranscript || '...'}</p>
+            </div>
+        </div>
+      );
     }
 
     if (selectedSurah) {
@@ -358,7 +368,7 @@ export default function RecordPage() {
                 <>
                     <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                       {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className={cn("font-arabic text-center text-3xl mb-8 pb-4 transition-opacity duration-300", isRecording ? "opacity-0" : "opacity-100")}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                          <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                       )}
                       <div 
                         dir="rtl" 
@@ -380,7 +390,7 @@ export default function RecordPage() {
                                         isHighlighted && "bg-primary/20"
                                     )}
                                   >
-                                      <span className={cn("transition-opacity duration-300", isRecording ? 'opacity-0' : 'opacity-100')}>
+                                      <span>
                                         {verse.text_uthmani}
                                       </span>
                                       <span 
@@ -396,10 +406,7 @@ export default function RecordPage() {
                       </div>
                     </div>
                     {totalPages > 1 && (
-                      <div className={cn(
-                        "flex items-center justify-center mt-4 px-4 w-full transition-opacity duration-300",
-                        isRecording ? "opacity-0 pointer-events-none" : "opacity-100"
-                        )}>
+                      <div className="flex items-center justify-center mt-4 px-4 w-full">
                           <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
                               <ChevronRight className="h-6 w-6" />
                               <span className="sr-only">Previous Page</span>
@@ -536,11 +543,7 @@ export default function RecordPage() {
 
       <footer className="flex flex-col items-center justify-center gap-2 py-4 border-t border-border flex-shrink-0">
         <div className="h-8 px-4 text-center">
-            {isRecording && (
-            <p dir="rtl" className="font-arabic text-xl text-muted-foreground">
-                {liveTranscript || '...'}
-            </p>
-            )}
+            {/* Placeholder for spacing, live transcript moved to main content area */}
         </div>
         <div className="flex items-center justify-center gap-6">
             <Button 
@@ -568,3 +571,5 @@ export default function RecordPage() {
     </div>
   );
 }
+
+    
