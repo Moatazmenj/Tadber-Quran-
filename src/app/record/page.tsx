@@ -63,7 +63,7 @@ export default function RecordPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   
-  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(surahs[0]);
   const [verses, setVerses] = useState<UthmaniVerse[]>([]);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
