@@ -105,7 +105,7 @@ export default function AnalysisPage() {
               <CardHeader className="p-6 text-right">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div>
-                    <CardTitle className="text-2xl font-bold text-foreground">تقرير تحليل التلاوة</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-primary">تقرير تحليل التلاوة</CardTitle>
                     <CardDescription>بناءً على تلاوتك لسورة {surahName}</CardDescription>
                   </div>
                   <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/10 w-full sm:w-auto justify-center">
@@ -120,17 +120,17 @@ export default function AnalysisPage() {
       
               <CardContent className="p-6 md:p-8 space-y-8">
                   <div className="bg-transparent">
-                      <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-foreground">
+                      <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-primary">
                           <MessageSquareQuote className="h-6 w-6 text-primary" />
                           ملاحظات المعلم الآلي
                       </h3>
-                      <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
+                      <p className="text-xl leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
                           {analysis.feedback}
                       </p>
                   </div>
       
                   <div className="bg-transparent">
-                      <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-foreground">
+                      <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-primary">
                           <BookText className="h-6 w-6 text-primary" />
                           النص الأصلي الذي تمت تلاوته
                       </h3>
