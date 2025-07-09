@@ -105,7 +105,7 @@ export default function AnalysisPage() {
               <CardHeader className="p-6 text-right">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div>
-                    <CardTitle className="text-2xl font-bold text-primary">تقرير تحليل التلاوة</CardTitle>
+                    <CardTitle className="text-xl font-bold text-primary">تقرير تحليل التلاوة</CardTitle>
                     <CardDescription>بناءً على تلاوتك لسورة {surahName}</CardDescription>
                   </div>
                   <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/10 w-full sm:w-auto justify-center">
@@ -120,24 +120,24 @@ export default function AnalysisPage() {
       
               <CardContent className="p-6 md:p-8 space-y-8">
                   <div className="bg-transparent">
-                      <h3 className="text-lg font-semibold flex items-center gap-3 mb-4 text-primary">
-                          <MessageSquareQuote className="h-6 w-6 text-primary" />
+                      <h3 className="text-base font-semibold flex items-center gap-3 mb-4 text-primary">
+                          <MessageSquareQuote className="h-5 w-5 text-primary" />
                           ملاحظات المعلم الآلي
                       </h3>
-                      <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
+                      <p className="text-base leading-relaxed whitespace-pre-wrap font-arabic text-foreground/90">
                           {analysis.feedback}
                       </p>
                   </div>
       
                   <div className="bg-transparent">
-                      <h3 className="text-lg font-semibold flex items-center gap-3 mb-4 text-primary">
-                          <BookText className="h-6 w-6 text-primary" />
+                      <h3 className="text-base font-semibold flex items-center gap-3 mb-4 text-primary">
+                          <BookText className="h-5 w-5 text-primary" />
                           النص الأصلي الذي تمت تلاوته
                       </h3>
                       <div className="p-4">
                         <p
                           className="font-arabic leading-loose text-justify text-foreground"
-                          style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                          style={{ fontSize: `${settings.fontSize * 0.7}px`, lineHeight: `${settings.fontSize * 1.6}px` }}
                         >
                             {originalText}
                         </p>
