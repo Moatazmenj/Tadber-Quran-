@@ -111,11 +111,9 @@ export default function AnalysisPage() {
                         <MessageSquareQuote className="h-6 w-6 text-primary" />
                         ملاحظات المعلم الآلي
                     </h3>
-                    <div className="bg-card p-4 rounded-lg border border-dashed border-border/70">
-                      <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
-                          {analysis.feedback}
-                      </p>
-                    </div>
+                    <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
+                        {analysis.feedback}
+                    </p>
                 </div>
     
                 <div className="border-t border-border/50 pt-8">
