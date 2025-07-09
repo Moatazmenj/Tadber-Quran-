@@ -121,7 +121,7 @@ export default function AnalysisPage() {
                         <BookText className="h-6 w-6 text-primary" />
                         النص الأصلي الذي تمت تلاوته
                     </h3>
-                    <div className="bg-card p-4 rounded-lg border border-border/70">
+                    <div className="bg-card p-4 rounded-lg">
                       <p
                         className="font-arabic leading-loose text-justify text-foreground"
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
