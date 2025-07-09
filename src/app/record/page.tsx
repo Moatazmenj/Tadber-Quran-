@@ -422,27 +422,30 @@ export default function RecordPage() {
 
       <footer className="relative flex items-center justify-center px-4 pt-12 pb-4 flex-shrink-0 z-50 bg-gradient-to-t from-background to-transparent overflow-hidden">
         <SoundWave isRecording={isRecording} />
-        <div className="relative z-10 flex items-center justify-center gap-4">
-            <Button 
-                variant="destructive" 
-                size="lg" 
-                className={cn("w-16 h-16 rounded-full", isRecording && "invisible")}
-                onClick={handleStartRecording}
-                disabled={isRecording || isProcessing || !isSupported}
-            >
-                <Mic className="h-7 w-7" />
-                <span className="sr-only">Record</span>
-            </Button>
-            <Button 
-                variant="outline" 
-                size="lg" 
-                className={cn("w-14 h-14 rounded-full", !isRecording && "invisible")}
-                onClick={handleStopRecording}
-                disabled={!isRecording || isProcessing || !isSupported}
-            >
-                <Square className="h-6 w-6" />
-                <span className="sr-only">Stop</span>
-            </Button>
+        <div className="relative z-10 flex items-center justify-center">
+            {isRecording ? (
+                <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-14 h-14 rounded-full"
+                    onClick={handleStopRecording}
+                    disabled={!isRecording || isProcessing || !isSupported}
+                >
+                    <Square className="h-6 w-6" />
+                    <span className="sr-only">Stop</span>
+                </Button>
+            ) : (
+                <Button 
+                    variant="destructive" 
+                    size="lg" 
+                    className="w-16 h-16 rounded-full"
+                    onClick={handleStartRecording}
+                    disabled={isRecording || isProcessing || !isSupported}
+                >
+                    <Mic className="h-7 w-7" />
+                    <span className="sr-only">Record</span>
+                </Button>
+            )}
         </div>
       </footer>
     </div>
