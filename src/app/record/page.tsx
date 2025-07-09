@@ -62,7 +62,7 @@ export default function RecordPage() {
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   
-  const finalTranscriptRef = useRef('');
+  const liveTranscriptRef = useRef('');
 
   useEffect(() => {
     // Select Al-Fatiha by default
@@ -192,27 +192,27 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
     
     recognition.onresult = (event: any) => {
+      let final_transcript = '';
       let interim_transcript = '';
-      let final_transcript_from_event = '';
 
       for (let i = 0; i < event.results.length; ++i) {
+        const transcript_part = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          final_transcript_from_event += event.results[i][0].transcript;
+          final_transcript += transcript_part;
         } else {
-          interim_transcript += event.results[i][0].transcript;
+          interim_transcript += transcript_part;
         }
       }
       
-      if(final_transcript_from_event) {
-        finalTranscriptRef.current = final_transcript_from_event;
-      }
-      setLiveTranscript(finalTranscriptRef.current + interim_transcript);
+      const newLiveTranscript = (final_transcript + interim_transcript).trim();
+      liveTranscriptRef.current = newLiveTranscript;
+      setLiveTranscript(newLiveTranscript);
     };
 
     recognition.onend = () => {
         setIsRecording(false);
-        if (finalTranscriptRef.current.trim()) {
-          performSearch(finalTranscriptRef.current.trim());
+        if (liveTranscriptRef.current.trim()) {
+          performSearch(liveTranscriptRef.current.trim());
         }
     };
     
@@ -230,7 +230,7 @@ export default function RecordPage() {
   const handleStartRecording = useCallback(() => {
     if (isRecording || !isSupported) return;
 
-    finalTranscriptRef.current = '';
+    liveTranscriptRef.current = '';
     setLiveTranscript('');
     setSearchError(null);
     setIsSearching(false);
@@ -527,7 +527,7 @@ export default function RecordPage() {
 
       <SoundWave isRecording={isRecording} />
 
-      <footer className="flex items-center justify-center py-2 border-t border-border flex-shrink-0 z-50">
+      <footer className="flex items-center justify-center p-2 border-t border-border flex-shrink-0 z-50">
         <div className="flex items-center justify-center gap-2">
             <Button 
                 variant="destructive" 
