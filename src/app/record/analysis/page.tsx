@@ -86,8 +86,8 @@ export default function AnalysisPage() {
     if (analysis) {
       return (
         <div dir="rtl">
-          <Card className="w-full overflow-hidden border-2 border-primary/10 shadow-lg bg-card">
-            <CardHeader className="bg-muted/30 p-6 text-right border-b border-border">
+          <Card className="w-full overflow-hidden border-2 border-primary/10 shadow-lg bg-black">
+            <CardHeader className="p-6 text-right border-b border-border">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
                   <CardTitle className="text-2xl font-bold text-foreground">تقرير تحليل التلاوة</CardTitle>
@@ -109,7 +109,7 @@ export default function AnalysisPage() {
                         <MessageSquareQuote className="h-6 w-6 text-primary" />
                         ملاحظات المعلم الآلي
                     </h3>
-                    <div className="bg-background p-4 rounded-lg border border-dashed border-border/70">
+                    <div className="bg-card p-4 rounded-lg border border-dashed border-border/70">
                       <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
                           {analysis.feedback}
                       </p>
@@ -121,7 +121,7 @@ export default function AnalysisPage() {
                         <BookText className="h-6 w-6 text-primary" />
                         النص الأصلي الذي تمت تلاوته
                     </h3>
-                    <div className="bg-background p-4 rounded-lg border border-border/70">
+                    <div className="bg-card p-4 rounded-lg border border-border/70">
                       <p className="font-arabic text-2xl leading-loose text-justify text-foreground">
                           {originalText}
                       </p>
@@ -137,20 +137,22 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
-      <header className="flex items-center mb-8 relative">
-        <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10" onClick={() => router.back()}>
-          <ChevronLeft className="h-6 w-6 rotate-180" />
-          <span className="sr-only">Back</span>
-        </Button>
-        <h1 className="text-2xl font-bold w-full text-center">تحليل التلاوة</h1>
-      </header>
-      <main>
-        {renderContent()}
-      </main>
-      <footer className="mt-12 text-center">
-        <Button onClick={() => router.push('/record')}>تسجيل آخر</Button>
-      </footer>
+    <div className="bg-black min-h-screen">
+      <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <header className="flex items-center mb-8 relative">
+          <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10" onClick={() => router.back()}>
+            <ChevronLeft className="h-6 w-6 rotate-180" />
+            <span className="sr-only">Back</span>
+          </Button>
+          <h1 className="text-2xl font-bold w-full text-center">تحليل التلاوة</h1>
+        </header>
+        <main>
+          {renderContent()}
+        </main>
+        <footer className="mt-12 text-center">
+          <Button onClick={() => router.push('/record')}>تسجيل آخر</Button>
+        </footer>
+      </div>
     </div>
   );
 }
