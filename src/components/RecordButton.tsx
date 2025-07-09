@@ -10,8 +10,9 @@ export function RecordButton() {
   const pathname = usePathname();
   const isSurahPage = pathname.startsWith('/surah/');
   const isRecordPage = pathname === '/record';
+  const isAnalysisPage = pathname.startsWith('/record/analysis');
 
-  if (isRecordPage) {
+  if (isRecordPage || isAnalysisPage) {
     return null;
   }
 
