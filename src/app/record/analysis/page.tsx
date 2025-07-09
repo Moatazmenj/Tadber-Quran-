@@ -89,17 +89,18 @@ export default function AnalysisPage() {
     if (analysis) {
       return (
         <div dir="rtl">
-          <Card className="w-full overflow-hidden shadow-lg bg-transparent border-0 relative">
-            <div className="absolute inset-0">
-                <Image
-                    src="https://i.postimg.cc/05BYGNLJ/muslim-1.png"
-                    layout="fill"
-                    objectFit="cover"
-                    alt="Decorative illustration background"
-                    className="opacity-20"
-                />
-                <div className="absolute inset-0 bg-black/50"></div>
+          <Card className="w-full overflow-hidden shadow-lg bg-card relative">
+            <div className="absolute top-0 right-0 h-28 w-28 pointer-events-none">
+              <Image
+                src="https://i.postimg.cc/05BYGNLJ/muslim-1.png"
+                width={112}
+                height={112}
+                alt="Decorative illustration"
+                className="opacity-20"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-card"></div>
             </div>
+
             <div className="relative z-10">
               <CardHeader className="p-6 text-right">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -153,10 +154,10 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="bg-black min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
         <header className="grid grid-cols-3 items-center mb-8">
-          <div className="justify-self-start opacity-0 pointer-events-none">
+          <div className="justify-self-start">
             <Image
               src="https://i.postimg.cc/05BYGNLJ/muslim-1.png"
               width={80}
