@@ -89,8 +89,8 @@ export default function AnalysisPage() {
     if (analysis) {
       return (
         <div dir="rtl">
-          <Card className="w-full overflow-hidden shadow-lg bg-card relative">
-            <div className="absolute top-0 right-0 h-28 w-28 pointer-events-none">
+          <Card className="w-full overflow-hidden shadow-lg bg-card relative border-none">
+            <div className="absolute top-0 left-0 h-28 w-28 pointer-events-none">
               <Image
                 src="https://i.postimg.cc/05BYGNLJ/muslim-1.png"
                 width={112}
@@ -98,7 +98,7 @@ export default function AnalysisPage() {
                 alt="Decorative illustration"
                 className="opacity-20"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-card"></div>
+              <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-transparent to-card"></div>
             </div>
 
             <div className="relative z-10">
