@@ -257,58 +257,41 @@ export default function RecordPage() {
         const versesForCurrentPage = verses.slice(startIndex, startIndex + versesPerPage);
         
         return (
-            <>
-                <div className="text-center text-muted-foreground mb-4 px-4">
-                    <p>Select a verse to begin your recitation practice.</p>
-                </div>
-                <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
-                  {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                      <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
-                  )}
-                  <div 
-                    dir="rtl" 
-                    className="font-arabic text-justify leading-loose"
-                    style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                  >
-                      {versesForCurrentPage.map((verse) => {
-                          const verseNumberStr = verse.verse_key.split(':')[1];
-                          const isSelected = selectedVerseKey === verse.verse_key;
-                          return (
-                              <span 
-                                key={verse.id} 
-                                id={`verse-${verseNumberStr}`} 
-                                className={cn(
-                                    "transition-colors duration-300 rounded-md p-1 scroll-mt-24 cursor-pointer hover:bg-primary/10",
-                                    isSelected && "bg-primary/20"
-                                )}
-                                onClick={() => handleVerseClick(verse.verse_key)}
-                              >
-                                  <span>{verse.text_uthmani}</span>
-                                  <span className="inline-block relative w-8 h-8 -mb-1 mx-1" style={{ fontSize: `${settings.fontSize * 0.55}px`}}>
-                                    <Octagon className="absolute h-full w-full text-primary/70" fill="currentColor" />
-                                    <span className="relative font-sans font-bold text-white flex items-center justify-center h-full">
-                                        {toArabicNumerals(String(verseNumberStr))}
-                                    </span>
-                                  </span>
-                                  {' '}
-                              </span>
-                          );
-                      })}
-                  </div>
-                </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center mt-4 px-4 w-full">
-                      <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
-                          <ChevronRight className="h-6 w-6" />
-                          <span className="sr-only">Previous Page</span>
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
-                          <ChevronLeft className="h-6 w-6" />
-                          <span className="sr-only">Next Page</span>
-                      </Button>
-                  </div>
+            <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+                {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                    <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                 )}
-            </>
+                <div 
+                  dir="rtl" 
+                  className="font-arabic text-justify leading-loose"
+                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                >
+                    {versesForCurrentPage.map((verse) => {
+                        const verseNumberStr = verse.verse_key.split(':')[1];
+                        const isSelected = selectedVerseKey === verse.verse_key;
+                        return (
+                            <span 
+                              key={verse.id} 
+                              id={`verse-${verseNumberStr}`} 
+                              className={cn(
+                                  "transition-colors duration-300 rounded-md p-1 scroll-mt-24 cursor-pointer hover:bg-primary/10",
+                                  isSelected && "bg-primary/20"
+                              )}
+                              onClick={() => handleVerseClick(verse.verse_key)}
+                            >
+                                <span>{verse.text_uthmani}</span>
+                                <span className="inline-block relative w-8 h-8 -mb-1 mx-1" style={{ fontSize: `${settings.fontSize * 0.55}px`}}>
+                                  <Octagon className="absolute h-full w-full text-primary/70" fill="currentColor" />
+                                  <span className="relative font-sans font-bold text-white flex items-center justify-center h-full">
+                                      {toArabicNumerals(String(verseNumberStr))}
+                                  </span>
+                                </span>
+                                {' '}
+                            </span>
+                        );
+                    })}
+                </div>
+            </div>
         )
     }
 
@@ -418,10 +401,31 @@ export default function RecordPage() {
         </div>
       )}
 
+      <div className="flex-grow flex flex-col items-center justify-start overflow-y-auto pt-4 relative">
+          <main className="w-full flex-grow flex flex-col items-center justify-start">
+            <div className="text-center text-muted-foreground mb-4 px-4">
+                <p>Select a verse to begin your recitation practice.</p>
+            </div>
+            {renderContent()}
+          </main>
+          {totalPages > 1 && (
+            <>
+              <div className="fixed left-0 md:left-2 top-1/2 -translate-y-1/2 z-30">
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                    <ChevronRight className="h-6 w-6" />
+                    <span className="sr-only">Previous Page</span>
+                </Button>
+              </div>
+              <div className="fixed right-0 md:right-2 top-1/2 -translate-y-1/2 z-30">
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
+                    <ChevronLeft className="h-6 w-6" />
+                    <span className="sr-only">Next Page</span>
+                </Button>
+              </div>
+            </>
+          )}
+      </div>
 
-      <main className="flex-grow flex flex-col items-center justify-start overflow-y-auto pt-4">
-        {renderContent()}
-      </main>
 
       <footer className="relative flex items-center justify-center px-4 pt-12 pb-4 flex-shrink-0 z-50 bg-gradient-to-t from-background to-transparent overflow-hidden">
         <SoundWave isRecording={isRecording} />
