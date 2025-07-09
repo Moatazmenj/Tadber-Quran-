@@ -8,7 +8,7 @@ import { ChevronLeft, Loader2, AlertCircle, Award, MessageSquareQuote } from 'lu
 import { getRecitationAnalysis } from '@/lib/actions';
 import type { AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const ANALYSIS_STORAGE_KEY = 'recitationAnalysisData';
 
@@ -28,9 +28,6 @@ export default function AnalysisPage() {
       return;
     }
 
-    // Clean up storage immediately
-    localStorage.removeItem(ANALYSIS_STORAGE_KEY);
-
     try {
       const { audioDataUri, originalText, surahName } = JSON.parse(storedData);
       setOriginalText(originalText);
@@ -47,6 +44,8 @@ export default function AnalysisPage() {
           setError(e.message || 'An unknown error occurred during analysis.');
         } finally {
           setIsLoading(false);
+          // Clean up storage after analysis attempt to prevent re-use
+          localStorage.removeItem(ANALYSIS_STORAGE_KEY);
         }
       };
       
@@ -56,6 +55,8 @@ export default function AnalysisPage() {
       console.error('Failed to parse analysis data', err);
       setError('Could not read recitation data. Please try again.');
       setIsLoading(false);
+      // Clean up potentially corrupt storage data
+      localStorage.removeItem(ANALYSIS_STORAGE_KEY);
     }
   }, []);
 
@@ -75,7 +76,7 @@ export default function AnalysisPage() {
         <Alert variant="destructive" className="max-w-lg mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Analysis Failed</AlertTitle>
-          <CardDescription>{error}</CardDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       );
     }
