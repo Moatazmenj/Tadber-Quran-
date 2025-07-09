@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ChevronLeft, Loader2, AlertCircle, Award, MessageSquareQuote } from 'lucide-react';
+import { ChevronLeft, Loader2, AlertCircle, MessageSquareQuote, BookText } from 'lucide-react';
 import { getRecitationAnalysis } from '@/lib/actions';
 import type { AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 import { Progress } from '@/components/ui/progress';
@@ -83,49 +83,48 @@ export default function AnalysisPage() {
 
     if (analysis) {
       return (
-        <div className="space-y-8" dir="rtl">
-          <Card>
-            <CardHeader className="text-right">
-                <div className="flex items-center gap-4">
-                    <Award className="h-8 w-8 text-primary" />
-                    <div>
-                        <CardTitle>تقييم التلاوة</CardTitle>
-                        <CardDescription>التقييم الإجمالي بناءً على تحليل الذكاء الاصطناعي.</CardDescription>
-                    </div>
+        <div dir="rtl">
+          <Card className="w-full overflow-hidden border-2 border-primary/10 shadow-lg bg-card">
+            <CardHeader className="bg-muted/30 p-6 text-right border-b border-border">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                  <CardTitle className="text-2xl font-bold text-foreground">تقرير تحليل التلاوة</CardTitle>
+                  <CardDescription>بناءً على تلاوتك لسورة {surahName}</CardDescription>
                 </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <span className="text-2xl font-bold text-primary">{analysis.score}%</span>
-                <Progress value={analysis.score} className="h-4 flex-grow" />
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/10 w-full sm:w-auto justify-center">
+                  <div className="text-right">
+                      <p className="text-sm font-medium text-primary">التقييم النهائي</p>
+                      <p className="text-4xl font-bold text-primary">{analysis.score}<span className="text-2xl text-primary/80">%</span></p>
+                  </div>
+                  <Progress value={analysis.score} className="w-24 h-3" />
+                </div>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="text-right">
-                <div className="flex items-center gap-4">
-                    <MessageSquareQuote className="h-8 w-8 text-primary" />
-                    <div>
-                        <CardTitle>ملاحظات المعلم الآلي</CardTitle>
-                        <CardDescription>تعليقات بناءة لمساعدتك على التحسين.</CardDescription>
+            </CardHeader>
+    
+            <CardContent className="p-6 md:p-8 space-y-8">
+                <div>
+                    <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-foreground">
+                        <MessageSquareQuote className="h-6 w-6 text-primary" />
+                        ملاحظات المعلم الآلي
+                    </h3>
+                    <div className="bg-background p-4 rounded-lg border border-dashed border-border/70">
+                      <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
+                          {analysis.feedback}
+                      </p>
                     </div>
                 </div>
-            </CardHeader>
-            <CardContent>
-              <p dir="rtl" className="text-lg leading-relaxed whitespace-pre-wrap font-arabic text-right">{analysis.feedback}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="text-right">
-                <CardTitle>النص الأصلي</CardTitle>
-                <CardDescription>الآية التي تلوتها من سورة {surahName}.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p dir="rtl" className="font-arabic text-2xl leading-loose text-justify text-foreground">
-                    {originalText}
-                </p>
+    
+                <div className="border-t border-border/50 pt-8">
+                    <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-foreground">
+                        <BookText className="h-6 w-6 text-primary" />
+                        النص الأصلي الذي تمت تلاوته
+                    </h3>
+                    <div className="bg-background p-4 rounded-lg border border-border/70">
+                      <p className="font-arabic text-2xl leading-loose text-justify text-foreground">
+                          {originalText}
+                      </p>
+                    </div>
+                </div>
             </CardContent>
           </Card>
         </div>
