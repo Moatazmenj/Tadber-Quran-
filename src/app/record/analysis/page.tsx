@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ChevronLeft, Loader2, AlertCircle, MessageSquareQuote, BookText } from 'lucide-react';
+import { ChevronLeft, Loader2, AlertCircle, MessageSquareQuote, BookText, RefreshCw } from 'lucide-react';
 import { getRecitationAnalysis } from '@/lib/actions';
 import type { AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 import { Progress } from '@/components/ui/progress';
@@ -20,7 +20,11 @@ export default function AnalysisPage() {
   const [originalText, setOriginalText] = useState('');
   const [surahName, setSurahName] = useState('');
 
-  useEffect(() => {
+  const performAnalysis = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setAnalysis(null);
+
     const storedData = localStorage.getItem(ANALYSIS_STORAGE_KEY);
     if (!storedData) {
       setError('لم يتم العثور على بيانات التلاوة. يرجى محاولة التسجيل مرة أخرى.');
@@ -33,32 +37,24 @@ export default function AnalysisPage() {
       setOriginalText(originalText);
       setSurahName(surahName);
 
-      const performAnalysis = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const result = await getRecitationAnalysis({ audioDataUri, originalText, surahName });
-          setAnalysis(result);
-        } catch (e: any) {
-          console.error('Analysis error:', e);
-          setError(e.message || 'حدث خطأ غير معروف أثناء التحليل.');
-        } finally {
-          setIsLoading(false);
-          // Clean up storage after analysis attempt to prevent re-use
-          localStorage.removeItem(ANALYSIS_STORAGE_KEY);
-        }
-      };
-      
-      performAnalysis();
+      const result = await getRecitationAnalysis({ audioDataUri, originalText, surahName });
+      setAnalysis(result);
 
-    } catch (err) {
-      console.error('Failed to parse analysis data', err);
-      setError('تعذر قراءة بيانات التلاوة. يرجى المحاولة مرة أخرى.');
-      setIsLoading(false);
-      // Clean up potentially corrupt storage data
+      // IMPORTANT: Clean up storage only on success
       localStorage.removeItem(ANALYSIS_STORAGE_KEY);
+
+    } catch (e: any) {
+      console.error('Analysis error:', e);
+      // Do not remove item from storage on error, to allow for retry.
+      setError(e.message || 'حدث خطأ غير معروف أثناء التحليل.');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    performAnalysis();
+  }, [performAnalysis]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -73,11 +69,17 @@ export default function AnalysisPage() {
 
     if (error) {
       return (
-        <Alert variant="destructive" className="max-w-lg mx-auto text-right" dir="rtl">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>فشل التحليل</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="max-w-lg mx-auto text-center" dir="rtl">
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>فشل التحليل</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button onClick={performAnalysis} className="mt-4">
+                إعادة المحاولة
+                <RefreshCw className="mr-2 h-4 w-4" />
+            </Button>
+        </div>
       );
     }
 

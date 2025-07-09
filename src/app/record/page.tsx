@@ -45,6 +45,7 @@ export default function RecordPage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -133,6 +134,7 @@ export default function RecordPage() {
         };
 
         mediaRecorderRef.current.onstop = () => {
+            setIsProcessing(true);
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
             const reader = new FileReader();
             
@@ -142,6 +144,7 @@ export default function RecordPage() {
                 streamRef.current = null;
               }
               setIsRecording(false);
+              setIsProcessing(false);
             };
 
             reader.onloadend = () => {
@@ -318,6 +321,12 @@ export default function RecordPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      {isProcessing && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-[100]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-lg text-foreground">...جاري معالجة تلاوتك</p>
+        </div>
+      )}
       <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 via-primary/20 to-transparent text-primary-foreground p-2">
         <div className="flex items-center justify-between w-full">
             <Link href="/" passHref>
@@ -421,7 +430,7 @@ export default function RecordPage() {
                 size="lg" 
                 className="w-16 h-16 rounded-full"
                 onClick={handleStartRecording}
-                disabled={isRecording || !isSupported}
+                disabled={isRecording || isProcessing || !isSupported}
             >
                 <Mic className="h-7 w-7" />
                 <span className="sr-only">Record</span>
@@ -431,7 +440,7 @@ export default function RecordPage() {
                 size="lg" 
                 className="w-14 h-14 rounded-full"
                 onClick={handleStopRecording}
-                disabled={!isRecording || !isSupported}
+                disabled={!isRecording || isProcessing || !isSupported}
             >
                 <Square className="h-6 w-6" />
                 <span className="sr-only">Stop</span>
