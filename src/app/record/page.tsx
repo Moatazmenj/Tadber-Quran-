@@ -39,7 +39,7 @@ export default function RecordPage() {
   const [verses, setVerses] = useState<UthmaniVerse[]>([]);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
-  const [selectedVerseKeys, setSelectedVerseKeys] = useState<Set<string>>(new Set());
+  const [selectedVerseKey, setSelectedVerseKey] = useState<string | null>(null);
   
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
@@ -73,7 +73,7 @@ export default function RecordPage() {
       setVerseFetchError(null);
       setVerses([]);
       setCurrentPage(0);
-      setSelectedVerseKeys(new Set());
+      setSelectedVerseKey(null);
       try {
         const response = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`);
         if (!response.ok) {
@@ -93,15 +93,9 @@ export default function RecordPage() {
   }, [selectedSurah]);
 
   const handleVerseClick = (verseKey: string) => {
-    setSelectedVerseKeys(prev => {
-        const newSelection = new Set(prev);
-        if (newSelection.has(verseKey)) {
-            newSelection.delete(verseKey);
-        } else {
-            newSelection.add(verseKey);
-        }
-        return newSelection;
-    });
+    // Allow selecting only one verse. Clicking another verse deselects the previous one.
+    // Clicking the same verse again will deselect it.
+    setSelectedVerseKey(prevKey => prevKey === verseKey ? null : verseKey);
   };
 
   const handleStopRecording = useCallback(() => {
@@ -114,11 +108,11 @@ export default function RecordPage() {
   const handleStartRecording = useCallback(async () => {
     if (isRecording || !isSupported) return;
 
-    if (selectedVerseKeys.size === 0) {
+    if (!selectedVerseKey) {
         toast({
             variant: 'destructive',
-            title: 'No Verses Selected',
-            description: 'Please select one or more verses to practice before recording.',
+            title: 'No Verse Selected',
+            description: 'Please select a verse to practice before recording.',
         });
         return;
     }
@@ -142,14 +136,8 @@ export default function RecordPage() {
             reader.onloadend = () => {
                 const base64Audio = reader.result as string;
                 
-                const sortedSelectedKeys = Array.from(selectedVerseKeys).sort((a, b) => {
-                    const [, aNum] = a.split(':');
-                    const [, bNum] = b.split(':');
-                    return parseInt(aNum) - parseInt(bNum);
-                });
-
-                const selectedVersesObjects = sortedSelectedKeys.map(key => verses.find(v => v.verse_key === key)).filter(Boolean) as UthmaniVerse[];
-                const originalText = selectedVersesObjects.map(v => v.text_uthmani).join(' ');
+                const selectedVerseObject = verses.find(v => v.verse_key === selectedVerseKey);
+                const originalText = selectedVerseObject?.text_uthmani;
 
                 if (!originalText || !selectedSurah) {
                     toast({ variant: 'destructive', title: 'Error', description: 'Could not get the Surah text to analyze.' });
@@ -185,7 +173,7 @@ export default function RecordPage() {
         toast({ variant: 'destructive', title: 'Microphone Error', description: 'Could not access microphone. Please check permissions and try again.' });
         setIsRecording(false);
     }
-  }, [isRecording, isSupported, verses, selectedSurah, router, toast, selectedVerseKeys]);
+  }, [isRecording, isSupported, verses, selectedSurah, router, toast, selectedVerseKey]);
 
   const renderContent = () => {
     if (!isSupported) {
@@ -237,7 +225,7 @@ export default function RecordPage() {
         return (
             <>
                 <div className="text-center text-muted-foreground mb-4 px-4">
-                    <p>Select one or more verses to begin your recitation practice.</p>
+                    <p>Select a verse to begin your recitation practice.</p>
                 </div>
                 <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                   {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
@@ -250,7 +238,7 @@ export default function RecordPage() {
                   >
                       {versesForCurrentPage.map((verse) => {
                           const verseNumberStr = verse.verse_key.split(':')[1];
-                          const isSelected = selectedVerseKeys.has(verse.verse_key);
+                          const isSelected = selectedVerseKey === verse.verse_key;
                           return (
                               <span 
                                 key={verse.id} 
@@ -330,7 +318,7 @@ export default function RecordPage() {
                                     setSelectedSurah(surah);
                                     setIsSheetOpen(false);
                                     setCurrentPage(0);
-                                    setSelectedVerseKeys(new Set());
+                                    setSelectedVerseKey(null);
                                 }}
                                 className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
                             >
