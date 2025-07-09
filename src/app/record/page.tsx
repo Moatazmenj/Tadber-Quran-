@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -427,7 +426,7 @@ export default function RecordPage() {
             <Button 
                 variant="destructive" 
                 size="lg" 
-                className="w-16 h-16 rounded-full"
+                className={cn("w-16 h-16 rounded-full", isRecording && "invisible")}
                 onClick={handleStartRecording}
                 disabled={isRecording || isProcessing || !isSupported}
             >
