@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -47,6 +48,7 @@ export default function RecordPage() {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     // Select Al-Fatiha by default
@@ -121,6 +123,7 @@ export default function RecordPage() {
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream; // Store stream in the ref
         mediaRecorderRef.current = new MediaRecorder(stream);
 
         mediaRecorderRef.current.ondataavailable = (event) => {
@@ -132,7 +135,15 @@ export default function RecordPage() {
         mediaRecorderRef.current.onstop = () => {
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
             const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
+            
+            const cleanup = () => {
+              if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+                streamRef.current = null;
+              }
+              setIsRecording(false);
+            };
+
             reader.onloadend = () => {
                 const base64Audio = reader.result as string;
                 
@@ -141,27 +152,45 @@ export default function RecordPage() {
 
                 if (!originalText || !selectedSurah) {
                     toast({ variant: 'destructive', title: 'Error', description: 'Could not get the Surah text to analyze.' });
+                    cleanup();
                     return;
                 }
 
-                // Store data in localStorage to pass to the analysis page
-                localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify({
-                    audioDataUri: base64Audio,
-                    originalText: originalText,
-                    surahName: selectedSurah.name,
-                }));
-
-                router.push('/record/analysis');
+                try {
+                  // Store data in localStorage to pass to the analysis page
+                  localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify({
+                      audioDataUri: base64Audio,
+                      originalText: originalText,
+                      surahName: selectedSurah.name,
+                  }));
+                  router.push('/record/analysis');
+                } catch (e) {
+                  console.error("Failed to save recording data to localStorage", e);
+                  toast({
+                    variant: 'destructive',
+                    title: 'Storage Error',
+                    description: 'Could not save the recording. Your device storage might be full.'
+                  });
+                  cleanup();
+                }
             };
             
-            // Clean up the stream tracks
-            stream.getTracks().forEach(track => track.stop());
-            setIsRecording(false);
+            reader.onerror = () => {
+              console.error('FileReader error');
+              toast({ variant: 'destructive', title: 'Processing Error', description: 'Could not process the recorded audio.' });
+              cleanup();
+            };
+
+            reader.readAsDataURL(audioBlob);
         };
         
         mediaRecorderRef.current.onerror = (event: Event) => {
             console.error('MediaRecorder error:', event);
             toast({ variant: 'destructive', title: 'Recording Error', description: 'Something went wrong during recording.' });
+            if (streamRef.current) {
+              streamRef.current.getTracks().forEach(track => track.stop());
+              streamRef.current = null;
+            }
             setIsRecording(false);
         };
 
