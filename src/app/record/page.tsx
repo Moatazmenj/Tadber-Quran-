@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -49,6 +49,7 @@ export default function RecordPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const isStoppingRef = useRef(false);
 
   useEffect(() => {
     // Select Al-Fatiha by default
@@ -102,14 +103,15 @@ export default function RecordPage() {
 
   const handleStopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
+      isStoppingRef.current = true;
       mediaRecorderRef.current.stop();
-      // onstop event will handle the rest
+      setIsRecording(false);
     }
   }, [isRecording]);
 
   const handleStartRecording = useCallback(async () => {
-    if (isRecording || !isSupported) return;
-
+    if (isRecording || !isSupported || isStoppingRef.current) return;
+  
     if (!selectedVerseKey) {
         toast({
             variant: 'destructive',
@@ -118,21 +120,24 @@ export default function RecordPage() {
         });
         return;
     }
-
-    audioChunksRef.current = []; // Clear previous chunks
-
+  
+    audioChunksRef.current = [];
+  
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        streamRef.current = stream; // Store stream in the ref
-        mediaRecorderRef.current = new MediaRecorder(stream);
-
-        mediaRecorderRef.current.ondataavailable = (event) => {
+        streamRef.current = stream;
+        
+        const recorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = recorder;
+  
+        recorder.ondataavailable = (event) => {
             if (event.data.size > 0) {
                 audioChunksRef.current.push(event.data);
             }
         };
-
-        mediaRecorderRef.current.onstop = () => {
+  
+        recorder.onstop = () => {
+            isStoppingRef.current = false;
             setIsProcessing(true);
             const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
             const reader = new FileReader();
@@ -142,24 +147,22 @@ export default function RecordPage() {
                 streamRef.current.getTracks().forEach(track => track.stop());
                 streamRef.current = null;
               }
-              setIsRecording(false);
               setIsProcessing(false);
             };
-
+  
             reader.onloadend = () => {
                 const base64Audio = reader.result as string;
                 
                 const selectedVerseObject = verses.find(v => v.verse_key === selectedVerseKey);
                 const originalText = selectedVerseObject?.text_uthmani;
-
+  
                 if (!originalText || !selectedSurah) {
                     toast({ variant: 'destructive', title: 'Error', description: 'Could not get the Surah text to analyze.' });
                     cleanup();
                     return;
                 }
-
+  
                 try {
-                  // Store data in localStorage to pass to the analysis page
                   localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify({
                       audioDataUri: base64Audio,
                       originalText: originalText,
@@ -182,11 +185,11 @@ export default function RecordPage() {
               toast({ variant: 'destructive', title: 'Processing Error', description: 'Could not process the recorded audio.' });
               cleanup();
             };
-
+  
             reader.readAsDataURL(audioBlob);
         };
         
-        mediaRecorderRef.current.onerror = (event: Event) => {
+        recorder.onerror = (event: Event) => {
             console.error('MediaRecorder error:', event);
             toast({ variant: 'destructive', title: 'Recording Error', description: 'Something went wrong during recording.' });
             if (streamRef.current) {
@@ -194,15 +197,15 @@ export default function RecordPage() {
               streamRef.current = null;
             }
             setIsRecording(false);
+            isStoppingRef.current = false;
         };
-
-        mediaRecorderRef.current.start();
+  
+        recorder.start();
         setIsRecording(true);
-
+  
     } catch (err) {
         console.error("Error starting recording:", err);
         toast({ variant: 'destructive', title: 'Microphone Error', description: 'Could not access microphone. Please check permissions and try again.' });
-        setIsRecording(false);
     }
   }, [isRecording, isSupported, verses, selectedSurah, router, toast, selectedVerseKey]);
 
@@ -281,11 +284,11 @@ export default function RecordPage() {
                                 onClick={() => handleVerseClick(verse.verse_key)}
                               >
                                   <span>{verse.text_uthmani}</span>
-                                  <span 
-                                      className="inline-block text-center mx-1 font-sans text-xs w-6 h-6 leading-6 rounded-full border-2 border-primary text-primary"
-                                      style={{ fontSize: `${settings.fontSize * 0.6}px` }}
-                                  >
-                                      {toArabicNumerals(String(verseNumberStr))}
+                                  <span className="inline-block relative w-8 h-8 -mb-1 mx-1" style={{ fontSize: `${settings.fontSize * 0.55}px`}}>
+                                    <Octagon className="absolute h-full w-full text-primary/70" fill="currentColor" />
+                                    <span className="relative font-sans font-bold text-white flex items-center justify-center h-full">
+                                        {toArabicNumerals(String(verseNumberStr))}
+                                    </span>
                                   </span>
                                   {' '}
                               </span>
