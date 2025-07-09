@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, Baseline } from 'lucide-react';
-import { cn, toArabicNumerals } from '@/lib/utils';
+import { cn, toArabicNumerals, normalizeArabic } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
 import { Card } from '@/components/ui/card';
@@ -17,17 +17,6 @@ import { Separator } from '@/components/ui/separator';
 import { SoundWave } from '@/components/SoundWave';
 
 // --- API Types ---
-interface ApiSearchResult {
-  verse_key: string;
-  text: string;
-}
-
-interface SearchApiResponse {
-  search: {
-    results: ApiSearchResult[];
-  }
-}
-
 interface UthmaniVerse {
   id: number;
   verse_key: string;
@@ -81,8 +70,8 @@ export default function RecordPage() {
     setIsSupported(!!isApiSupported);
   }, []);
 
-  const performSearch = useCallback(async (query: string) => {
-    if (query.trim().length < 3 || !selectedSurah) {
+  const performSearch = useCallback((query: string) => {
+    if (query.trim().length < 3 || !selectedSurah || verses.length === 0) {
       setSearchError(null);
       return;
     }
@@ -90,43 +79,40 @@ export default function RecordPage() {
     setIsSearching(true);
     setSearchError(null);
     setHighlightedVerseKey(null);
-    
-    try {
-      const response = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(query)}&language=ar`);
-      if (!response.ok) {
-        throw new Error("Could not reach the search service.");
+
+    // Use a timeout to allow the UI to update before the search logic runs
+    setTimeout(() => {
+      const normalizedQuery = normalizeArabic(query);
+
+      if (!normalizedQuery) {
+        setIsSearching(false);
+        return;
       }
 
-      const responseText = await response.text();
-      if (!responseText) {
-          setSearchError("No matching verse found in this Surah.");
-          setIsSearching(false);
-          return;
-      }
-      
-      const data: SearchApiResponse = JSON.parse(responseText);
-      
-      const resultInSurah = data.search.results.find(res => {
-          const [surahIdStr] = res.verse_key.split(':');
-          return parseInt(surahIdStr, 10) === selectedSurah.id;
-      });
+      const potentialMatches = verses
+        .map(verse => {
+          const normalizedVerseText = normalizeArabic(verse.text_uthmani);
+          if (normalizedVerseText.includes(normalizedQuery)) {
+            // Simple similarity score: prioritize matches where the query is a larger portion of the verse.
+            const score = normalizedQuery.length / normalizedVerseText.length;
+            return { verse, score };
+          }
+          return null;
+        })
+        .filter((match): match is { verse: UthmaniVerse; score: number } => match !== null);
 
-      if (resultInSurah) {
-        setHighlightedVerseKey(resultInSurah.verse_key);
+      if (potentialMatches.length > 0) {
+        // Sort by score descending to get the best match first
+        potentialMatches.sort((a, b) => b.score - a.score);
+        const bestMatch = potentialMatches[0];
+        setHighlightedVerseKey(bestMatch.verse.verse_key);
       } else {
         setSearchError("The recited verse was not found in the current Surah.");
       }
-    } catch (error) {
-      console.error('Verse search error:', error);
-      if (error instanceof SyntaxError) {
-        setSearchError("Received an invalid response from the search service. Please try again.");
-      } else {
-        setSearchError(error instanceof Error ? error.message : "An unknown error occurred during search.");
-      }
-    } finally {
+      
       setIsSearching(false);
-    }
-  }, [selectedSurah]);
+    }, 50);
+  }, [selectedSurah, verses]);
 
   useEffect(() => {
     if (highlightedVerseKey && verses.length > 0) {
@@ -195,17 +181,17 @@ export default function RecordPage() {
       let final_transcript = '';
       let interim_transcript = '';
 
+      // Rebuild the full transcript from scratch to avoid duplicates
       for (let i = 0; i < event.results.length; ++i) {
-        const transcript_part = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          final_transcript += transcript_part;
+          final_transcript += event.results[i][0].transcript + ' ';
         } else {
-          interim_transcript += transcript_part;
+          interim_transcript += event.results[i][0].transcript;
         }
       }
       
       const newLiveTranscript = (final_transcript + interim_transcript).trim();
-      liveTranscriptRef.current = newLiveTranscript;
+      liveTranscriptRef.current = final_transcript.trim(); // Store only the final part for search
       setLiveTranscript(newLiveTranscript);
     };
 
@@ -527,26 +513,26 @@ export default function RecordPage() {
 
       <SoundWave isRecording={isRecording} />
 
-      <footer className="flex items-center justify-center p-2 border-t border-border flex-shrink-0 z-50">
+      <footer className="flex items-center justify-center p-1 border-t border-border flex-shrink-0 z-50">
         <div className="flex items-center justify-center gap-2">
             <Button 
                 variant="destructive" 
                 size="lg" 
-                className="w-14 h-14 rounded-full"
+                className="w-12 h-12 rounded-full"
                 onClick={handleStartRecording}
                 disabled={isRecording || !isSupported}
             >
-                <Mic className="h-6 w-6" />
+                <Mic className="h-5 w-5" />
                 <span className="sr-only">Record</span>
             </Button>
             <Button 
                 variant="outline" 
                 size="icon" 
-                className="w-11 h-11 rounded-full"
+                className="w-10 h-10 rounded-full"
                 onClick={handleStopRecording}
                 disabled={!isRecording || !isSupported}
             >
-                <Square className="h-5 w-5" />
+                <Square className="h-4 w-4" />
                 <span className="sr-only">Stop</span>
             </Button>
         </div>
