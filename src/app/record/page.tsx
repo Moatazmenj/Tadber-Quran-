@@ -421,10 +421,9 @@ export default function RecordPage() {
         {renderContent()}
       </main>
 
-      <SoundWave isRecording={isRecording} />
-
-      <footer className="flex items-center justify-center p-2 border-t border-border flex-shrink-0 z-50">
-        <div className="flex items-center justify-center gap-4">
+      <footer className="relative flex items-center justify-center p-4 border-t border-border flex-shrink-0 z-50 bg-background overflow-hidden">
+        <SoundWave isRecording={isRecording} />
+        <div className="relative z-10 flex items-center justify-center gap-4">
             <Button 
                 variant="destructive" 
                 size="lg" 

@@ -10,17 +10,18 @@ export function SoundWave({ isRecording }: SoundWaveProps) {
   return (
     <div
       className={cn(
-        'fixed bottom-[72px] left-0 right-0 flex justify-center items-center h-12 pointer-events-none transition-opacity duration-300 z-40',
+        'absolute inset-0 flex justify-center items-center h-full w-full pointer-events-none transition-opacity duration-300 overflow-hidden',
         isRecording ? 'opacity-100' : 'opacity-0'
       )}
     >
-      <div className="flex items-center justify-center space-x-1.5 h-full">
-        {Array.from({ length: 24 }).map((_, i) => (
+      <div className="flex items-end justify-center space-x-1.5 h-full">
+        {Array.from({ length: 40 }).map((_, i) => (
           <div
             key={i}
-            className="w-1 h-1 bg-primary rounded-full animate-wave origin-bottom"
+            className="w-1.5 h-1 bg-primary/70 rounded-full animate-wave origin-bottom"
             style={{
-              animationDelay: `${i * 0.05}s`,
+              animationDelay: `${i * 0.04}s`,
+              animationDuration: '1.5s',
             }}
           ></div>
         ))}

@@ -91,7 +91,7 @@ export default {
         },
         'wave': {
           '0%, 100%': { transform: 'scaleY(1)' },
-          '50%': { transform: 'scaleY(6)' },
+          '50%': { transform: 'scaleY(10)' },
         },
       },
       animation: {
