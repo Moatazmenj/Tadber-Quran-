@@ -89,7 +89,7 @@ export default function AnalysisPage() {
     if (analysis) {
       return (
         <div dir="rtl">
-          <Card className="w-full overflow-hidden shadow-lg bg-card relative border-none">
+          <Card className="w-full overflow-hidden shadow-lg bg-transparent relative border-none">
             <div className="absolute top-0 left-0 h-28 w-28 pointer-events-none">
               <Image
                 src="https://i.postimg.cc/05BYGNLJ/muslim-1.png"
@@ -111,7 +111,7 @@ export default function AnalysisPage() {
                   <div className="flex items-center gap-4 p-3 rounded-lg bg-primary/10 w-full sm:w-auto justify-center">
                     <div className="text-right">
                         <p className="text-sm font-medium text-primary">التقييم النهائي</p>
-                        <p className="text-4xl font-bold text-primary">{analysis.score}<span className="text-2xl text-primary/80">%</span></p>
+                        <p className="text-4xl font-bold text-primary">{analysis.score}</p>
                     </div>
                     <Progress value={analysis.score} className="w-24 h-3" />
                   </div>
@@ -119,7 +119,7 @@ export default function AnalysisPage() {
               </CardHeader>
       
               <CardContent className="p-6 md:p-8 space-y-8">
-                  <div>
+                  <div className="bg-transparent">
                       <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-foreground">
                           <MessageSquareQuote className="h-6 w-6 text-primary" />
                           ملاحظات المعلم الآلي
@@ -129,7 +129,7 @@ export default function AnalysisPage() {
                       </p>
                   </div>
       
-                  <div>
+                  <div className="bg-transparent">
                       <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-foreground">
                           <BookText className="h-6 w-6 text-primary" />
                           النص الأصلي الذي تمت تلاوته
@@ -157,7 +157,8 @@ export default function AnalysisPage() {
     <div className="bg-background min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
         <header className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-center w-full">تحليل التلاوة</h1>
+          <div className="w-10 h-10"></div>
+          <h1 className="text-2xl font-bold text-center flex-grow">تحليل التلاوة</h1>
           <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.back()}>
               <ChevronLeft className="h-6 w-6 rotate-180" />
               <span className="sr-only">Back</span>
