@@ -4,7 +4,6 @@
 import { Play, Pause, SkipBack, SkipForward, Headphones } from 'lucide-react';
 import { Button } from './ui/button';
 import type { Surah } from '@/types';
-import { Card } from './ui/card';
 
 interface AudioPlayerBarProps {
   surah: Surah;
@@ -27,7 +26,7 @@ export function AudioPlayerBar({
 }: AudioPlayerBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
-      <Card className="bg-card/90 backdrop-blur-md p-3 flex items-center justify-between border-border/20 shadow-2xl">
+      <div className="bg-gradient-to-t from-card to-transparent p-3 rounded-lg flex items-center justify-between shadow-2xl border-x border-b border-border/20">
         <div className="flex items-center gap-3 min-w-0">
             <div className="flex-shrink-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full h-10 w-10">
                 <Headphones className="h-5 w-5" />
@@ -49,7 +48,7 @@ export function AudioPlayerBar({
             <SkipForward className="h-5 w-5" />
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
