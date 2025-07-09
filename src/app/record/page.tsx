@@ -420,7 +420,7 @@ export default function RecordPage() {
         {renderContent()}
       </main>
 
-      <footer className="relative flex items-center justify-center p-4 border-t border-border flex-shrink-0 z-50 bg-background overflow-hidden">
+      <footer className="relative flex items-center justify-center px-4 pt-12 pb-4 flex-shrink-0 z-50 bg-gradient-to-t from-background to-transparent overflow-hidden">
         <SoundWave isRecording={isRecording} />
         <div className="relative z-10 flex items-center justify-center gap-4">
             <Button 
@@ -436,7 +436,7 @@ export default function RecordPage() {
             <Button 
                 variant="outline" 
                 size="lg" 
-                className="w-14 h-14 rounded-full"
+                className={cn("w-14 h-14 rounded-full", !isRecording && "invisible")}
                 onClick={handleStopRecording}
                 disabled={!isRecording || isProcessing || !isSupported}
             >
