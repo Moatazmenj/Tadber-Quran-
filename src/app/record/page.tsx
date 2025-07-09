@@ -178,21 +178,14 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
     
     recognition.onresult = (event: any) => {
-      let final_transcript = '';
-      let interim_transcript = '';
-
-      // Rebuild the full transcript from scratch to avoid duplicates
-      for (let i = 0; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          final_transcript += event.results[i][0].transcript + ' ';
-        } else {
-          interim_transcript += event.results[i][0].transcript;
-        }
-      }
+      // Create the full transcript from all results so far
+      const fullTranscript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
       
-      const newLiveTranscript = (final_transcript + interim_transcript).trim();
-      liveTranscriptRef.current = final_transcript.trim(); // Store only the final part for search
-      setLiveTranscript(newLiveTranscript);
+      setLiveTranscript(fullTranscript);
+      liveTranscriptRef.current = fullTranscript; // Store the latest full transcript for search
     };
 
     recognition.onend = () => {
@@ -269,10 +262,10 @@ export default function RecordPage() {
 
     if (isRecording) {
       return (
-        <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+        <div className="w-full max-w-5xl flex-grow p-4 md:p-6 flex items-start justify-center" style={{minHeight: '60vh'}}>
              <div 
               dir="rtl" 
-              className="font-arabic text-justify leading-loose"
+              className="font-arabic text-justify leading-loose w-full"
               style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
             >
                 <p>
@@ -344,7 +337,6 @@ export default function RecordPage() {
                       >
                           {versesForCurrentPage.map((verse) => {
                               const verseNumberStr = verse.verse_key.split(':')[1];
-                              const verseNumberDisplay = toArabicNumerals(String(verseNumberStr));
                               const isHighlighted = verse.verse_key === highlightedVerseKey;
 
                               return (
@@ -352,11 +344,10 @@ export default function RecordPage() {
                                     key={verse.id} 
                                     id={`verse-${verseNumberStr}`} 
                                     className={cn(
-                                        "transition-colors duration-500 rounded-md p-1 scroll-mt-24",
-                                        isHighlighted && "bg-primary/20"
+                                        "transition-colors duration-500 rounded-md p-1 scroll-mt-24"
                                     )}
                                   >
-                                      <span>
+                                      <span className={cn(isHighlighted && "bg-primary/20")}>
                                         {verse.text_uthmani}
                                       </span>
                                       <span 
@@ -367,7 +358,7 @@ export default function RecordPage() {
                                           )}
                                           style={{ fontSize: `${settings.fontSize * 0.6}px` }}
                                       >
-                                          {verseNumberDisplay}
+                                          {toArabicNumerals(String(verseNumberStr))}
                                       </span>
                                       {' '}
                                   </span>
@@ -507,7 +498,7 @@ export default function RecordPage() {
       )}
 
 
-      <main className="flex-grow flex flex-col items-center overflow-y-auto">
+      <main className="flex-grow flex flex-col items-center justify-center overflow-y-auto">
         {renderContent()}
       </main>
 
