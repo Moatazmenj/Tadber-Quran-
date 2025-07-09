@@ -97,7 +97,7 @@ export default function RecordPage() {
   const handleVerseClick = (verseKey: string) => {
     // Allow selecting only one verse. Clicking another verse deselects the previous one.
     // Clicking the same verse again will deselect it.
-    setSelectedVerseKey(prevKey => prevKey === verseKey ? null : verseKey);
+    setSelectedVerseKey(prevKey => prevKey === verseKey ? null : prevKey);
   };
 
   const handleStopRecording = useCallback(() => {
@@ -425,13 +425,13 @@ export default function RecordPage() {
         <div className="relative z-10 flex items-center justify-center">
             {isRecording ? (
                 <Button 
-                    variant="outline" 
+                    variant="ghost" 
                     size="lg" 
-                    className="w-14 h-14 rounded-full"
+                    className="w-16 h-16 rounded-full text-primary-foreground hover:bg-transparent hover:text-primary-foreground/80 -translate-y-2"
                     onClick={handleStopRecording}
                     disabled={!isRecording || isProcessing || !isSupported}
                 >
-                    <Square className="h-6 w-6" />
+                    <Square className="h-7 w-7 fill-current" />
                     <span className="sr-only">Stop</span>
                 </Button>
             ) : (
