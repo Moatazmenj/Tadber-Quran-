@@ -9,11 +9,13 @@ import { getRecitationAnalysis } from '@/lib/actions';
 import type { AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
 
 const ANALYSIS_STORAGE_KEY = 'recitationAnalysisData';
 
 export default function AnalysisPage() {
   const router = useRouter();
+  const { settings } = useQuranSettings();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeRecitationOutput | null>(null);
@@ -122,7 +124,10 @@ export default function AnalysisPage() {
                         النص الأصلي الذي تمت تلاوته
                     </h3>
                     <div className="bg-card p-4 rounded-lg border border-border/70">
-                      <p className="font-arabic text-2xl leading-loose text-justify text-foreground">
+                      <p
+                        className="font-arabic leading-loose text-justify text-foreground"
+                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                      >
                           {originalText}
                       </p>
                     </div>
