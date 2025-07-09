@@ -97,7 +97,7 @@ export default function RecordPage() {
   const handleVerseClick = (verseKey: string) => {
     // Allow selecting only one verse. Clicking another verse deselects the previous one.
     // Clicking the same verse again will deselect it.
-    setSelectedVerseKey(prevKey => prevKey === verseKey ? null : prevKey);
+    setSelectedVerseKey(prevKey => prevKey === verseKey ? null : verseKey);
   };
 
   const handleStopRecording = useCallback(() => {
