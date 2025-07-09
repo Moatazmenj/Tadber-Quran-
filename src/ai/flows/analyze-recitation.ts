@@ -22,8 +22,8 @@ const AnalyzeRecitationInputSchema = z.object({
 export type AnalyzeRecitationInput = z.infer<typeof AnalyzeRecitationInputSchema>;
 
 const AnalyzeRecitationOutputSchema = z.object({
-  feedback: z.string().describe("Detailed feedback on the user's recitation, including comments on pronunciation (Makharij), rules of Tajweed, and any mistakes made. The feedback should be constructive and encouraging."),
-  score: z.number().min(0).max(100).describe("An overall score from 0 to 100 representing the accuracy of the recitation."),
+  feedback: z.string().describe("ملاحظات تفصيلية وبناءة باللغة العربية حول تلاوة المستخدم، تشمل التعليقات على مخارج الحروف، أحكام التجويد، والأخطاء التي تم ارتكابها مع كيفية تصحيحها."),
+  score: z.number().min(0).max(100).describe("تقييم رقمي إجمالي من 0 إلى 100 يمثل دقة التلاوة."),
 });
 export type AnalyzeRecitationOutput = z.infer<typeof AnalyzeRecitationOutputSchema>;
 
@@ -35,20 +35,20 @@ const prompt = ai.definePrompt({
   name: 'analyzeRecitationPrompt',
   input: {schema: AnalyzeRecitationInputSchema},
   output: {schema: AnalyzeRecitationOutputSchema},
-  prompt: `You are an expert Quran teacher specializing in Tajweed. Your task is to analyze a user's recitation of a Quranic passage and provide detailed, constructive feedback.
+  prompt: `أنت معلم قرآن خبير متخصص في علم التجويد. مهمتك هي تحليل تلاوة المستخدم لمقطع من القرآن وتقديم ملاحظات مفصلة وبناءة باللغة العربية الفصحى. يجب أن تستند في تحليلك إلى قواعد التجويد المعتمدة من مصادر موثوقة مثل "متن تحفة الأطفال" و"متن الجزرية".
 
-  The user is reciting from Surah: {{surahName}}.
+  المستخدم يتلو من سورة: {{surahName}}.
 
-  Here is the original Arabic text they were supposed to recite:
+  هذا هو النص العربي الأصلي الذي كان من المفترض أن يتلوه:
   "{{originalText}}"
 
-  Listen carefully to the user's recitation provided in the audio input. Compare it against the original text.
+  استمع بعناية لتلاوة المستخدم الموجودة في الملف الصوتي. قارنها بالنص الأصلي.
 
-  Provide your analysis in the following format:
-  1.  **Feedback:** Give detailed feedback on their pronunciation (Makharij), application of Tajweed rules (e.g., Idgham, Ikhfa, Qalqalah), fluency, and rhythm. Point out specific words where mistakes were made and explain how to correct them. Be encouraging and supportive.
-  2.  **Score:** Assign an overall score out of 100 for accuracy.
+  قدم تحليلك باللغة العربية و بالنسق التالي:
+  1.  **الملاحظات:** قدم ملاحظات تفصيلية حول مخارج الحروف، تطبيق أحكام التجويد (مثل الإدغام، الإخفاء، القلقلة)، سلاسة التلاوة، والإيقاع. أشر إلى الكلمات المحددة التي حدثت فيها أخطاء واشرح كيفية تصحيحها. كن مشجعًا وداعمًا.
+  2.  **التقييم:** أعطِ تقييمًا إجماليًا من 100 لمدى دقة التلاوة.
 
-  User's recitation audio: {{media url=audioDataUri}}`,
+  صوت تلاوة المستخدم: {{media url=audioDataUri}}`,
   config: {
     safetySettings: [
       {

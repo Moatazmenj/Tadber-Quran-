@@ -23,7 +23,7 @@ export default function AnalysisPage() {
   useEffect(() => {
     const storedData = localStorage.getItem(ANALYSIS_STORAGE_KEY);
     if (!storedData) {
-      setError('No recitation data found. Please try recording again.');
+      setError('لم يتم العثور على بيانات التلاوة. يرجى محاولة التسجيل مرة أخرى.');
       setIsLoading(false);
       return;
     }
@@ -41,7 +41,7 @@ export default function AnalysisPage() {
           setAnalysis(result);
         } catch (e: any) {
           console.error('Analysis error:', e);
-          setError(e.message || 'An unknown error occurred during analysis.');
+          setError(e.message || 'حدث خطأ غير معروف أثناء التحليل.');
         } finally {
           setIsLoading(false);
           // Clean up storage after analysis attempt to prevent re-use
@@ -53,7 +53,7 @@ export default function AnalysisPage() {
 
     } catch (err) {
       console.error('Failed to parse analysis data', err);
-      setError('Could not read recitation data. Please try again.');
+      setError('تعذر قراءة بيانات التلاوة. يرجى المحاولة مرة أخرى.');
       setIsLoading(false);
       // Clean up potentially corrupt storage data
       localStorage.removeItem(ANALYSIS_STORAGE_KEY);
@@ -65,17 +65,17 @@ export default function AnalysisPage() {
       return (
         <div className="flex flex-col items-center justify-center text-center p-8 gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h2 className="text-2xl font-bold">Analyzing Your Recitation...</h2>
-          <p className="text-muted-foreground">This may take a moment. An expert AI is reviewing your Tajweed.</p>
+          <h2 className="text-2xl font-bold">...جاري تحليل تلاوتك</h2>
+          <p className="text-muted-foreground">قد يستغرق هذا بعض الوقت. يقوم خبير ذكاء اصطناعي بمراجعة تجويدك.</p>
         </div>
       );
     }
 
     if (error) {
       return (
-        <Alert variant="destructive" className="max-w-lg mx-auto">
+        <Alert variant="destructive" className="max-w-lg mx-auto text-right" dir="rtl">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Analysis Failed</AlertTitle>
+          <AlertTitle>فشل التحليل</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       );
@@ -83,44 +83,44 @@ export default function AnalysisPage() {
 
     if (analysis) {
       return (
-        <div className="space-y-8">
+        <div className="space-y-8" dir="rtl">
           <Card>
-            <CardHeader>
+            <CardHeader className="text-right">
                 <div className="flex items-center gap-4">
                     <Award className="h-8 w-8 text-primary" />
                     <div>
-                        <CardTitle>Recitation Score</CardTitle>
-                        <CardDescription>Your overall accuracy based on AI analysis.</CardDescription>
+                        <CardTitle>تقييم التلاوة</CardTitle>
+                        <CardDescription>التقييم الإجمالي بناءً على تحليل الذكاء الاصطناعي.</CardDescription>
                     </div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
-                <Progress value={analysis.score} className="h-4" />
                 <span className="text-2xl font-bold text-primary">{analysis.score}%</span>
+                <Progress value={analysis.score} className="h-4 flex-grow" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader>
+            <CardHeader className="text-right">
                 <div className="flex items-center gap-4">
                     <MessageSquareQuote className="h-8 w-8 text-primary" />
                     <div>
-                        <CardTitle>AI Teacher Feedback</CardTitle>
-                        <CardDescription>Constructive comments to help you improve.</CardDescription>
+                        <CardTitle>ملاحظات المعلم الآلي</CardTitle>
+                        <CardDescription>تعليقات بناءة لمساعدتك على التحسين.</CardDescription>
                     </div>
                 </div>
             </CardHeader>
             <CardContent>
-              <p className="text-lg leading-relaxed whitespace-pre-wrap font-body">{analysis.feedback}</p>
+              <p dir="rtl" className="text-lg leading-relaxed whitespace-pre-wrap font-arabic text-right">{analysis.feedback}</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-                <CardTitle>Original Text</CardTitle>
-                <CardDescription>The verses you recited from Surah {surahName}.</CardDescription>
+            <CardHeader className="text-right">
+                <CardTitle>النص الأصلي</CardTitle>
+                <CardDescription>الآية التي تلوتها من سورة {surahName}.</CardDescription>
             </CardHeader>
             <CardContent>
                 <p dir="rtl" className="font-arabic text-2xl leading-loose text-justify text-foreground">
@@ -138,17 +138,17 @@ export default function AnalysisPage() {
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
       <header className="flex items-center mb-8 relative">
-        <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10" onClick={() => router.back()}>
-          <ChevronLeft className="h-6 w-6" />
+        <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10" onClick={() => router.back()}>
+          <ChevronLeft className="h-6 w-6 rotate-180" />
           <span className="sr-only">Back</span>
         </Button>
-        <h1 className="text-2xl font-bold w-full text-center">Recitation Analysis</h1>
+        <h1 className="text-2xl font-bold w-full text-center">تحليل التلاوة</h1>
       </header>
       <main>
         {renderContent()}
       </main>
       <footer className="mt-12 text-center">
-        <Button onClick={() => router.push('/record')}>Record Another</Button>
+        <Button onClick={() => router.push('/record')}>تسجيل آخر</Button>
       </footer>
     </div>
   );
