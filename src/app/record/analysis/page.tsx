@@ -167,9 +167,6 @@ export default function AnalysisPage() {
         <main>
           {renderContent()}
         </main>
-        <footer className="mt-12 text-center">
-          <Button onClick={() => router.push('/record')}>تسجيل آخر</Button>
-        </footer>
       </div>
     </div>
   );
