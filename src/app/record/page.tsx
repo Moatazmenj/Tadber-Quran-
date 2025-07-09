@@ -199,17 +199,20 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
 
     recognition.onresult = (event: any) => {
+      let final_transcript = '';
       let interim_transcript = '';
 
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+      for (let i = 0; i < event.results.length; ++i) {
+        const transcript_piece = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscriptRef.current += event.results[i][0].transcript + ' ';
+          final_transcript += transcript_piece;
         } else {
-          interim_transcript += event.results[i][0].transcript;
+          interim_transcript += transcript_piece;
         }
       }
       
-      setLiveTranscript(finalTranscriptRef.current + interim_transcript);
+      finalTranscriptRef.current = final_transcript.trim();
+      setLiveTranscript(final_transcript + interim_transcript);
     };
 
     recognition.onend = () => {
