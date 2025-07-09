@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
+import { SoundWave } from '@/components/SoundWave';
 
 // --- API Types ---
 interface ApiSearchResult {
@@ -61,12 +62,7 @@ export default function RecordPage() {
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   
-  const stoppingRef = useRef(false);
-
-  const isRecordingRef = useRef(isRecording);
-  useEffect(() => {
-    isRecordingRef.current = isRecording;
-  }, [isRecording]);
+  const finalTranscriptRef = useRef('');
 
   useEffect(() => {
     // Select Al-Fatiha by default
@@ -77,11 +73,12 @@ export default function RecordPage() {
   }, []);
 
   useEffect(() => {
-    const isSupported = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (isSupported) {
+    const isClient = typeof window !== 'undefined';
+    const isApiSupported = isClient && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (isApiSupported) {
         SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     }
-    setIsSupported(!!isSupported);
+    setIsSupported(!!isApiSupported);
   }, []);
 
   const performSearch = useCallback(async (query: string) => {
@@ -194,27 +191,28 @@ export default function RecordPage() {
     recognition.interimResults = true;
     recognition.lang = 'ar-SA';
     
-    let finalTranscript = '';
-
     recognition.onresult = (event: any) => {
       let interim_transcript = '';
-      finalTranscript = '';
+      let final_transcript_from_event = '';
 
       for (let i = 0; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          final_transcript_from_event += event.results[i][0].transcript;
         } else {
           interim_transcript += event.results[i][0].transcript;
         }
       }
       
-      setLiveTranscript(finalTranscript + interim_transcript);
+      if(final_transcript_from_event) {
+        finalTranscriptRef.current = final_transcript_from_event;
+      }
+      setLiveTranscript(finalTranscriptRef.current + interim_transcript);
     };
 
     recognition.onend = () => {
         setIsRecording(false);
-        if (finalTranscript.trim()) {
-          performSearch(finalTranscript.trim());
+        if (finalTranscriptRef.current.trim()) {
+          performSearch(finalTranscriptRef.current.trim());
         }
     };
     
@@ -232,18 +230,18 @@ export default function RecordPage() {
   const handleStartRecording = useCallback(() => {
     if (isRecording || !isSupported) return;
 
+    finalTranscriptRef.current = '';
     setLiveTranscript('');
     setSearchError(null);
     setIsSearching(false);
     setHighlightedVerseKey(null);
-    
-    setIsRecording(true);
     
     const recognition = setupRecognition();
     if (recognition) {
         recognitionRef.current = recognition;
         try {
           recognitionRef.current?.start();
+          setIsRecording(true);
         } catch (e) {
           console.error("Error starting recognition:", e);
           setIsRecording(false);
@@ -258,6 +256,7 @@ export default function RecordPage() {
   const handleStopRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop();
+      setIsRecording(false); // Manually set to false here as onend might take time
     }
   }, [isRecording]);
 
@@ -287,7 +286,7 @@ export default function RecordPage() {
         <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
              <div 
               dir="rtl" 
-              className="font-arabic text-justify"
+              className="font-arabic text-justify leading-loose"
               style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
             >
                 <p>
@@ -360,7 +359,6 @@ export default function RecordPage() {
                           {versesForCurrentPage.map((verse) => {
                               const verseNumberStr = verse.verse_key.split(':')[1];
                               const verseNumberDisplay = toArabicNumerals(String(verseNumberStr));
-                              const verseEndSymbol = `\u06dd${verseNumberDisplay}`;
                               const isHighlighted = verse.verse_key === highlightedVerseKey;
 
                               return (
@@ -377,12 +375,13 @@ export default function RecordPage() {
                                       </span>
                                       <span 
                                           className={cn(
-                                            "text-primary font-sans font-normal mx-1",
-                                            isHighlighted && "bg-primary text-primary-foreground rounded-full px-1"
+                                            "inline-block text-center mx-1 font-sans text-xs w-6 h-6 leading-6 rounded-full",
+                                            "border-2 border-primary text-primary",
+                                            isHighlighted && "bg-primary text-primary-foreground"
                                           )}
-                                          style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                          style={{ fontSize: `${settings.fontSize * 0.6}px` }}
                                       >
-                                          {verseEndSymbol}
+                                          {verseNumberDisplay}
                                       </span>
                                       {' '}
                                   </span>
@@ -526,8 +525,10 @@ export default function RecordPage() {
         {renderContent()}
       </main>
 
-      <footer className="flex items-center justify-center py-3 border-t border-border flex-shrink-0">
-        <div className="flex items-center justify-center gap-4">
+      <SoundWave isRecording={isRecording} />
+
+      <footer className="flex items-center justify-center py-2 border-t border-border flex-shrink-0 z-50">
+        <div className="flex items-center justify-center gap-2">
             <Button 
                 variant="destructive" 
                 size="lg" 
