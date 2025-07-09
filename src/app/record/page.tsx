@@ -205,7 +205,7 @@ export default function RecordPage() {
       for (let i = 0; i < event.results.length; ++i) {
         const transcript_piece = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          final_transcript += transcript_piece;
+          final_transcript += transcript_piece + ' ';
         } else {
           interim_transcript += transcript_piece;
         }
