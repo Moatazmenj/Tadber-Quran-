@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -323,9 +323,12 @@ export default function RecordPage() {
 
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
-                    <div className="text-center cursor-pointer p-2 rounded-md hover:bg-primary/80">
-                        <p className="font-bold text-lg">{selectedSurah ? `${selectedSurah.id}. ${selectedSurah.name}` : 'Select Surah'}</p>
-                        {selectedSurah && <p className="text-sm opacity-80">{selectedSurah.revelationPlace} - {selectedSurah.versesCount} verses</p>}
+                    <div className="flex items-center justify-center gap-2 text-center cursor-pointer p-2 rounded-md hover:bg-primary/80">
+                        <div>
+                            <p className="font-bold text-lg">{selectedSurah ? `${selectedSurah.id}. ${selectedSurah.name}` : 'Select Surah'}</p>
+                            {selectedSurah && <p className="text-sm opacity-80">{selectedSurah.revelationPlace} - {selectedSurah.versesCount} verses</p>}
+                        </div>
+                        <ChevronDown className="h-5 w-5" />
                     </div>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[80vh] flex flex-col">
@@ -411,13 +414,13 @@ export default function RecordPage() {
           {totalPages > 1 && (
             <>
               <div className="fixed left-0 md:left-2 top-1/2 -translate-y-1/2 z-30">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full backdrop-blur-sm bg-background/20" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
                     <ChevronRight className="h-6 w-6" />
                     <span className="sr-only">Previous Page</span>
                 </Button>
               </div>
               <div className="fixed right-0 md:right-2 top-1/2 -translate-y-1/2 z-30">
-                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
+                <Button variant="ghost" size="icon" className="h-12 w-12 rounded-full backdrop-blur-sm bg-background/20" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
                     <ChevronLeft className="h-6 w-6" />
                     <span className="sr-only">Next Page</span>
                 </Button>
@@ -458,3 +461,5 @@ export default function RecordPage() {
     </div>
   );
 }
+
+    
