@@ -1,22 +1,23 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, BookOpen, AlertCircle, List, ChevronRight, Info, Baseline } from 'lucide-react';
-import { cn, toArabicNumerals, normalizeArabic } from '@/lib/utils';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline } from 'lucide-react';
+import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
-import { Card } from '@/components/ui/card';
 import type { Surah } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { SoundWave } from '@/components/SoundWave';
+import { useToast } from '@/hooks/use-toast';
 
-// --- API Types ---
+const ANALYSIS_STORAGE_KEY = 'recitationAnalysisData';
+
 interface UthmaniVerse {
   id: number;
   verse_key: string;
@@ -26,32 +27,25 @@ interface UthmaniVerse {
 interface UthmaniVerseApiResponse {
     verses: UthmaniVerse[];
 }
-// --- End of API Types ---
-
-let SpeechRecognitionAPI: any = null;
-
 
 export default function RecordPage() {
+  const router = useRouter();
+  const { toast } = useToast();
   const { settings, setSetting } = useQuranSettings();
   const [isRecording, setIsRecording] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
-  const [liveTranscript, setLiveTranscript] = useState('');
-  
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
   
   const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
   const [verses, setVerses] = useState<UthmaniVerse[]>([]);
   const [isLoadingVerses, setIsLoadingVerses] = useState(false);
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
+  
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [highlightedVerseKey, setHighlightedVerseKey] = useState<string | null>(null);
-  
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
-  const liveTranscriptRef = useRef('');
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     // Select Al-Fatiha by default
@@ -63,82 +57,9 @@ export default function RecordPage() {
 
   useEffect(() => {
     const isClient = typeof window !== 'undefined';
-    const isApiSupported = isClient && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (isApiSupported) {
-        SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    }
+    const isApiSupported = isClient && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
     setIsSupported(!!isApiSupported);
   }, []);
-
-  const performSearch = useCallback((query: string) => {
-    if (query.trim().length < 3 || !selectedSurah || verses.length === 0) {
-      setSearchError(null);
-      return;
-    }
-
-    setIsSearching(true);
-    setSearchError(null);
-    setHighlightedVerseKey(null);
-
-    // Use a timeout to allow the UI to update before the search logic runs
-    setTimeout(() => {
-      const normalizedQuery = normalizeArabic(query);
-
-      if (!normalizedQuery) {
-        setIsSearching(false);
-        return;
-      }
-
-      const potentialMatches = verses
-        .map(verse => {
-          const normalizedVerseText = normalizeArabic(verse.text_uthmani);
-          if (normalizedVerseText.includes(normalizedQuery)) {
-            // Simple similarity score: prioritize matches where the query is a larger portion of the verse.
-            const score = normalizedQuery.length / normalizedVerseText.length;
-            return { verse, score };
-          }
-          return null;
-        })
-        .filter((match): match is { verse: UthmaniVerse; score: number } => match !== null);
-
-      if (potentialMatches.length > 0) {
-        // Sort by score descending to get the best match first
-        potentialMatches.sort((a, b) => b.score - a.score);
-        const bestMatch = potentialMatches[0];
-        setHighlightedVerseKey(bestMatch.verse.verse_key);
-      } else {
-        setSearchError("The recited verse was not found in the current Surah.");
-      }
-      
-      setIsSearching(false);
-    }, 50);
-  }, [selectedSurah, verses]);
-
-  useEffect(() => {
-    if (highlightedVerseKey && verses.length > 0) {
-      const verseIndex = verses.findIndex(v => v.verse_key === highlightedVerseKey);
-      
-      if (verseIndex !== -1) {
-        const versesPerPage = 10;
-        const targetPage = Math.floor(verseIndex / versesPerPage);
-
-        const scrollAndHighlight = () => {
-          const verseNum = highlightedVerseKey.split(':')[1];
-          const verseElement = document.getElementById(`verse-${verseNum}`);
-          if (verseElement) {
-            verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        };
-
-        if (currentPage !== targetPage) {
-          setCurrentPage(targetPage);
-          setTimeout(scrollAndHighlight, 100);
-        } else {
-          scrollAndHighlight();
-        }
-      }
-    }
-  }, [highlightedVerseKey, verses, currentPage]);
 
   useEffect(() => {
     const fetchVerses = async () => {
@@ -150,6 +71,7 @@ export default function RecordPage() {
       setIsLoadingVerses(true);
       setVerseFetchError(null);
       setVerses([]);
+      setCurrentPage(0);
       try {
         const response = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`);
         if (!response.ok) {
@@ -168,76 +90,71 @@ export default function RecordPage() {
     fetchVerses();
   }, [selectedSurah]);
 
-  const setupRecognition = useCallback(() => {
-    if (!SpeechRecognitionAPI) {
-      return null;
-    }
-    const recognition = new SpeechRecognitionAPI();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'ar-SA';
-    
-    recognition.onresult = (event: any) => {
-      // Create the full transcript from all results so far
-      const fullTranscript = Array.from(event.results)
-        .map((result: any) => result[0])
-        .map((result: any) => result.transcript)
-        .join('');
-      
-      setLiveTranscript(fullTranscript);
-      liveTranscriptRef.current = fullTranscript; // Store the latest full transcript for search
-    };
-
-    recognition.onend = () => {
-        setIsRecording(false);
-        if (liveTranscriptRef.current.trim()) {
-          performSearch(liveTranscriptRef.current.trim());
-        }
-    };
-    
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-       if (event.error !== 'no-speech') {
-        setSearchError(`Speech recognition error: ${event.error}`);
-        setIsRecording(false);
-      }
-    };
-    
-    return recognition;
-  }, [performSearch]);
-
-  const handleStartRecording = useCallback(() => {
-    if (isRecording || !isSupported) return;
-
-    liveTranscriptRef.current = '';
-    setLiveTranscript('');
-    setSearchError(null);
-    setIsSearching(false);
-    setHighlightedVerseKey(null);
-    
-    const recognition = setupRecognition();
-    if (recognition) {
-        recognitionRef.current = recognition;
-        try {
-          recognitionRef.current?.start();
-          setIsRecording(true);
-        } catch (e) {
-          console.error("Error starting recognition:", e);
-          setIsRecording(false);
-          setSearchError("Could not start microphone. Please check permissions.");
-        }
-    } else {
-         setIsRecording(false);
-         setSearchError("Speech recognition is not set up correctly.");
-    }
-  }, [isRecording, isSupported, setupRecognition]);
-
   const handleStopRecording = useCallback(() => {
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false); // Manually set to false here as onend might take time
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      // onstop event will handle the rest
     }
   }, [isRecording]);
+
+  const handleStartRecording = useCallback(async () => {
+    if (isRecording || !isSupported) return;
+
+    audioChunksRef.current = []; // Clear previous chunks
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderRef.current = new MediaRecorder(stream);
+
+        mediaRecorderRef.current.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunksRef.current.push(event.data);
+            }
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => {
+                const base64Audio = reader.result as string;
+                const originalText = verses.map(v => v.text_uthmani).join(' ');
+
+                if (!originalText || !selectedSurah) {
+                    toast({ variant: 'destructive', title: 'Error', description: 'Could not get the Surah text to analyze.' });
+                    return;
+                }
+
+                // Store data in localStorage to pass to the analysis page
+                localStorage.setItem(ANALYSIS_STORAGE_KEY, JSON.stringify({
+                    audioDataUri: base64Audio,
+                    originalText: originalText,
+                    surahName: selectedSurah.name,
+                }));
+
+                router.push('/record/analysis');
+            };
+            
+            // Clean up the stream tracks
+            stream.getTracks().forEach(track => track.stop());
+            setIsRecording(false);
+        };
+        
+        mediaRecorderRef.current.onerror = (event: Event) => {
+            console.error('MediaRecorder error:', event);
+            toast({ variant: 'destructive', title: 'Recording Error', description: 'Something went wrong during recording.' });
+            setIsRecording(false);
+        };
+
+        mediaRecorderRef.current.start();
+        setIsRecording(true);
+
+    } catch (err) {
+        console.error("Error starting recording:", err);
+        toast({ variant: 'destructive', title: 'Microphone Error', description: 'Could not access microphone. Please check permissions and try again.' });
+        setIsRecording(false);
+    }
+  }, [isRecording, isSupported, verses, selectedSurah, router, toast]);
 
   const renderContent = () => {
     if (!isSupported) {
@@ -246,7 +163,7 @@ export default function RecordPage() {
                 <WifiOff className="h-4 w-4" />
                 <AlertTitle>Browser Not Supported</AlertTitle>
                 <AlertDescription>
-                    Speech recognition is not supported by your browser. Please try using Chrome or Safari.
+                    Audio recording is not supported by your browser. Please try using a modern browser like Chrome or Safari.
                 </AlertDescription>
             </Alert>
         );
@@ -260,139 +177,79 @@ export default function RecordPage() {
         );
     }
 
-    if (isRecording) {
-      return (
-        <div className="w-full max-w-5xl flex-grow p-4 md:p-6 flex items-start justify-center" style={{minHeight: '60vh'}}>
-             <div 
-              dir="rtl" 
-              className="font-arabic text-justify leading-loose w-full"
-              style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-            >
-                <p>
-                    {liveTranscript || <span className="text-muted-foreground">ابدأ التلاوة...</span>}
-                </p>
-            </div>
-        </div>
-      );
-    }
-
-    if (isSearching) {
+    if (isLoadingVerses) {
         return (
-            <div className="w-full max-w-7xl p-8 text-center flex flex-col items-center justify-center gap-4 min-h-[450px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-lg text-muted-foreground">Searching for matching verse...</p>
-            </div>
+          <div className="w-full flex-grow flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
         );
     }
-
-    if (searchError && !isRecording) {
-        return (
-             <Alert variant="destructive" className="max-w-md">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Search Failed</AlertTitle>
-                <AlertDescription>
-                    {searchError}
-                </AlertDescription>
-            </Alert>
-        );
-    }
-
-    if (selectedSurah) {
-        if (isLoadingVerses) {
-          return (
-            <div className="w-full flex-grow flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          );
-        }
-        
-        if (verseFetchError) {
-          return (
-            <div className="w-full flex-grow flex items-center justify-center">
-              <Alert variant="destructive" className="max-w-md">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Verses</AlertTitle>
-                <AlertDescription>{verseFetchError}</AlertDescription>
-              </Alert>
-            </div>
-          );
-        }
-        
-        if (verses.length > 0) {
-            const versesPerPage = 10;
-            const totalPages = Math.ceil(verses.length / versesPerPage);
-            const startIndex = currentPage * versesPerPage;
-            const versesForCurrentPage = verses.slice(startIndex, startIndex + versesPerPage);
-            
-            return (
-                <>
-                    <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
-                      {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                          <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
-                      )}
-                      <div 
-                        dir="rtl" 
-                        className="font-arabic text-justify leading-loose"
-                        style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                      >
-                          {versesForCurrentPage.map((verse) => {
-                              const verseNumberStr = verse.verse_key.split(':')[1];
-                              const isHighlighted = verse.verse_key === highlightedVerseKey;
-
-                              return (
-                                  <span 
-                                    key={verse.id} 
-                                    id={`verse-${verseNumberStr}`} 
-                                    className={cn(
-                                        "transition-colors duration-500 rounded-md p-1 scroll-mt-24"
-                                    )}
-                                  >
-                                      <span className={cn(isHighlighted && "bg-primary/20")}>
-                                        {verse.text_uthmani}
-                                      </span>
-                                      <span 
-                                          className={cn(
-                                            "inline-block text-center mx-1 font-sans text-xs w-6 h-6 leading-6 rounded-full",
-                                            "border-2 border-primary text-primary",
-                                            isHighlighted && "bg-primary text-primary-foreground"
-                                          )}
-                                          style={{ fontSize: `${settings.fontSize * 0.6}px` }}
-                                      >
-                                          {toArabicNumerals(String(verseNumberStr))}
-                                      </span>
-                                      {' '}
-                                  </span>
-                              );
-                          })}
-                      </div>
-                    </div>
-                    {totalPages > 1 && (
-                      <div className="flex items-center justify-center mt-4 px-4 w-full">
-                          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
-                              <ChevronRight className="h-6 w-6" />
-                              <span className="sr-only">Previous Page</span>
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
-                              <ChevronLeft className="h-6 w-6" />
-                              <span className="sr-only">Next Page</span>
-                          </Button>
-                      </div>
-                    )}
-                </>
-            )
-        }
-  
-        // Fallback for when no verses are loaded but a surah is selected
-        return (
-           <div className="w-full flex-grow flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-      }
     
+    if (verseFetchError) {
+        return (
+          <div className="w-full flex-grow flex items-center justify-center">
+            <Alert variant="destructive" className="max-w-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error Loading Verses</AlertTitle>
+              <AlertDescription>{verseFetchError}</AlertDescription>
+            </Alert>
+          </div>
+        );
+    }
+    
+    if (verses.length > 0) {
+        const versesPerPage = 10;
+        const totalPages = Math.ceil(verses.length / versesPerPage);
+        const startIndex = currentPage * versesPerPage;
+        const versesForCurrentPage = verses.slice(startIndex, startIndex + versesPerPage);
+        
+        return (
+            <>
+                <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
+                  {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
+                      <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                  )}
+                  <div 
+                    dir="rtl" 
+                    className="font-arabic text-justify leading-loose"
+                    style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                  >
+                      {versesForCurrentPage.map((verse) => {
+                          const verseNumberStr = verse.verse_key.split(':')[1];
+                          return (
+                              <span key={verse.id} id={`verse-${verseNumberStr}`} className="transition-colors duration-500 rounded-md p-1 scroll-mt-24">
+                                  <span>{verse.text_uthmani}</span>
+                                  <span 
+                                      className="inline-block text-center mx-1 font-sans text-xs w-6 h-6 leading-6 rounded-full border-2 border-primary text-primary"
+                                      style={{ fontSize: `${settings.fontSize * 0.6}px` }}
+                                  >
+                                      {toArabicNumerals(String(verseNumberStr))}
+                                  </span>
+                                  {' '}
+                              </span>
+                          );
+                      })}
+                  </div>
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center mt-4 px-4 w-full">
+                      <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}>
+                          <ChevronRight className="h-6 w-6" />
+                          <span className="sr-only">Previous Page</span>
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}>
+                          <ChevronLeft className="h-6 w-6" />
+                          <span className="sr-only">Next Page</span>
+                      </Button>
+                  </div>
+                )}
+            </>
+        )
+    }
+
     return (
         <div className="w-full max-w-7xl flex-grow flex items-center justify-center" style={{minHeight: '60vh'}}>
-            {/* Empty by default */}
+            {/* Empty by default, or can show a prompt to select a surah */}
         </div>
     );
   };
@@ -429,7 +286,6 @@ export default function RecordPage() {
                                 onClick={() => {
                                     setSelectedSurah(surah);
                                     setIsSheetOpen(false);
-                                    setHighlightedVerseKey(null);
                                     setCurrentPage(0);
                                 }}
                                 className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
@@ -453,10 +309,6 @@ export default function RecordPage() {
             </Sheet>
 
             <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                    <Info className="h-5 w-5" />
-                    <span className="sr-only">Info</span>
-                </Button>
                 <Sheet open={isFontSizeSheetOpen} onOpenChange={setIsFontSizeSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
@@ -488,42 +340,39 @@ export default function RecordPage() {
       </header>
       
       {selectedSurah && (
-        <div className={cn(
-          "flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border",
-          isRecording ? 'invisible' : 'visible'
-        )}>
+        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-b border-border">
           <span>Juz {selectedSurah.juz[0]} | Page {currentPage + 1}</span>
           <span>{totalPages > 0 ? `${currentPage + 1} / ${totalPages}` : ''}</span>
         </div>
       )}
 
 
-      <main className="flex-grow flex flex-col items-center justify-center overflow-y-auto">
+      <main className="flex-grow flex flex-col items-center justify-start overflow-y-auto pt-4">
         {renderContent()}
       </main>
 
       <SoundWave isRecording={isRecording} />
 
-      <footer className="flex items-center justify-center p-1 border-t border-border flex-shrink-0 z-50">
-        <div className="flex items-center justify-center gap-2">
+      <footer className="flex items-center justify-center p-2 border-t border-border flex-shrink-0 z-50">
+        <div className="flex items-center justify-center gap-4">
             <Button 
                 variant="destructive" 
                 size="lg" 
-                className="w-12 h-12 rounded-full"
+                className="w-16 h-16 rounded-full"
                 onClick={handleStartRecording}
                 disabled={isRecording || !isSupported}
             >
-                <Mic className="h-5 w-5" />
+                <Mic className="h-7 w-7" />
                 <span className="sr-only">Record</span>
             </Button>
             <Button 
                 variant="outline" 
-                size="icon" 
-                className="w-10 h-10 rounded-full"
+                size="lg" 
+                className="w-14 h-14 rounded-full"
                 onClick={handleStopRecording}
                 disabled={!isRecording || !isSupported}
             >
-                <Square className="h-4 w-4" />
+                <Square className="h-6 w-6" />
                 <span className="sr-only">Stop</span>
             </Button>
         </div>
