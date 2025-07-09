@@ -156,23 +156,12 @@ export default function AnalysisPage() {
   return (
     <div className="bg-background min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
-        <header className="grid grid-cols-3 items-center mb-8">
-          <div className="justify-self-start">
-            <Image
-              src="https://i.postimg.cc/05BYGNLJ/muslim-1.png"
-              width={80}
-              height={80}
-              alt="Decorative illustration"
-              className="w-16 h-16 sm:w-20 sm:h-20"
-            />
-          </div>
-          <h1 className="text-2xl font-bold text-center col-start-2">تحليل التلاوة</h1>
-          <div className="justify-self-end">
-            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.back()}>
-                <ChevronLeft className="h-6 w-6 rotate-180" />
-                <span className="sr-only">Back</span>
-            </Button>
-          </div>
+        <header className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-bold text-center w-full">تحليل التلاوة</h1>
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => router.back()}>
+              <ChevronLeft className="h-6 w-6 rotate-180" />
+              <span className="sr-only">Back</span>
+          </Button>
         </header>
         <main>
           {renderContent()}
