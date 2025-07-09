@@ -60,7 +60,6 @@ export default function RecordPage() {
   const [highlightedVerseKey, setHighlightedVerseKey] = useState<string | null>(null);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const finalTranscriptRef = useRef<string>('');
   
   const stoppingRef = useRef(false);
 
@@ -78,14 +77,11 @@ export default function RecordPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-        const recognitionIsSupported = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (recognitionIsSupported) {
-          SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-        } else {
-          setIsSupported(false);
-        }
+    const isSupported = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (isSupported) {
+        SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     }
+    setIsSupported(!!isSupported);
   }, []);
 
   const performSearch = useCallback(async (query: string) => {
@@ -191,46 +187,35 @@ export default function RecordPage() {
 
   const setupRecognition = useCallback(() => {
     if (!SpeechRecognitionAPI) {
-      return;
+      return null;
     }
     const recognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'ar-SA';
+    
+    let finalTranscript = '';
 
     recognition.onresult = (event: any) => {
-      let final_transcript = '';
       let interim_transcript = '';
+      finalTranscript = '';
 
       for (let i = 0; i < event.results.length; ++i) {
-        const transcript_piece = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          final_transcript += transcript_piece + ' ';
+          finalTranscript += event.results[i][0].transcript;
         } else {
-          interim_transcript += transcript_piece;
+          interim_transcript += event.results[i][0].transcript;
         }
       }
       
-      finalTranscriptRef.current = final_transcript.trim();
-      setLiveTranscript(final_transcript + interim_transcript);
+      setLiveTranscript(finalTranscript + interim_transcript);
     };
 
     recognition.onend = () => {
-      if (stoppingRef.current) {
         setIsRecording(false);
-        if (finalTranscriptRef.current.trim()) {
-          performSearch(finalTranscriptRef.current.trim());
+        if (finalTranscript.trim()) {
+          performSearch(finalTranscript.trim());
         }
-        stoppingRef.current = false;
-      } 
-      else if (isRecordingRef.current) {
-        try {
-          recognitionRef.current?.start();
-        } catch (error) {
-          console.error("Speech recognition restart failed:", error);
-          setIsRecording(false);
-        }
-      }
     };
     
     recognition.onerror = (event: any) => {
@@ -241,50 +226,37 @@ export default function RecordPage() {
       }
     };
     
-    recognitionRef.current = recognition;
+    return recognition;
   }, [performSearch]);
-
-  useEffect(() => {
-    if (!isSupported) {
-      return;
-    }
-    setupRecognition();
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      }
-    };
-  }, [isSupported, setupRecognition]);
 
   const handleStartRecording = useCallback(() => {
     if (isRecording || !isSupported) return;
 
-    finalTranscriptRef.current = '';
     setLiveTranscript('');
     setSearchError(null);
     setIsSearching(false);
     setHighlightedVerseKey(null);
     
-    stoppingRef.current = false;
     setIsRecording(true);
     
-    if (!recognitionRef.current) {
-      setupRecognition();
-    }
-    
-    try {
-      recognitionRef.current?.start();
-    } catch (e) {
-      console.error("Error starting recognition:", e);
-      setIsRecording(false);
-      setSearchError("Could not start microphone. Please check permissions.");
+    const recognition = setupRecognition();
+    if (recognition) {
+        recognitionRef.current = recognition;
+        try {
+          recognitionRef.current?.start();
+        } catch (e) {
+          console.error("Error starting recognition:", e);
+          setIsRecording(false);
+          setSearchError("Could not start microphone. Please check permissions.");
+        }
+    } else {
+         setIsRecording(false);
+         setSearchError("Speech recognition is not set up correctly.");
     }
   }, [isRecording, isSupported, setupRecognition]);
 
   const handleStopRecording = useCallback(() => {
     if (recognitionRef.current && isRecording) {
-      stoppingRef.current = true;
       recognitionRef.current.stop();
     }
   }, [isRecording]);
@@ -313,9 +285,9 @@ export default function RecordPage() {
     if (isRecording) {
       return (
         <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
-            <div 
+             <div 
               dir="rtl" 
-              className="font-arabic text-justify leading-loose text-foreground"
+              className="font-arabic text-justify"
               style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
             >
                 <p>
@@ -554,24 +526,22 @@ export default function RecordPage() {
         {renderContent()}
       </main>
 
-      <footer className="flex flex-col items-center justify-center gap-2 py-4 border-t border-border flex-shrink-0">
-        <div className="h-8 px-4 text-center">
-        </div>
-        <div className="flex items-center justify-center gap-6">
+      <footer className="flex items-center justify-center py-3 border-t border-border flex-shrink-0">
+        <div className="flex items-center justify-center gap-4">
             <Button 
                 variant="destructive" 
                 size="lg" 
-                className="w-16 h-16 rounded-full"
+                className="w-14 h-14 rounded-full"
                 onClick={handleStartRecording}
                 disabled={isRecording || !isSupported}
             >
-                <Mic className="h-7 w-7" />
+                <Mic className="h-6 w-6" />
                 <span className="sr-only">Record</span>
             </Button>
             <Button 
                 variant="outline" 
                 size="icon" 
-                className="w-12 h-12 rounded-full"
+                className="w-11 h-11 rounded-full"
                 onClick={handleStopRecording}
                 disabled={!isRecording || !isSupported}
             >
