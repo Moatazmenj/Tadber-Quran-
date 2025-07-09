@@ -72,7 +72,9 @@ export default function RecordPage() {
   useEffect(() => {
     // Select Al-Fatiha by default
     const alFatiha = surahs.find(s => s.id === 1);
-    setSelectedSurah(alFatiha || surahs[0]);
+    if (alFatiha) {
+        setSelectedSurah(alFatiha);
+    }
   }, []);
 
   useEffect(() => {
@@ -197,19 +199,17 @@ export default function RecordPage() {
     recognition.lang = 'ar-SA';
 
     recognition.onresult = (event: any) => {
-      let final_transcript = '';
       let interim_transcript = '';
 
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          final_transcript += event.results[i][0].transcript;
+          finalTranscriptRef.current += event.results[i][0].transcript + ' ';
         } else {
           interim_transcript += event.results[i][0].transcript;
         }
       }
       
-      finalTranscriptRef.current = final_transcript;
-      setLiveTranscript(final_transcript + interim_transcript);
+      setLiveTranscript(finalTranscriptRef.current + interim_transcript);
     };
 
     recognition.onend = () => {
@@ -553,7 +553,6 @@ export default function RecordPage() {
 
       <footer className="flex flex-col items-center justify-center gap-2 py-4 border-t border-border flex-shrink-0">
         <div className="h-8 px-4 text-center">
-            {/* Placeholder for spacing, live transcript moved to main content area */}
         </div>
         <div className="flex items-center justify-center gap-6">
             <Button 
