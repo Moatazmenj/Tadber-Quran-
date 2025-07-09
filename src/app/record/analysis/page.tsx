@@ -88,8 +88,8 @@ export default function AnalysisPage() {
     if (analysis) {
       return (
         <div dir="rtl">
-          <Card className="w-full overflow-hidden border-2 border-primary/10 shadow-lg bg-black">
-            <CardHeader className="p-6 text-right border-b border-border">
+          <Card className="w-full overflow-hidden shadow-lg bg-black border-0">
+            <CardHeader className="p-6 text-right border-b border-border/20">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
                   <CardTitle className="text-2xl font-bold text-foreground">تقرير تحليل التلاوة</CardTitle>
@@ -121,7 +121,7 @@ export default function AnalysisPage() {
                         <BookText className="h-6 w-6 text-primary" />
                         النص الأصلي الذي تمت تلاوته
                     </h3>
-                    <div className="bg-card p-4 rounded-lg">
+                    <div className="p-4">
                       <p
                         className="font-arabic leading-loose text-justify text-foreground"
                         style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
