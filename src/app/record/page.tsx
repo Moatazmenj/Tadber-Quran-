@@ -4,17 +4,19 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown, Check, Languages } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
-import type { Surah } from '@/types';
+import type { Surah, TranslationOption } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Slider } from '@/components/ui/slider';
 import { SoundWave } from '@/components/SoundWave';
 import { useToast } from '@/hooks/use-toast';
+import { translationOptions } from '@/lib/translations';
+import { Separator } from '@/components/ui/separator';
 
 const ANALYSIS_STORAGE_KEY = 'recitationAnalysisData';
 
@@ -27,6 +29,28 @@ interface UthmaniVerse {
 interface UthmaniVerseApiResponse {
     verses: UthmaniVerse[];
 }
+
+const TranslationItem = ({ 
+    option, 
+    isSelected, 
+    onClick 
+}: { 
+    option: TranslationOption; 
+    isSelected: boolean; 
+    onClick: () => void;
+}) => (
+  <div onClick={onClick} className="flex items-center justify-between py-3 cursor-pointer px-4 hover:bg-card/80 transition-colors">
+    <div className="flex items-center gap-4">
+        <span className="text-2xl">{option.flag}</span>
+        <div>
+            <p className="text-lg text-foreground">{option.nativeName}</p>
+            <p className="text-sm text-muted-foreground">{option.translator}</p>
+        </div>
+    </div>
+    {isSelected && <Check className="h-5 w-5 text-primary" />}
+  </div>
+);
+
 
 export default function RecordPage() {
   const router = useRouter();
@@ -41,8 +65,9 @@ export default function RecordPage() {
   const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
   const [selectedVerseKey, setSelectedVerseKey] = useState<string | null>(null);
   
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSurahSheetOpen, setIsSurahSheetOpen] = useState(false);
   const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
+  const [isTranslationSheetOpen, setIsTranslationSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -321,7 +346,7 @@ export default function RecordPage() {
                 </Button>
             </Link>
 
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <Sheet open={isSurahSheetOpen} onOpenChange={setIsSurahSheetOpen}>
                 <SheetTrigger asChild>
                     <div className="flex items-center justify-center gap-2 text-center cursor-pointer p-2 rounded-md hover:bg-primary/80">
                         <div>
@@ -342,7 +367,7 @@ export default function RecordPage() {
                                 key={surah.id}
                                 onClick={() => {
                                     setSelectedSurah(surah);
-                                    setIsSheetOpen(false);
+                                    setIsSurahSheetOpen(false);
                                     setCurrentPage(0);
                                     setSelectedVerseKey(null);
                                 }}
@@ -367,6 +392,38 @@ export default function RecordPage() {
             </Sheet>
 
             <div className="flex items-center gap-1">
+                 <Sheet open={isTranslationSheetOpen} onOpenChange={setIsTranslationSheetOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                            <Languages className="h-5 w-5" />
+                            <span className="sr-only">Translations</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-auto rounded-t-lg">
+                        <SheetHeader>
+                            <SheetTitle className="text-center">Translation</SheetTitle>
+                        </SheetHeader>
+                         <div className="bg-card rounded-lg py-4">
+                            {translationOptions.map((option, index) => {
+                                const isSelected = settings.translationId === option.id;
+                                return (
+                                    <div key={option.id}>
+                                        <TranslationItem
+                                            option={option}
+                                            isSelected={isSelected}
+                                            onClick={() => {
+                                              setSetting('translationId', option.id);
+                                              setIsTranslationSheetOpen(false);
+                                            }}
+                                        />
+                                        {index < translationOptions.length - 1 && <Separator className="bg-border/20 mx-4" />}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </SheetContent>
+                </Sheet>
+
                 <Sheet open={isFontSizeSheetOpen} onOpenChange={setIsFontSizeSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
@@ -461,5 +518,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
-    
