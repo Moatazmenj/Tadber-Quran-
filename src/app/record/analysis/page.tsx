@@ -120,17 +120,17 @@ export default function AnalysisPage() {
       
               <CardContent className="p-6 md:p-8 space-y-8">
                   <div className="bg-transparent">
-                      <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-primary">
+                      <h3 className="text-lg font-semibold flex items-center gap-3 mb-4 text-primary">
                           <MessageSquareQuote className="h-6 w-6 text-primary" />
                           ملاحظات المعلم الآلي
                       </h3>
-                      <p className="text-xl leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
+                      <p className="text-lg leading-loose whitespace-pre-wrap font-arabic text-foreground/90">
                           {analysis.feedback}
                       </p>
                   </div>
       
                   <div className="bg-transparent">
-                      <h3 className="text-xl font-semibold flex items-center gap-3 mb-4 text-primary">
+                      <h3 className="text-lg font-semibold flex items-center gap-3 mb-4 text-primary">
                           <BookText className="h-6 w-6 text-primary" />
                           النص الأصلي الذي تمت تلاوته
                       </h3>
