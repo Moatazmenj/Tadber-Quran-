@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { themes } from '@/lib/themes';
-import { reciters } from '@/lib/reciters';
 
 const SettingsListItem = ({ label, value, href = '#' }: { label: string; value?: string; href?: string }) => (
     <Link href={href} className="block">
@@ -30,7 +29,6 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 export default function SettingsPage() {
   const { settings, setSetting } = useQuranSettings();
-  const selectedReciter = reciters.find(r => r.id === settings.reciterId)?.name || 'Select Reciter';
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
@@ -72,7 +70,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex flex-col">
-            <SectionTitle>Recitation Mode</SectionTitle>
+            <SectionTitle>Display</SectionTitle>
             <div className="bg-card rounded-lg">
                 <SettingsListItem label="Translation Display" value="Arabic & Translation" href="/settings/translation-display" />
             </div>
