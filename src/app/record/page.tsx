@@ -72,7 +72,6 @@ export default function RecordPage() {
   
   const [isSurahSheetOpen, setIsSurahSheetOpen] = useState(false);
   const [isFontSizeSheetOpen, setIsFontSizeSheetOpen] = useState(false);
-  const [isTranslationSheetOpen, setIsTranslationSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -414,38 +413,6 @@ export default function RecordPage() {
             </Sheet>
 
             <div className="flex items-center gap-1">
-                 <Sheet open={isTranslationSheetOpen} onOpenChange={setIsTranslationSheetOpen}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                            <Languages className="h-5 w-5" />
-                            <span className="sr-only">Translations</span>
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="bottom" className="h-auto rounded-t-lg">
-                        <SheetHeader>
-                            <SheetTitle className="text-center">Translation</SheetTitle>
-                        </SheetHeader>
-                         <div className="bg-card rounded-lg py-4">
-                            {translationOptions.map((option, index) => {
-                                const isSelected = settings.translationId === option.id;
-                                return (
-                                    <div key={option.id}>
-                                        <TranslationItem
-                                            option={option}
-                                            isSelected={isSelected}
-                                            onClick={() => {
-                                              setSetting('translationId', option.id);
-                                              setIsTranslationSheetOpen(false);
-                                            }}
-                                        />
-                                        {index < translationOptions.length - 1 && <Separator className="bg-border/20 mx-4" />}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </SheetContent>
-                </Sheet>
-
                 <Sheet open={isFontSizeSheetOpen} onOpenChange={setIsFontSizeSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
