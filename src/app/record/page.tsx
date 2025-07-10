@@ -116,8 +116,8 @@ export default function RecordPage() {
     if (!selectedVerseKey) {
         toast({
             variant: 'destructive',
-            title: 'No Verse Selected',
-            description: 'Please select a verse to practice before recording.',
+            title: 'لم يتم تحديد آية',
+            description: 'يرجى تحديد آية للتدريب عليها قبل البدء بالتسجيل.',
         });
         return;
     }
@@ -450,4 +450,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
