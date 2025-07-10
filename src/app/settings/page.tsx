@@ -84,11 +84,6 @@ export default function SettingsPage() {
                 <SettingsListItem label="Translation" href="/settings/translation" />
             </div>
 
-            <SectionTitle>Audio</SectionTitle>
-             <div className="bg-card rounded-lg">
-                <SettingsListItem label="Reciter" value={selectedReciter} href="/settings/reciter" />
-            </div>
-
             <SectionTitle>Settings</SectionTitle>
              <div className="bg-card rounded-lg">
                 <SettingsListItem label="Settings" />
