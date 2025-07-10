@@ -10,7 +10,7 @@ import { getLocalVersesForSurah } from '@/lib/quran-verses';
 import { surahs } from '@/lib/quran';
 import type { Ayah } from '@/types';
 import { useQuranSettings, type FontStyleOption } from '@/hooks/use-quran-settings';
-import { toArabicNumerals } from '@/lib/utils';
+import { cn, toArabicNumerals } from '@/lib/utils';
 
 const FontStyleItem = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
   <div onClick={onClick} className="flex items-center justify-between py-4 cursor-pointer px-4 hover:bg-card/80 transition-colors">
@@ -73,6 +73,12 @@ export default function FontSizePage() {
                     selected={settings.fontStyle === 'uthmanic'}
                     onClick={() => setSetting('fontStyle', 'uthmanic')}
                 />
+                <Separator className="bg-border/20 mx-4" />
+                <FontStyleItem 
+                    label="IndoPak"
+                    selected={settings.fontStyle === 'indopak'}
+                    onClick={() => setSetting('fontStyle', 'indopak')}
+                />
             </div>
         </div>
 
@@ -83,7 +89,10 @@ export default function FontSizePage() {
             <Card className="bg-card/50">
                 <CardContent className="p-6">
                     <div className="text-center mb-8 border-b-2 border-primary pb-4">
-                        <h2 className="font-arabic text-4xl font-bold text-foreground">{surahInfo?.arabicName}</h2>
+                        <h2 className={cn(
+                          "text-4xl font-bold text-foreground",
+                          settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                        )}>{surahInfo?.arabicName}</h2>
                     </div>
                     
                     <div className="space-y-8">
@@ -95,7 +104,10 @@ export default function FontSizePage() {
                                 <div key={ayah.id} className={`${index < verses.length -1 ? 'border-b border-border/20' : ''} pb-6 last:pb-0`}>
                                     <p 
                                       dir="rtl" 
-                                      className="font-arabic leading-loose text-foreground mb-3 text-center"
+                                      className={cn(
+                                        "leading-loose text-foreground mb-3 text-center",
+                                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                      )}
                                       style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                                     >
                                         {ayah.text_uthmani}

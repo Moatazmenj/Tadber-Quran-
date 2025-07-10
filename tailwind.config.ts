@@ -13,6 +13,7 @@ export default {
         body: ['PT Sans', 'sans-serif'],
         headline: ['Alegreya', 'serif'],
         arabic: ['Noto Kufi Arabic', 'serif'],
+        'arabic-indopak': ['Noto Naskh Arabic', 'serif'],
         code: ['monospace'],
       },
       colors: {

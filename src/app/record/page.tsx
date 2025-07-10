@@ -253,11 +253,17 @@ export default function RecordPage() {
         return (
             <div className="w-full max-w-5xl flex-grow p-4 md:p-6" style={{minHeight: '60vh'}}>
                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
-                    <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                    <p className={cn(
+                        "text-center text-3xl mb-8 pb-4",
+                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                      )}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                 )}
                 <div 
                   dir="rtl"
-                  className="font-arabic leading-loose text-foreground text-center text-justify"
+                  className={cn(
+                    "leading-loose text-foreground text-center text-justify",
+                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                  )}
                   style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                 >
                   {versesForCurrentPage.map((verse) => {
@@ -346,7 +352,10 @@ export default function RecordPage() {
                                     <p className="font-headline text-lg text-foreground">{surah.name}</p>
                                     </div>
                                 </div>
-                                <p className="font-arabic text-2xl text-primary">{surah.arabicName}</p>
+                                <p className={cn(
+                                    "text-2xl text-primary",
+                                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                  )}>{surah.arabicName}</p>
                                 </div>
                             </div>
                             ))}

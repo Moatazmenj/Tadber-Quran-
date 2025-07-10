@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 const SETTINGS_KEY = 'quranAppSettings';
 
-export type FontStyleOption = 'default' | 'uthmanic';
+export type FontStyleOption = 'default' | 'uthmanic' | 'indopak';
 
 interface QuranSettings {
   fontSize: number;

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import type { Surah, Juz } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { cn } from '@/lib/utils';
 
 interface SurahListProps {
   surahs: Surah[];
@@ -13,6 +15,7 @@ interface SurahListProps {
 
 export function SurahList({ surahs, juzs }: SurahListProps) {
   const [selectedJuz, setSelectedJuz] = useState('all');
+  const { settings } = useQuranSettings();
 
   const filteredSurahs = useMemo(() => {
     return surahs.filter((surah) => {
@@ -55,7 +58,10 @@ export function SurahList({ surahs, juzs }: SurahListProps) {
                         <p className="text-sm text-muted-foreground">{surah.revelationPlace}</p>
                     </div>
                 </div>
-                <p className="font-arabic text-xl text-primary">{surah.arabicName}</p>
+                <p className={cn(
+                  "text-xl text-primary",
+                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                )}>{surah.arabicName}</p>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">{surah.versesCount} verses</p>
