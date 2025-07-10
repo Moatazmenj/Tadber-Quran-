@@ -26,11 +26,14 @@ export function RecordButton() {
       )}
     >
       <Button
+        asChild
         variant="destructive"
         className="rounded-full w-14 h-14 shadow-lg"
         aria-label="Record"
       >
-        <Mic className="h-6 w-6" />
+        <span>
+            <Mic className="h-6 w-6" />
+        </span>
       </Button>
     </Link>
   );
