@@ -3,20 +3,18 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import type { Ayah, Surah, AudioFile } from '@/types';
+import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, PlayCircle, Copy, Share2, Languages, Pause } from 'lucide-react';
-import { getVerseTafsir } from '@/lib/actions';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages } from 'lucide-react';
+import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { useToast } from '@/hooks/use-toast';
 import { translationOptions } from '@/lib/translations';
-import { reciters } from '@/lib/reciters';
-import { AudioPlayerBar } from './AudioPlayerBar';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import {
   Sheet,
@@ -68,12 +66,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
   const [translationError, setTranslationError] = useState('');
 
-  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
-  const [audioError, setAudioError] = useState('');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentVerseAudioIndex, setCurrentVerseAudioIndex] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [activePopoverKey, setActivePopoverKey] = useState<string | null>(null);
 
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
@@ -98,8 +90,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   useEffect(() => {
     setDisplayVerses(initialVerses);
     setFullVerseData(initialVerses);
-    setCurrentVerseAudioIndex(0);
-    setIsPlaying(false);
     setActivePopoverKey(null);
   }, [initialVerses]);
   
@@ -144,43 +134,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (settings.showTranslation) {
       setDisplayVerses(fullVerseData);
     } else {
-      setDisplayVerses(initialVerses);
+      setDisplayVerses(initialVerses.map(v => ({...v, translation: undefined})));
     }
   }, [settings.showTranslation, fullVerseData, initialVerses]);
 
-
-  const fetchAudio = useCallback(async () => {
-    if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-    }
-    setAudioFiles([]);
-    setIsPlaying(false);
-    setActivePopoverKey(null);
-    setCurrentVerseAudioIndex(0); 
-
-    setIsLoadingAudio(true);
-    setAudioError('');
-    try {
-      const response = await fetch(`https://api.quran.com/api/v4/recitations/${settings.reciterId}/by_chapter/${surahInfo.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch audio data');
-      }
-      const data = await response.json();
-      setAudioFiles(data.audio_files || []);
-    } catch (e: any) {
-      console.error('Failed to fetch audio', e);
-      setAudioError('Could not load audio. Please check your connection or try a different reciter.');
-      setAudioFiles([]);
-    } finally {
-      setIsLoadingAudio(false);
-    }
-  }, [surahInfo.id, settings.reciterId]);
-
-
-  useEffect(() => {
-    fetchAudio();
-  }, [fetchAudio]);
 
   useEffect(() => {
     const generateImage = async () => {
@@ -319,8 +276,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setSummary('');
     try {
       if (!surahText) throw new Error("Surah text is not available to summarize.");
-      const result = await getSurahSummary({ surahName: surahInfo.name, surahText: surahText });
-      setSummary(result.summary);
+      const result = await getSurahSummary(surahInfo.name, surahText);
+      setSummary(result);
     } catch (e) {
       setSummaryError('Failed to generate summary. Please try again later.');
       console.error(e);
@@ -385,82 +342,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
   };
 
-
-  const playVerse = useCallback((audioIndex: number) => {
-    if (audioIndex >= 0 && audioIndex < audioFiles.length) {
-      const audioUrl = audioFiles[audioIndex]?.audio_url;
-      if (audioRef.current && audioUrl) {
-        audioRef.current.src = `https://verses.quran.com/${audioUrl}`;
-        audioRef.current.play().catch(e => {
-            console.error("Audio play failed:", e);
-            toast({
-              variant: 'destructive',
-              title: 'Audio Error',
-              description: 'Could not play the audio file.'
-            });
-            setIsPlaying(false);
-        });
-        setCurrentVerseAudioIndex(audioIndex);
-        setIsPlaying(true);
-        const verseKey = audioFiles[audioIndex].verse_key;
-        const verseNum = verseKey.split(':')[1];
-        if (verseNum !== '0') {
-            const verseElement = document.getElementById(`verse-${verseNum}`);
-            verseElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Audio Not Available',
-          description: 'Audio for this verse is not available with the current reciter.',
-        });
-      }
-    } else {
-      setIsPlaying(false);
-    }
-  }, [audioFiles, toast]);
-
-  const handlePlayPauseForVerse = (audioIndex: number) => {
-    if (isPlaying && currentVerseAudioIndex === audioIndex) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      playVerse(audioIndex);
-    }
-  };
-
-  const handlePlayPause = useCallback(() => {
-    if (isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      if (audioFiles.length > 0) {
-        playVerse(currentVerseAudioIndex);
-      }
-    }
-  }, [isPlaying, audioFiles, currentVerseAudioIndex, playVerse]);
-
-  const handleNext = useCallback(() => {
-    const nextIndex = currentVerseAudioIndex + 1;
-    if (nextIndex < audioFiles.length) {
-      playVerse(nextIndex);
-    } else {
-      setIsPlaying(false);
-      setCurrentVerseAudioIndex(0);
-    }
-  }, [currentVerseAudioIndex, playVerse, audioFiles.length]);
-
-  const handlePrev = useCallback(() => {
-    const prevIndex = currentVerseAudioIndex - 1;
-    if (prevIndex >= 0) {
-      playVerse(prevIndex);
-    }
-  }, [currentVerseAudioIndex, playVerse]);
-
-  const handleAudioEnded = () => {
-    handleNext();
-  };
-
   const handleTafsir = (ayah: Ayah) => {
     setSelectedVerseForTafsir(ayah);
     setTafsirLanguage('Arabic'); // Always default to Arabic when opening
@@ -474,10 +355,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </div>
   );
 
-  const selectedReciter = reciters.find(r => r.id === settings.reciterId);
-  const currentVerseKey = audioFiles[currentVerseAudioIndex]?.verse_key;
-  const currentVerseNumber = currentVerseKey ? parseInt(currentVerseKey.split(':')[1], 10) : 1;
-    
   return (
     <>
       <div className="max-w-4xl mx-auto pb-28">
@@ -543,11 +420,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                   {displayVerses.map((ayah, index) => {
                       const verseNumber = ayah.verse_key.split(':')[1];
                       const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
-                      
-                      const audioIndexForThisVerse = audioFiles.findIndex(f => f.verse_key === ayah.verse_key);
-                      const currentPlayingVerseKey = audioFiles[currentVerseAudioIndex]?.verse_key;
-                      const isPlayingThisVerse = isPlaying && ayah.verse_key === currentPlayingVerseKey;
-                      const isHighlighted = ayah.verse_key === currentPlayingVerseKey;
 
                       const fullAyah = fullVerseData[index] || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
@@ -563,7 +435,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 id={`verse-${verseNumber}`} 
                                 className={cn(
                                   "border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg p-4 -m-4 cursor-pointer", 
-                                  isHighlighted && "bg-orange-500/20"
                                 )}
                             >
                                 <p 
@@ -588,19 +459,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-1" side="bottom" align="center">
                             <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => {
-                                  if (audioIndexForThisVerse !== -1) {
-                                    handlePlayPauseForVerse(audioIndexForThisVerse);
-                                  } else {
-                                    toast({
-                                        variant: 'destructive',
-                                        title: 'Audio Not Available',
-                                        description: 'Audio for this verse is not available with the current reciter.',
-                                    });
-                                  }
-                                }}>
-                                    {isPlayingThisVerse ? <Pause className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
-                                </Button>
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                     <BookText className="h-5 w-5" />
                                 </Button>
@@ -631,11 +489,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const verseNumber = ayah.verse_key.split(':')[1];
                       const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
                       
-                      const audioIndexForThisVerse = audioFiles.findIndex(f => f.verse_key === ayah.verse_key);
-                      const currentPlayingVerseKey = audioFiles[currentVerseAudioIndex]?.verse_key;
-                      const isPlayingThisVerse = isPlaying && ayah.verse_key === currentPlayingVerseKey;
-                      const isHighlighted = ayah.verse_key === currentPlayingVerseKey;
-
                       const fullAyah = fullVerseData[index] || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
 
@@ -648,7 +501,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             <PopoverTrigger asChild>
                                 <span 
                                     id={`verse-${verseNumber}`} 
-                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer", isHighlighted && "bg-orange-500/20")}
+                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer")}
                                 >
                                     {ayah.text_uthmani}
                                     <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
@@ -657,19 +510,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-1" side="bottom" align="center">
                                 <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => {
-                                      if (audioIndexForThisVerse !== -1) {
-                                        handlePlayPauseForVerse(audioIndexForThisVerse);
-                                      } else {
-                                        toast({
-                                            variant: 'destructive',
-                                            title: 'Audio Not Available',
-                                            description: 'Audio for this verse is not available with the current reciter.',
-                                        });
-                                      }
-                                    }}>
-                                        {isPlayingThisVerse ? <Pause className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
-                                    </Button>
                                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                         <BookText className="h-5 w-5" />
                                     </Button>
@@ -700,18 +540,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               </Alert>
           )}
 
-          {audioError && (
-              <Alert variant="destructive" className="mt-4">
-                  <AlertTitle>Audio Error</AlertTitle>
-                  <AlertDescription className="flex items-center justify-between">
-                      <span>{audioError}</span>
-                      <Button variant="secondary" size="sm" onClick={fetchAudio}>
-                          <RefreshCw className="mr-2 h-4 w-4"/>
-                          Retry
-                      </Button>
-                  </AlertDescription>
-              </Alert>
-          )}
         </div>
 
         <div className="flex justify-between mt-8">
@@ -733,19 +561,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           ): <div />}
         </div>
       </div>
-      <audio ref={audioRef} onEnded={handleAudioEnded} />
-      {audioFiles && audioFiles.length > 0 && (
-        <AudioPlayerBar
-          surah={surahInfo}
-          isPlaying={isPlaying}
-          currentVerse={currentVerseNumber}
-          onPlayPause={handlePlayPause}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          reciterName={selectedReciter?.name || 'Loading...'}
-        />
-      )}
-
+      
       <Sheet 
         open={isShareSheetOpen} 
         onOpenChange={(isOpen) => {

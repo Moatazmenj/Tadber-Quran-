@@ -1,6 +1,6 @@
 'use server';
 
-import { summarizeSurah } from '@/ai/flows/summarize-surah';
+import { summarizeSurah, SummarizeSurahInput, SummarizeSurahOutput } from '@/ai/flows/summarize-surah';
 import { getVerseTafsir as getVerseTafsirFlow, type GetVerseTafsirInput } from '@/ai/flows/get-verse-tafsir';
 import { analyzeRecitation as analyzeRecitationFlow, type AnalyzeRecitationInput, type AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 
@@ -17,10 +17,10 @@ export async function getSurahSummary(surahName: string, surahText: string): Pro
   }
 }
 
-export async function getVerseTafsir(input: GetVerseTafsirInput): Promise<string> {
+export async function getVerseTafsir(input: GetVerseTafsirInput) {
     try {
         const result = await getVerseTafsirFlow(input);
-        return result.tafsir;
+        return result;
     } catch (error) {
         console.error('Error in getVerseTafsir action:', error);
         if (error instanceof Error) {
