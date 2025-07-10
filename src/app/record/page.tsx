@@ -1,22 +1,21 @@
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown, Check, Languages } from 'lucide-react';
+import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown, Check } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
-import type { Surah, TranslationOption, Ayah } from '@/types';
+import type { Surah, Ayah } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Slider } from '@/components/ui/slider';
 import { SoundWave } from '@/components/SoundWave';
 import { useToast } from '@/hooks/use-toast';
-import { translationOptions } from '@/lib/translations';
-import { Separator } from '@/components/ui/separator';
 
 const ANALYSIS_STORAGE_KEY = 'recitationAnalysisData';
 
@@ -29,33 +28,6 @@ interface UthmaniVerse {
 interface UthmaniVerseApiResponse {
     verses: UthmaniVerse[];
 }
-
-interface TranslationApiResponse {
-    translations: { text: string }[];
-}
-
-
-const TranslationItem = ({ 
-    option, 
-    isSelected, 
-    onClick 
-}: { 
-    option: TranslationOption; 
-    isSelected: boolean; 
-    onClick: () => void;
-}) => (
-  <div onClick={onClick} className="flex items-center justify-between py-3 cursor-pointer px-4 hover:bg-card/80 transition-colors">
-    <div className="flex items-center gap-4">
-        <span className="text-2xl">{option.flag}</span>
-        <div>
-            <p className="text-lg text-foreground">{option.nativeName}</p>
-            <p className="text-sm text-muted-foreground">{option.translator}</p>
-        </div>
-    </div>
-    {isSelected && <Check className="h-5 w-5 text-primary" />}
-  </div>
-);
-
 
 export default function RecordPage() {
   const router = useRouter();
@@ -106,36 +78,13 @@ export default function RecordPage() {
     setCurrentPage(0);
     setSelectedVerseKey(null);
 
-    const selectedTranslation = translationOptions.find(t => t.id === settings.translationId);
-
     try {
-      // Fetch Uthmani text and translation in parallel
-      const [versesResponse, translationResponse] = await Promise.all([
-        fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`),
-        selectedTranslation ? fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${selectedSurah.id}`) : Promise.resolve(null),
-      ]);
-
+      const versesResponse = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`);
       if (!versesResponse.ok) {
         throw new Error("Could not fetch verses for the selected Surah.");
       }
       const versesData: UthmaniVerseApiResponse = await versesResponse.json();
-
-      let translations: string[] = [];
-      if (translationResponse) {
-          if (!translationResponse.ok) {
-              console.warn(`Failed to fetch translation: ${translationResponse.statusText}`);
-          } else {
-              const translationData: TranslationApiResponse = await translationResponse.json();
-              translations = translationData.translations.map(t => t.text.replace(/<sup.*?<\/sup>/g, ''));
-          }
-      }
-
-      const combinedVerses = versesData.verses.map((verse, index) => ({
-          ...verse,
-          translation: translations[index] || (selectedTranslation ? 'Translation not available.' : undefined),
-      }));
-
-      setVerses(combinedVerses);
+      setVerses(versesData.verses);
 
     } catch (error) {
       console.error("Content fetch error:", error);
@@ -143,7 +92,7 @@ export default function RecordPage() {
     } finally {
       setIsLoadingContent(false);
     }
-  }, [selectedSurah, settings.translationId]);
+  }, [selectedSurah]);
 
   useEffect(() => {
     fetchContent();
@@ -306,38 +255,32 @@ export default function RecordPage() {
                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                     <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                 )}
-                <div className="space-y-8">
-                    {versesForCurrentPage.map((verse) => {
-                        const verseNumberStr = verse.verse_key.split(':')[1];
-                        const isSelected = selectedVerseKey === verse.verse_key;
-                        const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumberStr)}`;
+                <div 
+                  dir="rtl"
+                  className="font-arabic leading-loose text-foreground text-center text-justify"
+                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                >
+                  {versesForCurrentPage.map((verse) => {
+                      const verseNumberStr = verse.verse_key.split(':')[1];
+                      const isSelected = selectedVerseKey === verse.verse_key;
+                      const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumberStr)}`;
 
-                        return (
-                            <div 
-                              key={verse.id} 
-                              id={`verse-${verseNumberStr}`} 
-                              className={cn(
-                                  "transition-colors duration-300 rounded-md p-4 -m-4 scroll-mt-24 cursor-pointer hover:bg-primary/10",
-                                  isSelected && "bg-primary/20"
-                              )}
-                              onClick={() => handleVerseClick(verse.verse_key)}
-                            >
-                                <p 
-                                  dir="rtl" 
-                                  className="font-arabic leading-loose text-foreground text-center"
-                                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                                >
-                                    {verse.text_uthmani}
-                                    <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
-                                </p>
-                                {verse.translation && settings.showTranslation && (
-                                    <div className="text-muted-foreground text-lg leading-relaxed text-center mt-4 border-t border-border/20 pt-4">
-                                        <p><span className="text-primary font-bold mr-2">{verseNumberStr}</span>{verse.translation}</p>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                      return (
+                          <span 
+                            key={verse.id} 
+                            id={`verse-${verseNumberStr}`} 
+                            className={cn(
+                                "transition-colors duration-300 rounded-md p-1 cursor-pointer hover:bg-primary/10",
+                                isSelected && "bg-primary/20"
+                            )}
+                            onClick={() => handleVerseClick(verse.verse_key)}
+                          >
+                            {verse.text_uthmani}
+                            <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                            {' '}
+                          </span>
+                      );
+                  })}
                 </div>
             </div>
         )
@@ -507,3 +450,4 @@ export default function RecordPage() {
     </div>
   );
 }
+
