@@ -8,7 +8,7 @@ import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, 
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
-import type { Surah, TranslationOption } from '@/types';
+import type { Surah, TranslationOption, Ayah } from '@/types';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
@@ -29,6 +29,11 @@ interface UthmaniVerse {
 interface UthmaniVerseApiResponse {
     verses: UthmaniVerse[];
 }
+
+interface TranslationApiResponse {
+    translations: { text: string }[];
+}
+
 
 const TranslationItem = ({ 
     option, 
@@ -60,9 +65,9 @@ export default function RecordPage() {
   const [isSupported, setIsSupported] = useState(true);
   
   const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
-  const [verses, setVerses] = useState<UthmaniVerse[]>([]);
-  const [isLoadingVerses, setIsLoadingVerses] = useState(false);
-  const [verseFetchError, setVerseFetchError] = useState<string | null>(null);
+  const [verses, setVerses] = useState<Ayah[]>([]);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState<string | null>(null);
   const [selectedVerseKey, setSelectedVerseKey] = useState<string | null>(null);
   
   const [isSurahSheetOpen, setIsSurahSheetOpen] = useState(false);
@@ -90,39 +95,62 @@ export default function RecordPage() {
     setIsSupported(!!isApiSupported);
   }, []);
 
-  useEffect(() => {
-    const fetchVerses = async () => {
-      if (!selectedSurah) {
-        setVerses([]);
-        return;
-      }
-
-      setIsLoadingVerses(true);
-      setVerseFetchError(null);
+  const fetchContent = useCallback(async () => {
+    if (!selectedSurah) {
       setVerses([]);
-      setCurrentPage(0);
-      setSelectedVerseKey(null);
-      try {
-        const response = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`);
-        if (!response.ok) {
-          throw new Error("Could not fetch verses for the selected Surah.");
-        }
-        const data: UthmaniVerseApiResponse = await response.json();
-        setVerses(data.verses);
-      } catch (error) {
-        console.error("Verse fetch error:", error);
-        setVerseFetchError(error instanceof Error ? error.message : "An unknown error occurred.");
-      } finally {
-        setIsLoadingVerses(false);
-      }
-    };
+      return;
+    }
 
-    fetchVerses();
-  }, [selectedSurah]);
+    setIsLoadingContent(true);
+    setContentError(null);
+    setVerses([]);
+    setCurrentPage(0);
+    setSelectedVerseKey(null);
+
+    const selectedTranslation = translationOptions.find(t => t.id === settings.translationId);
+
+    try {
+      // Fetch Uthmani text and translation in parallel
+      const [versesResponse, translationResponse] = await Promise.all([
+        fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${selectedSurah.id}`),
+        selectedTranslation ? fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${selectedSurah.id}`) : Promise.resolve(null),
+      ]);
+
+      if (!versesResponse.ok) {
+        throw new Error("Could not fetch verses for the selected Surah.");
+      }
+      const versesData: UthmaniVerseApiResponse = await versesResponse.json();
+
+      let translations: string[] = [];
+      if (translationResponse) {
+          if (!translationResponse.ok) {
+              console.warn(`Failed to fetch translation: ${translationResponse.statusText}`);
+          } else {
+              const translationData: TranslationApiResponse = await translationResponse.json();
+              translations = translationData.translations.map(t => t.text.replace(/<sup.*?<\/sup>/g, ''));
+          }
+      }
+
+      const combinedVerses = versesData.verses.map((verse, index) => ({
+          ...verse,
+          translation: translations[index] || (selectedTranslation ? 'Translation not available.' : undefined),
+      }));
+
+      setVerses(combinedVerses);
+
+    } catch (error) {
+      console.error("Content fetch error:", error);
+      setContentError(error instanceof Error ? error.message : "An unknown error occurred while loading content.");
+    } finally {
+      setIsLoadingContent(false);
+    }
+  }, [selectedSurah, settings.translationId]);
+
+  useEffect(() => {
+    fetchContent();
+  }, [fetchContent]);
 
   const handleVerseClick = (verseKey: string) => {
-    // Allow selecting only one verse. Clicking another verse deselects the previous one.
-    // Clicking the same verse again will deselect it.
     setSelectedVerseKey(prevKey => prevKey === verseKey ? null : verseKey);
   };
 
@@ -247,29 +275,22 @@ export default function RecordPage() {
         );
     }
     
-    if (!selectedSurah) {
+    if (!selectedSurah || isLoadingContent) {
         return (
             <div className="w-full flex-grow flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
-
-    if (isLoadingVerses) {
-        return (
-          <div className="w-full flex-grow flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        );
-    }
     
-    if (verseFetchError) {
+    if (contentError) {
         return (
           <div className="w-full flex-grow flex items-center justify-center">
             <Alert variant="destructive" className="max-w-md">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error Loading Verses</AlertTitle>
-              <AlertDescription>{verseFetchError}</AlertDescription>
+              <AlertTitle>Error Loading Content</AlertTitle>
+              <AlertDescription>{contentError}</AlertDescription>
+              <Button onClick={fetchContent} className="mt-4">Retry</Button>
             </Alert>
           </div>
         );
@@ -286,33 +307,36 @@ export default function RecordPage() {
                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                     <p className="font-arabic text-center text-3xl mb-8 pb-4">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                 )}
-                <div 
-                  dir="rtl" 
-                  className="font-arabic text-justify leading-loose"
-                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                >
+                <div className="space-y-8">
                     {versesForCurrentPage.map((verse) => {
                         const verseNumberStr = verse.verse_key.split(':')[1];
                         const isSelected = selectedVerseKey === verse.verse_key;
+                        const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumberStr)}`;
+
                         return (
-                            <span 
+                            <div 
                               key={verse.id} 
                               id={`verse-${verseNumberStr}`} 
                               className={cn(
-                                  "transition-colors duration-300 rounded-md p-1 scroll-mt-24 cursor-pointer hover:bg-primary/10",
+                                  "transition-colors duration-300 rounded-md p-4 -m-4 scroll-mt-24 cursor-pointer hover:bg-primary/10",
                                   isSelected && "bg-primary/20"
                               )}
                               onClick={() => handleVerseClick(verse.verse_key)}
                             >
-                                <span>{verse.text_uthmani}</span>
-                                <span className="inline-block relative w-8 h-8 -mb-1 mx-1" style={{ fontSize: `${settings.fontSize * 0.55}px`}}>
-                                  <Octagon className="absolute h-full w-full text-primary/70" fill="currentColor" />
-                                  <span className="relative font-sans font-bold text-white flex items-center justify-center h-full">
-                                      {toArabicNumerals(String(verseNumberStr))}
-                                  </span>
-                                </span>
-                                {' '}
-                            </span>
+                                <p 
+                                  dir="rtl" 
+                                  className="font-arabic leading-loose text-foreground text-center"
+                                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                                >
+                                    {verse.text_uthmani}
+                                    <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                                </p>
+                                {verse.translation && settings.showTranslation && (
+                                    <div className="text-muted-foreground text-lg leading-relaxed text-center mt-4 border-t border-border/20 pt-4">
+                                        <p><span className="text-primary font-bold mr-2">{verseNumberStr}</span>{verse.translation}</p>
+                                    </div>
+                                )}
+                            </div>
                         );
                     })}
                 </div>
@@ -368,8 +392,6 @@ export default function RecordPage() {
                                 onClick={() => {
                                     setSelectedSurah(surah);
                                     setIsSurahSheetOpen(false);
-                                    setCurrentPage(0);
-                                    setSelectedVerseKey(null);
                                 }}
                                 className="p-3 rounded-lg hover:bg-card/80 transition-colors cursor-pointer border-b border-border/10 last:border-b-0"
                             >
