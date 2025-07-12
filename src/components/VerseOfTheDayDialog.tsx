@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Share2, BookOpen } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const verses = [
@@ -56,6 +56,7 @@ export function VerseOfTheDayDialog() {
                 });
             });
         }
+        setIsOpen(false);
     };
 
     if (!selectedVerse) {
@@ -65,11 +66,7 @@ export function VerseOfTheDayDialog() {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="sm:max-w-[280px] rounded-xl" dir="rtl">
-                <DialogHeader className="text-right">
-                    <DialogTitle className="flex items-center gap-2">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                        رسالة اليوم
-                    </DialogTitle>
+                <DialogHeader className="text-right pt-4">
                     <DialogDescription>
                         شارك هذه الآية لتكون صدقة جارية لك.
                     </DialogDescription>
@@ -90,9 +87,6 @@ export function VerseOfTheDayDialog() {
                         <Button type="button" className="w-full" onClick={handleShare}>
                             <Share2 className="ml-2 h-4 w-4" />
                             مشاركة
-                        </Button>
-                        <Button type="button" variant="secondary" onClick={() => setIsOpen(false)} className="w-full">
-                            إغلاق
                         </Button>
                     </div>
                 </DialogFooter>
