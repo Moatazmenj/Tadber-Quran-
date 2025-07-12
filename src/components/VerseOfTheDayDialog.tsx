@@ -46,29 +46,13 @@ export function VerseOfTheDayDialog() {
         const shareText = `Verse of the Day:\n\n"${selectedVerse.text}"\n- Quran (${selectedVerse.surah}, ${selectedVerse.verse.split(':')[1]})`;
         const fullShareText = `${shareText}\n\n"${selectedVerse.translation}"`;
 
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'Verse of the Day',
-                    text: shareText,
-                });
-                setIsOpen(false);
-            } catch (error) {
-                // This will catch if the user cancels the share dialog, so we don't need to show an error.
-                // We only log errors that are not 'AbortError'.
-                if ((error as any).name !== 'AbortError') {
-                    console.error('Error sharing:', error);
-                }
-            }
-        } else {
-            // Fallback for browsers that don't support the Web Share API.
+        const fallbackCopy = async () => {
             try {
                 await navigator.clipboard.writeText(fullShareText);
                 toast({
                     title: "Copied to Clipboard",
                     description: "Share text has been copied. You can paste it to share.",
                 });
-                setIsOpen(false);
             } catch (err) {
                 console.error('Failed to copy: ', err);
                 toast({
@@ -77,6 +61,26 @@ export function VerseOfTheDayDialog() {
                     description: 'Could not copy the text to your clipboard.'
                 });
             }
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Verse of the Day',
+                    text: fullShareText,
+                });
+                setIsOpen(false);
+            } catch (error) {
+                // If sharing fails (e.g., user cancels), do nothing or fallback
+                if ((error as DOMException).name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    // Fallback to copy for other errors
+                    await fallbackCopy();
+                }
+            }
+        } else {
+            // Fallback for browsers that don't support the Web Share API.
+            await fallbackCopy();
         }
     };
 
