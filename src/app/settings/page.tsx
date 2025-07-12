@@ -81,11 +81,6 @@ export default function SettingsPage() {
                 <Separator className="bg-border/20 mx-4" />
                 <SettingsListItem label="Translation" href="/settings/translation" />
             </div>
-
-            <SectionTitle>Settings</SectionTitle>
-             <div className="bg-card rounded-lg">
-                <SettingsListItem label="Settings" />
-            </div>
         </div>
       </main>
     </div>
