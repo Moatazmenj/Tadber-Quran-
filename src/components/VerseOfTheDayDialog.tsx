@@ -27,11 +27,9 @@ function VisuallyHidden({ children }: { children: React.ReactNode }) {
 export function VerseOfTheDayDialog() {
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
-    // Initialize with a default verse to prevent mismatch during SSR
     const [selectedVerse, setSelectedVerse] = useState(verses[0]);
 
     useEffect(() => {
-        // This code runs only on the client
         const randomIndex = Math.floor(Math.random() * verses.length);
         const randomVerse = verses[randomIndex];
         
@@ -40,33 +38,46 @@ export function VerseOfTheDayDialog() {
         }
         
         setIsOpen(true);
-    }, []); // Empty dependency array ensures this runs on every mount
+    }, []);
 
     const handleShare = async () => {
         if (!selectedVerse) return;
-        const shareText = `Verse of the Day:\n\n"${selectedVerse.text}"\n\n- Quran (${selectedVerse.surah}, ${selectedVerse.verse})\n\n"${selectedVerse.translation}"`;
-        
+
+        const shareText = `Verse of the Day:\n\n"${selectedVerse.text}"\n- Quran (${selectedVerse.surah}, ${selectedVerse.verse.split(':')[1]})`;
+        const fullShareText = `${shareText}\n\n"${selectedVerse.translation}"`;
+
         if (navigator.share) {
             try {
                 await navigator.share({
                     title: 'Verse of the Day',
                     text: shareText,
                 });
+                setIsOpen(false);
             } catch (error) {
+                // This will catch if the user cancels the share dialog, so we don't need to show an error.
+                // We only log errors that are not 'AbortError'.
                 if ((error as any).name !== 'AbortError') {
-                  console.log('Error sharing:', error);
+                    console.error('Error sharing:', error);
                 }
             }
         } else {
-            // Fallback for browsers that don't support Web Share API
-            navigator.clipboard.writeText(shareText).then(() => {
+            // Fallback for browsers that don't support the Web Share API.
+            try {
+                await navigator.clipboard.writeText(fullShareText);
                 toast({
                     title: "Copied to Clipboard",
                     description: "Share text has been copied. You can paste it to share.",
                 });
-            });
+                setIsOpen(false);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                toast({
+                    variant: 'destructive',
+                    title: 'Copy Failed',
+                    description: 'Could not copy the text to your clipboard.'
+                });
+            }
         }
-        setIsOpen(false);
     };
 
     if (!selectedVerse) {
