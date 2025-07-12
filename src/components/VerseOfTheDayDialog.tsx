@@ -64,7 +64,7 @@ export function VerseOfTheDayDialog() {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-xs" dir="rtl">
+            <DialogContent className="sm:max-w-[300px]" dir="rtl">
                 <DialogHeader className="text-right">
                     <DialogTitle className="flex items-center gap-2">
                         <BookOpen className="h-6 w-6 text-primary" />
@@ -75,13 +75,13 @@ export function VerseOfTheDayDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="my-4 text-center space-y-4 py-4">
-                    <p className="font-arabic text-2xl text-foreground leading-loose">
+                    <p className="font-arabic text-xl text-foreground leading-loose">
                         {selectedVerse.text}
                     </p>
-                    <p className="text-muted-foreground italic">
+                    <p className="text-muted-foreground italic text-sm">
                         "{selectedVerse.translation}"
                     </p>
-                    <p className="text-sm text-primary font-semibold">
+                    <p className="text-xs text-primary font-semibold">
                         - سورة {selectedVerse.surah}، الآية {selectedVerse.verse.split(':')[1]} -
                     </p>
                 </div>
