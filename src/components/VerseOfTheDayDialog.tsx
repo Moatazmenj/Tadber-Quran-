@@ -64,7 +64,7 @@ export function VerseOfTheDayDialog() {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-sm" dir="rtl">
+            <DialogContent className="sm:max-w-xs" dir="rtl">
                 <DialogHeader className="text-right">
                     <DialogTitle className="flex items-center gap-2">
                         <BookOpen className="h-6 w-6 text-primary" />
