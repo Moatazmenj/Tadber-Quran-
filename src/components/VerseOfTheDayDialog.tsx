@@ -84,7 +84,7 @@ export function VerseOfTheDayDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="my-4 text-center space-y-4 py-4">
-                    <p className="font-arabic text-xl text-foreground leading-loose">
+                    <p className="font-arabic text-lg text-foreground leading-loose">
                         {selectedVerse.text}
                     </p>
                     <p className="text-muted-foreground italic text-sm">
