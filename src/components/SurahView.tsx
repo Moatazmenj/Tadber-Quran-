@@ -7,7 +7,7 @@ import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X } from 'lucide-react';
 import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -390,8 +390,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           </Card>
         )}
         {summary && (
-          <Card className="mb-8 surah-view-card">
-            <CardContent className="p-6">
+          <Card className="mb-8 surah-view-card relative">
+            <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setSummary('')}
+            >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close summary</span>
+            </Button>
+            <CardContent className="p-6 pt-8">
               <p className="text-lg leading-relaxed">{summary}</p>
             </CardContent>
           </Card>
