@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Share2, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const DIALOG_STORAGE_KEY = 'verseOfTheDayLastShown';
-
 const verses = [
     { surah: "Al-Baqarah", verse: "2:255", text: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ ...", translation: "Allah! There is no god but He, the Living, the Self-subsisting, Eternal..." },
     { surah: "Ar-Rahman", verse: "55:13", text: "فَبِأَىِّ ءَالَآءِ رَبِّكُمَا تُكَذِّبَانِ", translation: "Then which of the favors of your Lord will you deny?" },
@@ -20,22 +18,24 @@ const verses = [
 export function VerseOfTheDayDialog() {
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
+    // Initialize with a default verse to prevent mismatch during SSR
     const [selectedVerse, setSelectedVerse] = useState(verses[0]);
 
     useEffect(() => {
-        const lastShown = localStorage.getItem(DIALOG_STORAGE_KEY);
-        const now = new Date().getTime();
-        const oneDay = 24 * 60 * 60 * 1000;
-
-        if (!lastShown || now - parseInt(lastShown, 10) > oneDay) {
-            const randomIndex = Math.floor(Math.random() * verses.length);
-            setSelectedVerse(verses[randomIndex]);
-            setIsOpen(true);
-            localStorage.setItem(DIALOG_STORAGE_KEY, now.toString());
+        // This code runs only on the client
+        const randomIndex = Math.floor(Math.random() * verses.length);
+        const randomVerse = verses[randomIndex];
+        
+        // This might not even be necessary if we always want a new verse
+        if (randomVerse) {
+          setSelectedVerse(randomVerse);
         }
-    }, []);
+        
+        setIsOpen(true);
+    }, []); // Empty dependency array ensures this runs on every mount
 
     const handleShare = async () => {
+        if (!selectedVerse) return;
         const shareText = `Verse of the Day:\n\n"${selectedVerse.text}"\n\n- Quran (${selectedVerse.surah}, ${selectedVerse.verse})\n\n"${selectedVerse.translation}"`;
         
         if (navigator.share) {
@@ -57,6 +57,10 @@ export function VerseOfTheDayDialog() {
             });
         }
     };
+
+    if (!selectedVerse) {
+        return null;
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
