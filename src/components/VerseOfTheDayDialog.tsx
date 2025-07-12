@@ -35,7 +35,6 @@ export function VerseOfTheDayDialog() {
         const randomIndex = Math.floor(Math.random() * verses.length);
         const randomVerse = verses[randomIndex];
         
-        // This might not even be necessary if we always want a new verse
         if (randomVerse) {
           setSelectedVerse(randomVerse);
         }
@@ -54,7 +53,9 @@ export function VerseOfTheDayDialog() {
                     text: shareText,
                 });
             } catch (error) {
-                console.log('Error sharing:', error);
+                if ((error as any).name !== 'AbortError') {
+                  console.log('Error sharing:', error);
+                }
             }
         } else {
             // Fallback for browsers that don't support Web Share API
