@@ -65,7 +65,7 @@ export function VerseOfTheDayDialog() {
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-[280px] rounded-xl" dir="rtl">
+            <DialogContent className="sm:max-w-[250px] rounded-xl" dir="rtl">
                 <DialogHeader className="text-right pt-4">
                     <DialogDescription>
                         شارك هذه الآية لتكون صدقة جارية لك.
