@@ -1,0 +1,98 @@
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Share2, BookOpen } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+const DIALOG_STORAGE_KEY = 'verseOfTheDayLastShown';
+
+const verses = [
+    { surah: "Al-Baqarah", verse: "2:255", text: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ ...", translation: "Allah! There is no god but He, the Living, the Self-subsisting, Eternal..." },
+    { surah: "Ar-Rahman", verse: "55:13", text: "فَبِأَىِّ ءَالَآءِ رَبِّكُمَا تُكَذِّبَانِ", translation: "Then which of the favors of your Lord will you deny?" },
+    { surah: "Ash-Sharh", verse: "94:5", text: "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", translation: "For indeed, with hardship [will be] ease." },
+    { surah: "Az-Zumar", verse: "39:53", text: "قُلْ يَـٰعِبَادِىَ ٱلَّذِينَ أَسْرَفُوا۟ عَلَىٰٓ أَنفُسِهِمْ لَا تَقْنَطُوا۟ مِن رَّحْمَةِ ٱللَّهِ ۚ إِنَّ ٱللَّهَ يَغْفِرُ ٱلذُّنُوبَ جَمِيعًا", translation: "Say, 'O My servants who have transgressed against themselves [by sinning], do not despair of the mercy of Allah.'" },
+    { surah: "Al-Asr", verse: "103:2", text: "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", translation: "Indeed, mankind is in loss." },
+];
+
+export function VerseOfTheDayDialog() {
+    const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedVerse, setSelectedVerse] = useState(verses[0]);
+
+    useEffect(() => {
+        const lastShown = localStorage.getItem(DIALOG_STORAGE_KEY);
+        const now = new Date().getTime();
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        if (!lastShown || now - parseInt(lastShown, 10) > oneDay) {
+            const randomIndex = Math.floor(Math.random() * verses.length);
+            setSelectedVerse(verses[randomIndex]);
+            setIsOpen(true);
+            localStorage.setItem(DIALOG_STORAGE_KEY, now.toString());
+        }
+    }, []);
+
+    const handleShare = async () => {
+        const shareText = `Verse of the Day:\n\n"${selectedVerse.text}"\n\n- Quran (${selectedVerse.surah}, ${selectedVerse.verse})\n\n"${selectedVerse.translation}"`;
+        
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Verse of the Day',
+                    text: shareText,
+                });
+            } catch (error) {
+                console.log('Error sharing:', error);
+            }
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            navigator.clipboard.writeText(shareText).then(() => {
+                toast({
+                    title: "Copied to Clipboard",
+                    description: "Share text has been copied. You can paste it to share.",
+                });
+            });
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent className="sm:max-w-md" dir="rtl">
+                <DialogHeader className="text-right">
+                    <DialogTitle className="flex items-center gap-2">
+                        <BookOpen className="h-6 w-6 text-primary" />
+                        رسالة اليوم
+                    </DialogTitle>
+                    <DialogDescription>
+                        شارك هذه الآية لتكون صدقة جارية لك.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="my-4 text-center space-y-4 py-4">
+                    <p className="font-arabic text-2xl text-foreground leading-loose">
+                        {selectedVerse.text}
+                    </p>
+                    <p className="text-muted-foreground italic">
+                        "{selectedVerse.translation}"
+                    </p>
+                    <p className="text-sm text-primary font-semibold">
+                        - سورة {selectedVerse.surah}، الآية {selectedVerse.verse.split(':')[1]} -
+                    </p>
+                </div>
+                <DialogFooter className="sm:justify-start">
+                    <div className="flex w-full gap-2">
+                        <Button type="button" className="w-full" onClick={handleShare}>
+                            <Share2 className="ml-2 h-4 w-4" />
+                            مشاركة
+                        </Button>
+                        <Button type="button" variant="secondary" onClick={() => setIsOpen(false)} className="w-full">
+                            إغلاق
+                        </Button>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
