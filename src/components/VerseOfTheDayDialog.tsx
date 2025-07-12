@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const verses = [
     { surah: "Al-Baqarah", verse: "2:255", text: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ ...", translation: "Allah! There is no god but He, the Living, the Self-subsisting, Eternal..." },
@@ -14,6 +15,14 @@ const verses = [
     { surah: "Az-Zumar", verse: "39:53", text: "قُلْ يَـٰعِبَادِىَ ٱلَّذِينَ أَسْرَفُوا۟ عَلَىٰٓ أَنفُسِهِمْ لَا تَقْنَطُوا۟ مِن رَّحْمَةِ ٱللَّهِ ۚ إِنَّ ٱللَّهَ يَغْفِرُ ٱلذُّنُوبَ جَمِيعًا", translation: "Say, 'O My servants who have transgressed against themselves [by sinning], do not despair of the mercy of Allah.'" },
     { surah: "Al-Asr", verse: "103:2", text: "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", translation: "Indeed, mankind is in loss." },
 ];
+
+function VisuallyHidden({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="sr-only">
+      {children}
+    </div>
+  );
+}
 
 export function VerseOfTheDayDialog() {
     const { toast } = useToast();
@@ -67,6 +76,9 @@ export function VerseOfTheDayDialog() {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="sm:max-w-[250px] rounded-xl" dir="rtl">
                 <DialogHeader className="text-right pt-4">
+                    <VisuallyHidden>
+                        <DialogTitle>رسالة اليوم</DialogTitle>
+                    </VisuallyHidden>
                     <DialogDescription>
                         شارك هذه الآية لتكون صدقة جارية لك.
                     </DialogDescription>
