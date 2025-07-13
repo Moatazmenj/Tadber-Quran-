@@ -45,46 +45,28 @@ export function VerseOfTheDayDialog() {
     }, []);
 
     const handleShare = async () => {
-        if (!selectedVerse) return;
+        if (!selectedVerse || !navigator.share) return;
 
-        const shareText = `Verse of the Day:\n\n"${selectedVerse.text}"\n- Quran (${selectedVerse.surah}, ${selectedVerse.verse.split(':')[1]})`;
-        const fullShareText = `${shareText}\n\n"${selectedVerse.translation}"`;
+        const fullShareText = `Verse of the Day:\n"${selectedVerse.text}"\n- Quran ${selectedVerse.surah}:${selectedVerse.verse.split(':')[1]}\n\n"${selectedVerse.translation}"`;
 
-        const fallbackCopy = async () => {
-            try {
-                await navigator.clipboard.writeText(fullShareText);
-                toast({
-                    title: "Copied to Clipboard",
-                    description: "Share text has been copied. You can paste it to share.",
-                });
-            } catch (err) {
-                console.error('Failed to copy: ', err);
-                toast({
-                    variant: 'destructive',
-                    title: 'Copy Failed',
-                    description: 'Could not copy the text to your clipboard.'
-                });
+        try {
+            await navigator.share({
+                title: 'Verse of the Day',
+                text: fullShareText,
+            });
+            setIsOpen(false);
+        } catch (error) {
+            // The user cancelled the share operation.
+            // We can safely ignore this error.
+            if ((error as DOMException).name === 'AbortError') {
+                return;
             }
-        };
-
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'Verse of the Day',
-                    text: fullShareText,
-                });
-                setIsOpen(false);
-            } catch (error) {
-                // If sharing fails (e.g., user cancels), do nothing or fallback
-                if ((error as DOMException).name !== 'AbortError') {
-                    console.error('Error sharing:', error);
-                    // Fallback to copy for other errors
-                    await fallbackCopy();
-                }
-            }
-        } else {
-            // Fallback for browsers that don't support the Web Share API.
-            await fallbackCopy();
+            console.error('Failed to share:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Share Failed',
+                description: 'Could not share the verse. Please try again.'
+            });
         }
     };
 
