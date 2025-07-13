@@ -30,14 +30,18 @@ export function VerseOfTheDayDialog() {
     const [selectedVerse, setSelectedVerse] = useState(verses[0]);
 
     useEffect(() => {
-        const randomIndex = Math.floor(Math.random() * verses.length);
-        const randomVerse = verses[randomIndex];
-        
-        if (randomVerse) {
-          setSelectedVerse(randomVerse);
+        const hasSeenDialogToday = sessionStorage.getItem('hasSeenVerseDialog');
+        if (!hasSeenDialogToday) {
+            const randomIndex = Math.floor(Math.random() * verses.length);
+            const randomVerse = verses[randomIndex];
+            
+            if (randomVerse) {
+              setSelectedVerse(randomVerse);
+            }
+            
+            setIsOpen(true);
+            sessionStorage.setItem('hasSeenVerseDialog', 'true');
         }
-        
-        setIsOpen(true);
     }, []);
 
     const handleShare = async () => {
