@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
 export function SplashScreen({ children }: { children: React.ReactNode }) {
@@ -32,7 +31,6 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
               height={38}
               priority
             />
-            <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mt-8" />
         </div>
       </div>
     );
