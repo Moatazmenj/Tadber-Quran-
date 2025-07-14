@@ -18,8 +18,12 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black text-white">
-        <div className="text-center">
+      <div 
+        className="fixed inset-0 z-[200] flex flex-col items-center justify-center text-white bg-cover bg-center"
+        style={{ backgroundImage: "url('https://i.postimg.cc/j5y5dR1X/20250714-094701.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="relative z-10 text-center">
             <h1 className="text-5xl font-headline font-bold text-white">Tadber Quran</h1>
             <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mt-8" />
         </div>
