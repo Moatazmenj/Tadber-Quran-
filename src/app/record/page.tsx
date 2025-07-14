@@ -4,8 +4,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Mic, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown, Check } from 'lucide-react';
+import { ChevronLeft, Square, WifiOff, Loader2, AlertCircle, ChevronRight, Baseline, Octagon, ChevronDown, Check } from 'lucide-react';
 import { cn, toArabicNumerals } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { surahs } from '@/lib/quran';
@@ -446,11 +447,11 @@ export default function RecordPage() {
                 <Button 
                     variant="destructive" 
                     size="lg" 
-                    className="w-16 h-16 rounded-full"
+                    className="w-16 h-16 rounded-full flex items-center justify-center p-0"
                     onClick={handleStartRecording}
                     disabled={isRecording || isProcessing || !isSupported}
                 >
-                    <Mic className="h-7 w-7" />
+                    <Image src="https://i.postimg.cc/ht9MRmDZ/microphone.png" alt="Record" width={28} height={28} className="w-7 h-7" />
                     <span className="sr-only">Record</span>
                 </Button>
             )}

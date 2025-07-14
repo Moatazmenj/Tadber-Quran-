@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Mic } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -28,11 +28,11 @@ export function RecordButton() {
       <Button
         asChild
         variant="destructive"
-        className="rounded-full w-14 h-14 shadow-lg"
+        className="rounded-full w-14 h-14 shadow-lg p-0 flex items-center justify-center"
         aria-label="Record"
       >
         <span>
-            <Mic className="h-6 w-6" />
+            <Image src="https://i.postimg.cc/ht9MRmDZ/microphone.png" alt="Record" width={28} height={28} className="w-7 h-7" />
         </span>
       </Button>
     </Link>
