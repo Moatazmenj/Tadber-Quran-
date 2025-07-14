@@ -167,7 +167,22 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
           canvas.width = 1080;
           canvas.height = 1080;
-          ctx.drawImage(image, 0, 0, 1080, 1080);
+
+          // Calculate aspect ratio and dimensions to fit within canvas
+          const aspectRatio = image.width / image.height;
+          let newWidth = canvas.width;
+          let newHeight = canvas.height;
+
+          if (aspectRatio > 1) { // Image is wider than tall
+            newHeight = canvas.width / aspectRatio;
+          } else { // Image is taller than wide or square
+            newWidth = canvas.height * aspectRatio;
+          }
+
+          // Calculate center position
+          const x = (canvas.width - newWidth) / 2;
+          const y = (canvas.height - newHeight) / 2;
+          ctx.drawImage(image, x, y, newWidth, newHeight);
 
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
