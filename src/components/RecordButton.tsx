@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 
 export function RecordButton() {
   const pathname = usePathname();
-  const isSurahPage = pathname.startsWith('/surah/');
   const isRecordPage = pathname === '/record';
   const isAnalysisPage = pathname.startsWith('/record/analysis');
 
@@ -20,10 +19,7 @@ export function RecordButton() {
     <Link
       href="/record"
       passHref
-      className={cn(
-        "fixed right-4 z-50",
-        isSurahPage ? "bottom-28" : "bottom-4"
-      )}
+      className={cn("fixed right-4 bottom-4 z-50")}
     >
       <Button
         asChild
