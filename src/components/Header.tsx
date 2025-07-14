@@ -1,8 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { Settings, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 export function Header() {
   return (
@@ -23,7 +24,7 @@ export function Header() {
             </Button>
             <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" size="icon">
               <Link href="/settings">
-                <Settings className="w-6 h-6" />
+                <Image src="https://i.postimg.cc/fLkmKd12/bouton-de-reglage-de-la-roue-dentee.png" alt="Settings" width={24} height={24} className="w-6 h-6" />
                 <span className="sr-only">Settings</span>
               </Link>
             </Button>
