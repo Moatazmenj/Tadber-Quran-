@@ -10,10 +10,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Cairo', 'sans-serif'],
-        headline: ['Alegreya', 'serif'],
-        arabic: ['Noto Kufi Arabic', 'serif'],
-        'arabic-indopak': ['Noto Naskh Arabic', 'serif'],
+        body: ['var(--font-cairo)', 'sans-serif'],
+        headline: ['var(--font-alegreya)', 'serif'],
+        arabic: ['var(--font-noto-kufi-arabic)', 'serif'],
+        'arabic-indopak': ['var(--font-noto-naskh-arabic)', 'serif'],
         code: ['monospace'],
       },
       colors: {

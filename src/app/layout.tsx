@@ -1,9 +1,35 @@
 import type { Metadata } from 'next';
+import { Alegreya, Cairo, Noto_Kufi_Arabic, Noto_Naskh_Arabic } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import ThemeManager from '@/components/ThemeManager';
 import { RecordButton } from '@/components/RecordButton';
 import { SplashScreen } from '@/components/SplashScreen';
+import { cn } from '@/lib/utils';
+
+const cairo = Cairo({
+  subsets: ['latin', 'arabic'],
+  variable: '--font-cairo',
+  display: 'swap',
+});
+
+const alegreya = Alegreya({
+  subsets: ['latin'],
+  variable: '--font-alegreya',
+  display: 'swap',
+});
+
+const notoKufiArabic = Noto_Kufi_Arabic({
+  subsets: ['arabic'],
+  variable: '--font-noto-kufi-arabic',
+  display: 'swap',
+});
+
+const notoNaskhArabic = Noto_Naskh_Arabic({
+  subsets: ['arabic'],
+  variable: '--font-noto-naskh-arabic',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Tadber Quran',
@@ -19,14 +45,14 @@ export default function RootLayout({
     <html lang="en" dir="ltr" className="dark notranslate" translate="no">
       <head>
         <meta name="google" content="notranslate" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">
+      <body className={cn(
+        "font-body antialiased",
+        cairo.variable,
+        alegreya.variable,
+        notoKufiArabic.variable,
+        notoNaskhArabic.variable
+      )}>
         <SplashScreen>
           <ThemeManager />
           <div className="flex flex-col min-h-screen">
