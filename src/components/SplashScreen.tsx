@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 export function SplashScreen({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +25,13 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
       >
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10 text-center">
-            <h1 className="text-5xl font-headline font-bold text-white">Tadber Quran</h1>
+            <Image 
+              src="https://i.postimg.cc/KcLqFC88/20250707-093634.png"
+              alt="Tadber Quran Logo"
+              width={400}
+              height={150}
+              priority
+            />
             <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mt-8" />
         </div>
       </div>
