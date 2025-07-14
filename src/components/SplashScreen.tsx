@@ -28,8 +28,8 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
             <Image 
               src="https://i.postimg.cc/KcLqFC88/20250707-093634.png"
               alt="Tadber Quran Logo"
-              width={250}
-              height={94}
+              width={100}
+              height={38}
               priority
             />
             <Loader2 className="h-8 w-8 animate-spin text-white mx-auto mt-8" />
