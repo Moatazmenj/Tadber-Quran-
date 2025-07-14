@@ -47,11 +47,12 @@ export default function RootLayout({
         <meta name="google" content="notranslate" />
       </head>
       <body className={cn(
-        "font-body antialiased",
+        "antialiased",
         cairo.variable,
         alegreya.variable,
         notoKufiArabic.variable,
-        notoNaskhArabic.variable
+        notoNaskhArabic.variable,
+        'font-body'
       )}>
         <SplashScreen>
           <ThemeManager />

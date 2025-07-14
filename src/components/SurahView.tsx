@@ -633,7 +633,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     src={bg}
                                     alt={`Background option ${index + 1}`}
                                     fill
-                                    className="object-cover transition-transform group-hover:scale-105"
+ className="object-cover transition-transform group-hover:scale-105 w-full h-auto"
+                                    style={{ width: '100%', height: 'auto' }}
                                 />
                             </div>
                         ))}
