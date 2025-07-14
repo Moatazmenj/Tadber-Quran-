@@ -12,3 +12,4 @@ To get started, take a look at src/app/page.tsx.
 # Tadber-Quran-1
 # Tadber-Quran-1
 # Tadber-Quran-1
+# Tadber-Quran
