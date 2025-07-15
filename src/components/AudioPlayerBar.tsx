@@ -26,7 +26,7 @@ export function AudioPlayerBar({
 }: AudioPlayerBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4">
-      <div className="bg-gradient-to-t from-card to-transparent p-3 rounded-lg flex items-center justify-between shadow-2xl border-x border-b border-border/20">
+      <div className="bg-gradient-to-t from-card to-transparent p-3 rounded-lg flex items-center justify-between shadow-2xl border-x border-b border-border/20 backdrop-blur-sm bg-card/80">
         <div className="flex items-center gap-3 min-w-0">
             <div className="flex-shrink-0 flex items-center justify-center bg-primary text-primary-foreground rounded-full h-10 w-10">
                 <Headphones className="h-5 w-5" />

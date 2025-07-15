@@ -3,11 +3,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import type { Ayah, Surah } from '@/types';
+import type { Ayah, Surah, AudioFile, Reciter } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause } from 'lucide-react';
 import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -15,7 +15,9 @@ import { Label } from '@/components/ui/label';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { useToast } from '@/hooks/use-toast';
 import { translationOptions } from '@/lib/translations';
+import { reciters } from '@/lib/reciters';
 import { cn, toArabicNumerals } from '@/lib/utils';
+import { AudioPlayerBar } from '@/components/AudioPlayerBar';
 import {
   Sheet,
   SheetContent,
@@ -84,13 +86,109 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [tafsirLanguage, setTafsirLanguage] = useState('Arabic');
 
   const [bookmarkedVerses, setBookmarkedVerses] = useState<string[]>([]);
+  
+  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [showAudioPlayer, setShowAudioPlayer] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentVerse, setCurrentVerse] = useState(1);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [reciter, setReciter] = useState<Reciter | null>(null);
 
   useEffect(() => {
     const savedBookmarks = localStorage.getItem(BOOKMARKS_KEY);
     if (savedBookmarks) {
       setBookmarkedVerses(JSON.parse(savedBookmarks));
     }
-  }, []);
+    const currentReciter = reciters.find(r => r.id === settings.reciterId) || reciters[0];
+    setReciter(currentReciter);
+  }, [settings.reciterId]);
+  
+  const fetchAudioFiles = useCallback(async () => {
+    if (!reciter) return;
+    setIsLoadingAudio(true);
+    setAudioError(null);
+    try {
+      const response = await fetch(`https://api.quran.com/api/v4/recitations/${reciter.id}/by_chapter/${surahInfo.id}?word_timing=false&per_page=all`);
+      if (!response.ok) throw new Error('Failed to fetch audio files.');
+      const data = await response.json();
+      setAudioFiles(data.audio_files);
+    } catch (e) {
+      console.error(e);
+      setAudioError('Could not load audio for this surah.');
+    } finally {
+      setIsLoadingAudio(false);
+    }
+  }, [surahInfo.id, reciter]);
+
+  useEffect(() => {
+    if (showAudioPlayer && audioFiles.length === 0) {
+      fetchAudioFiles();
+    }
+  }, [showAudioPlayer, audioFiles, fetchAudioFiles]);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    
+    const audioElement = audioRef.current;
+    
+    const handleAudioEnd = () => {
+      if (currentVerse < surahInfo.versesCount) {
+        setCurrentVerse(v => v + 1);
+      } else {
+        setIsPlaying(false);
+      }
+    };
+    
+    audioElement.addEventListener('ended', handleAudioEnd);
+
+    return () => {
+      audioElement.removeEventListener('ended', handleAudioEnd);
+    };
+  }, [currentVerse, surahInfo.versesCount]);
+
+  useEffect(() => {
+    if (isPlaying && audioFiles.length > 0) {
+      const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
+      if (audioFile && audioRef.current) {
+        const url = `https://verses.quran.com/${audioFile.audio_url}`;
+        if (audioRef.current.src !== url) {
+            audioRef.current.src = url;
+        }
+        audioRef.current.play().catch(e => console.error("Audio play error", e));
+        
+        const verseElement = document.getElementById(`verse-${currentVerse}`);
+        if(verseElement) {
+          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    } else if (audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, currentVerse, audioFiles, surahInfo.id]);
+  
+  const handlePlayPause = () => {
+    if (audioFiles.length === 0 && !isLoadingAudio) {
+      fetchAudioFiles();
+    }
+    setIsPlaying(p => !p);
+  };
+
+  const handleNext = () => {
+    if (currentVerse < surahInfo.versesCount) {
+      setCurrentVerse(v => v + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentVerse > 1) {
+      setCurrentVerse(v => v - 1);
+    }
+  };
+
 
   const toggleBookmark = (verseKey: string) => {
     const updatedBookmarks = bookmarkedVerses.includes(verseKey)
@@ -402,6 +500,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         <Card className="mb-8 surah-view-card">
           <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
               <div className="flex flex-wrap gap-2">
+                <Button onClick={() => setShowAudioPlayer(s => !s)} variant={showAudioPlayer ? "secondary" : "default"} className="w-full sm:w-auto">
+                  {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                  {isPlaying ? 'Pause' : 'Listen'}
+                </Button>
                 <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
                     {isLoadingSummary ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -484,6 +586,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const fullAyah = fullVerseData[index] || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
                       const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
+                      const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
                       
                       return (
                         <Popover 
@@ -496,7 +599,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 id={`verse-${verseNumber}`} 
                                 className={cn(
                                   "border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg p-4 -m-4 cursor-pointer",
-                                  isBookmarked && "bg-orange-500/20"
+                                  isBookmarked && "bg-orange-500/20",
+                                  isCurrentlyPlaying && "bg-primary/20"
                                 )}
                             >
                                 <p 
@@ -557,6 +661,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const fullAyah = fullVerseData[index] || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
                       const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
+                      const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
 
                       return (
                         <Popover 
@@ -569,7 +674,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     id={`verse-${verseNumber}`} 
                                     className={cn(
                                       "scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer",
-                                      isBookmarked && "bg-orange-500/20"
+                                      isBookmarked && "bg-orange-500/20",
+                                      isCurrentlyPlaying && "bg-primary/20"
                                     )}
                                 >
                                     {ayah.text_uthmani}
@@ -634,6 +740,18 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         </div>
       </div>
       
+      {showAudioPlayer && reciter && (
+        <AudioPlayerBar
+          surah={surahInfo}
+          isPlaying={isPlaying}
+          currentVerse={currentVerse}
+          onPlayPause={handlePlayPause}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          reciterName={reciter.name}
+        />
+      )}
+      
       <Sheet 
         open={isShareSheetOpen} 
         onOpenChange={(isOpen) => {
@@ -681,7 +799,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     src={bg}
                                     alt={`Background option ${index + 1}`}
                                     fill
- className="object-cover transition-transform group-hover:scale-105 w-full h-auto"
+                                    className="object-cover transition-transform group-hover:scale-105 w-full h-auto"
                                     style={{ width: '100%', height: 'auto' }}
                                 />
                             </div>
