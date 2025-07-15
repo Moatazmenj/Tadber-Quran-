@@ -401,14 +401,22 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       <div className="max-w-4xl mx-auto pb-28">
         <Card className="mb-8 surah-view-card">
           <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
-                  {isLoadingSummary ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                  <BookOpenCheck className="mr-2 h-4 w-4" />
-                  )}
-                  Summarize Surah
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
+                    {isLoadingSummary ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                    <BookOpenCheck className="mr-2 h-4 w-4" />
+                    )}
+                    Summarize Surah
+                </Button>
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                    <Link href="/settings/bookmarks">
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Bookmarked Verses
+                    </Link>
+                </Button>
+              </div>
               <div className="flex items-center space-x-2">
                   <Switch 
                     id="translation-toggle" 
