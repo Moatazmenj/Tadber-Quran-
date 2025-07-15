@@ -7,7 +7,7 @@ import type { Ayah, Surah, AudioFile, Reciter } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause, Headphones } from 'lucide-react';
 import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -201,7 +201,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   const handlePrev = () => {
     if (currentVerse > 1) {
-      setCurrentVerse(v => v - 1);
+      setCurrentVerse(v => v + 1);
     }
   };
 
@@ -512,247 +512,268 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   return (
     <>
-      <div className="max-w-4xl mx-auto pb-28">
-        <Card className="mb-8 surah-view-card">
-          <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={() => setShowAudioPlayer(s => !s)} variant={showAudioPlayer ? "secondary" : "default"} className="w-full sm:w-auto">
-                  {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                  {isPlaying ? 'Pause' : 'Listen'}
-                </Button>
-                <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
-                    {isLoadingSummary ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                    <BookOpenCheck className="mr-2 h-4 w-4" />
-                    )}
-                    Summarize Surah
-                </Button>
-                {bookmarkedVerses.length > 0 && (
-                  <Button asChild variant="outline" className="w-full sm:w-auto">
-                      <Link href="/settings/bookmarks">
-                          <Bookmark className="mr-2 h-4 w-4" />
-                          Bookmarked Verses
-                      </Link>
-                  </Button>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                  <Switch 
-                    id="translation-toggle" 
-                    checked={settings.showTranslation} 
-                    onCheckedChange={(checked) => setSetting('showTranslation', checked)} 
-                  />
-                  <Label htmlFor="translation-toggle" className="cursor-pointer">Show Translation</Label>
-              </div>
-          </CardContent>
-        </Card>
-
-        {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
-        {isLoadingSummary && !summary && (
-          <Card className="mb-4 animate-pulse surah-view-card">
-              <CardContent className="p-6 space-y-2">
-                  <div className="h-4 bg-muted-foreground/10 rounded w-full"></div>
-                  <div className="h-4 bg-muted-foreground/10 rounded w-5/6"></div>
-                  <div className="h-4 bg-muted-foreground/10 rounded w-3/4"></div>
-              </CardContent>
-          </Card>
-        )}
-        {summary && (
-          <Card className="mb-8 surah-view-card relative">
-            <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-foreground"
-                onClick={() => setSummary('')}
-            >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close summary</span>
+      <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 via-primary/20 to-transparent">
+        <div className="container mx-auto grid grid-cols-3 items-center h-16 px-4">
+          <div className="justify-self-start">
+            <Link href="/" passHref>
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground">
+                <ChevronLeft className="h-6 w-6" />
+                <span className="sr-only">Back</span>
+              </Button>
+            </Link>
+          </div>
+          <h1 className="text-xl font-bold text-primary-foreground text-center truncate">
+            {surahInfo.name}
+          </h1>
+          <div className="justify-self-end text-sm text-primary-foreground/80 flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground" onClick={() => setShowAudioPlayer(s => !s)}>
+                <Headphones className="h-5 w-5" />
+                <span className="sr-only">Listen</span>
             </Button>
-            <CardContent className="p-6 pt-8">
-              <p className="text-lg leading-relaxed">{summary}</p>
+            {surahInfo.versesCount} verses
+          </div>
+        </div>
+      </header>
+
+      <div className="surah-page-background flex-grow p-4 sm:p-6 md:p-8">
+        <div className="max-w-4xl mx-auto pb-28">
+          <Card className="mb-8 surah-view-card">
+            <CardContent className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={handleSummarize} disabled={isLoadingSummary} className="w-full sm:w-auto">
+                      {isLoadingSummary ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                      <BookOpenCheck className="mr-2 h-4 w-4" />
+                      )}
+                      Summarize Surah
+                  </Button>
+                  {bookmarkedVerses.length > 0 && (
+                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                        <Link href="/settings/bookmarks">
+                            <Bookmark className="mr-2 h-4 w-4" />
+                            Bookmarked Verses
+                        </Link>
+                    </Button>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="translation-toggle" 
+                      checked={settings.showTranslation} 
+                      onCheckedChange={(checked) => setSetting('showTranslation', checked)} 
+                    />
+                    <Label htmlFor="translation-toggle" className="cursor-pointer">Show Translation</Label>
+                </div>
             </CardContent>
           </Card>
-        )}
 
-        <div className="surah-view-card rounded-lg p-4 md:p-8">
-          {initialVerses.length === 0 && !isLoadingTranslation && (
-              <Alert variant="destructive">
-                  <AlertTitle>Could Not Load Verses</AlertTitle>
-                  <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
-              </Alert>
+          {summaryError && <Alert variant="destructive" className="mb-4"><AlertTitle>Error</AlertTitle><AlertDescription>{summaryError}</AlertDescription></Alert>}
+          {isLoadingSummary && !summary && (
+            <Card className="mb-4 animate-pulse surah-view-card">
+                <CardContent className="p-6 space-y-2">
+                    <div className="h-4 bg-muted-foreground/10 rounded w-full"></div>
+                    <div className="h-4 bg-muted-foreground/10 rounded w-5/6"></div>
+                    <div className="h-4 bg-muted-foreground/10 rounded w-3/4"></div>
+                </CardContent>
+            </Card>
           )}
-          
-          {surahInfo.id !== 1 && surahInfo.id !== 9 && (
-              <p className={cn("text-center text-3xl mb-8", settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
-          )}
-
-          {(isLoadingTranslation && settings.showTranslation) && (
-              <div className="space-y-8">
-                  {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
-              </div>
-          )}
-          
-          {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
-              <div className="space-y-8">
-                  {displayVerses.map((ayah, index) => {
-                      const verseNumber = ayah.verse_key.split(':')[1];
-                      const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
-
-                      const fullAyah = fullVerseData[index] || ayah;
-                      const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
-                      const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
-                      const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
-                      
-                      return (
-                        <Popover 
-                            key={ayah.id}
-                            open={activePopoverKey === ayah.verse_key}
-                            onOpenChange={(isOpen) => setActivePopoverKey(isOpen ? ayah.verse_key : null)}
-                        >
-                          <PopoverTrigger asChild>
-                            <div 
-                                id={`verse-${verseNumber}`} 
-                                className={cn(
-                                  "border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg p-4 -m-4 cursor-pointer",
-                                  isBookmarked && "bg-orange-500/20",
-                                  isCurrentlyPlaying && "bg-primary/20"
-                                )}
-                            >
-                                <p 
-                                    dir="rtl" 
-                                    className={cn(
-                                      "leading-loose text-foreground mb-4 text-center",
-                                      settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
-                                    )}
-                                    style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                                >
-                                    {ayah.text_uthmani}
-                                    <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
-                                </p>
-                              <div className="text-muted-foreground text-lg leading-relaxed text-center">
-                                  {ayah.translation ? (
-                                    <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
-                                  ) : (
-                                    !translationError && <p className="text-sm">Loading translation...</p>
-                                  )}
-                              </div>
-                            </div>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-1" side="bottom" align="center">
-                            <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
-                                    <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
-                                    <BookText className="h-5 w-5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
-                                    <Copy className="h-5 w-5" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
-                                    <Share2 className="h-5 w-5" />
-                                </Button>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      );
-                  })}
-              </div>
-          )}
-
-          {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
-              <div
-                  dir="rtl"
-                  className={cn(
-                    "leading-loose text-foreground text-justify",
-                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
-                  )}
-                  style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+          {summary && (
+            <Card className="mb-8 surah-view-card relative">
+              <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSummary('')}
               >
-                  {displayVerses.map((ayah, index) => {
-                      const verseNumber = ayah.verse_key.split(':')[1];
-                      const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
-                      
-                      const fullAyah = fullVerseData[index] || ayah;
-                      const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
-                      const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
-                      const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close summary</span>
+              </Button>
+              <CardContent className="p-6 pt-8">
+                <p className="text-lg leading-relaxed">{summary}</p>
+              </CardContent>
+            </Card>
+          )}
 
-                      return (
-                        <Popover 
-                            key={ayah.id}
-                            open={activePopoverKey === ayah.verse_key}
-                            onOpenChange={(isOpen) => setActivePopoverKey(isOpen ? ayah.verse_key : null)}
-                        >
+          <div className="surah-view-card rounded-lg p-4 md:p-8">
+            {initialVerses.length === 0 && !isLoadingTranslation && (
+                <Alert variant="destructive">
+                    <AlertTitle>Could Not Load Verses</AlertTitle>
+                    <AlertDescription>The text for this Surah could not be loaded. Please check your internet connection and try again.</AlertDescription>
+                </Alert>
+            )}
+            
+            {surahInfo.id !== 1 && surahInfo.id !== 9 && (
+                <p className={cn("text-center text-3xl mb-8", settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+            )}
+
+            {(isLoadingTranslation && settings.showTranslation) && (
+                <div className="space-y-8">
+                    {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
+                </div>
+            )}
+            
+            {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
+                <div className="space-y-8">
+                    {displayVerses.map((ayah, index) => {
+                        const verseNumber = ayah.verse_key.split(':')[1];
+                        const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
+
+                        const fullAyah = fullVerseData[index] || ayah;
+                        const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
+                        const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
+                        const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
+                        
+                        return (
+                          <Popover 
+                              key={ayah.id}
+                              open={activePopoverKey === ayah.verse_key}
+                              onOpenChange={(isOpen) => setActivePopoverKey(isOpen ? ayah.verse_key : null)}
+                          >
                             <PopoverTrigger asChild>
-                                <span 
-                                    id={`verse-${verseNumber}`} 
-                                    className={cn(
-                                      "scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer",
-                                      isBookmarked && "bg-orange-500/20",
-                                      isCurrentlyPlaying && "bg-primary/20"
+                              <div 
+                                  id={`verse-${verseNumber}`} 
+                                  className={cn(
+                                    "border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg p-4 -m-4 cursor-pointer",
+                                    isBookmarked && "bg-orange-500/20",
+                                    isCurrentlyPlaying && "bg-primary/20"
+                                  )}
+                              >
+                                  <p 
+                                      dir="rtl" 
+                                      className={cn(
+                                        "leading-loose text-foreground mb-4 text-center",
+                                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                      )}
+                                      style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                                  >
+                                      {ayah.text_uthmani}
+                                      <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                                  </p>
+                                <div className="text-muted-foreground text-lg leading-relaxed text-center">
+                                    {ayah.translation ? (
+                                      <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
+                                    ) : (
+                                      !translationError && <p className="text-sm">Loading translation...</p>
                                     )}
-                                >
-                                    {ayah.text_uthmani}
-                                    <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
-                                    {' '}
-                                </span>
+                                </div>
+                              </div>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-1" side="bottom" align="center">
-                                <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
-                                        <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
-                                        <BookText className="h-5 w-5" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
-                                        <Copy className="h-5 w-5" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
-                                        <Share2 className="h-5 w-5" />
-                                    </Button>
-                                </div>
+                              <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
+                                      <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
+                                      <BookText className="h-5 w-5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
+                                      <Copy className="h-5 w-5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
+                                      <Share2 className="h-5 w-5" />
+                                  </Button>
+                              </div>
                             </PopoverContent>
-                        </Popover>
-                      );
-                  })}
-              </div>
-          )}
+                          </Popover>
+                        );
+                    })}
+                </div>
+            )}
 
-          {translationError && (
-              <Alert variant="destructive" className="mt-4">
-                  <AlertTitle>Translation Error</AlertTitle>
-                  <AlertDescription className="flex items-center justify-between">
-                      <span>{translationError}</span>
-                      <Button variant="secondary" size="sm" onClick={fetchAndStoreTranslations}>
-                          <RefreshCw className="mr-2 h-4 w-4"/>
-                          Retry
-                      </Button>
-                  </AlertDescription>
-              </Alert>
-          )}
+            {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
+                <div
+                    dir="rtl"
+                    className={cn(
+                      "leading-loose text-foreground text-justify",
+                      settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                    )}
+                    style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+                >
+                    {displayVerses.map((ayah, index) => {
+                        const verseNumber = ayah.verse_key.split(':')[1];
+                        const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
+                        
+                        const fullAyah = fullVerseData[index] || ayah;
+                        const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
+                        const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
+                        const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
 
-        </div>
+                        return (
+                          <Popover 
+                              key={ayah.id}
+                              open={activePopoverKey === ayah.verse_key}
+                              onOpenChange={(isOpen) => setActivePopoverKey(isOpen ? ayah.verse_key : null)}
+                          >
+                              <PopoverTrigger asChild>
+                                  <span 
+                                      id={`verse-${verseNumber}`} 
+                                      className={cn(
+                                        "scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer",
+                                        isBookmarked && "bg-orange-500/20",
+                                        isCurrentlyPlaying && "bg-primary/20"
+                                      )}
+                                  >
+                                      {ayah.text_uthmani}
+                                      <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                                      {' '}
+                                  </span>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-1" side="bottom" align="center">
+                                  <div className="flex items-center gap-1">
+                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
+                                          <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
+                                          <BookText className="h-5 w-5" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
+                                          <Copy className="h-5 w-5" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
+                                          <Share2 className="h-5 w-5" />
+                                      </Button>
+                                  </div>
+                              </PopoverContent>
+                          </Popover>
+                        );
+                    })}
+                </div>
+            )}
 
-        <div className="flex justify-between mt-8">
-          {surahInfo.id > 1 ? (
-            <Link href={`/surah/${surahInfo.id - 1}`} passHref>
-              <Button variant="outline">
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Previous Surah
-              </Button>
-            </Link>
-          ) : <div />}
-          {surahInfo.id < 114 ? (
-            <Link href={`/surah/${surahInfo.id + 1}`} passHref>
-              <Button variant="outline">
-                Next Surah
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          ): <div />}
+            {translationError && (
+                <Alert variant="destructive" className="mt-4">
+                    <AlertTitle>Translation Error</AlertTitle>
+                    <AlertDescription className="flex items-center justify-between">
+                        <span>{translationError}</span>
+                        <Button variant="secondary" size="sm" onClick={fetchAndStoreTranslations}>
+                            <RefreshCw className="mr-2 h-4 w-4"/>
+                            Retry
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+          </div>
+
+          <div className="flex justify-between mt-8">
+            {surahInfo.id > 1 ? (
+              <Link href={`/surah/${surahInfo.id - 1}`} passHref>
+                <Button variant="outline">
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Previous Surah
+                </Button>
+              </Link>
+            ) : <div />}
+            {surahInfo.id < 114 ? (
+              <Link href={`/surah/${surahInfo.id + 1}`} passHref>
+                <Button variant="outline">
+                  Next Surah
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            ): <div />}
+          </div>
         </div>
       </div>
       

@@ -79,29 +79,9 @@ export default async function SurahPage({ params }: SurahPageProps) {
   const { surahInfo, verses, surahText } = await getSurahData(id);
 
   return (
-    <>
-      <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 via-primary/20 to-transparent">
-        <div className="container mx-auto grid grid-cols-3 items-center h-16 px-4">
-          <div className="justify-self-start">
-            <Link href="/" passHref>
-              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/20 hover:text-primary-foreground">
-                <ChevronLeft className="h-6 w-6" />
-                <span className="sr-only">Back</span>
-              </Button>
-            </Link>
-          </div>
-          <h1 className="text-xl font-bold text-primary-foreground text-center truncate">
-            {surahInfo.name}
-          </h1>
-          <div className="justify-self-end text-sm text-primary-foreground/80">
-            {surahInfo.versesCount} verses
-          </div>
-        </div>
-      </header>
-      <div className="surah-page-background flex-grow p-4 sm:p-6 md:p-8">
-        <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
-      </div>
-    </>
+    <div className="flex flex-col min-h-screen">
+      <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
+    </div>
   );
 }
 
