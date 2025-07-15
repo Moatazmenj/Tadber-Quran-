@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -135,25 +136,27 @@ export default function SearchPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8">
-      <div className="my-8 max-w-2xl mx-auto flex items-center gap-2">
+      <header className="flex items-center mb-8 relative">
         <Link href="/" passHref>
-          <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
+          <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
             <ChevronLeft className="h-6 w-6" />
             <span className="sr-only">Back</span>
           </Button>
         </Link>
-        <div className="relative flex-grow">
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search Surah name or keywords..."
-              className="w-full pl-12 h-10 text-base rounded-full bg-card"
-              aria-label="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            {isSearching && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />}
-        </div>
+        <h1 className="text-2xl font-bold w-full text-center">Search Surah</h1>
+      </header>
+      
+      <div className="relative max-w-2xl mx-auto">
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search Surah name or keywords..."
+            className="w-full pl-12 h-10 text-base rounded-full bg-card"
+            aria-label="Search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {isSearching && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />}
       </div>
       
       <div className="max-w-4xl mx-auto mt-8">
