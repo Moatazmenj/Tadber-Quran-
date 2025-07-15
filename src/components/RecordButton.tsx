@@ -10,8 +10,9 @@ export function RecordButton() {
   const pathname = usePathname();
   const isRecordPage = pathname === '/record';
   const isAnalysisPage = pathname.startsWith('/record/analysis');
+  const isSearchPage = pathname === '/search';
 
-  if (isRecordPage || isAnalysisPage) {
+  if (isRecordPage || isAnalysisPage || isSearchPage) {
     return null;
   }
 
