@@ -7,7 +7,7 @@ import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark } from 'lucide-react';
 import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -31,6 +31,8 @@ interface SurahViewProps {
   verses: Ayah[];
   surahText: string;
 }
+
+const BOOKMARKS_KEY = 'quranBookmarks';
 
 // Helper function to wrap text on canvas
 function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: number) {
@@ -80,6 +82,30 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [tafsirError, setTafsirError] = useState('');
   const [selectedVerseForTafsir, setSelectedVerseForTafsir] = useState<Ayah | null>(null);
   const [tafsirLanguage, setTafsirLanguage] = useState('Arabic');
+
+  const [bookmarkedVerses, setBookmarkedVerses] = useState<string[]>([]);
+
+  useEffect(() => {
+    const savedBookmarks = localStorage.getItem(BOOKMARKS_KEY);
+    if (savedBookmarks) {
+      setBookmarkedVerses(JSON.parse(savedBookmarks));
+    }
+  }, []);
+
+  const toggleBookmark = (verseKey: string) => {
+    const updatedBookmarks = bookmarkedVerses.includes(verseKey)
+      ? bookmarkedVerses.filter((key) => key !== verseKey)
+      : [...bookmarkedVerses, verseKey];
+    
+    setBookmarkedVerses(updatedBookmarks);
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updatedBookmarks));
+
+    toast({
+      title: updatedBookmarks.includes(verseKey) ? "Verse Bookmarked" : "Bookmark Removed",
+      description: `Verse ${verseKey} has been ${updatedBookmarks.includes(verseKey) ? 'saved to' : 'removed from'} your bookmarks.`,
+    });
+    setActivePopoverKey(null);
+  };
 
   const shareBackgrounds = [
     'https://i.postimg.cc/kGrQGn9N/White-and-Blue-Delicate-Minimalist-Isra-Miraj-Personal-Instagram-Post.png',
@@ -447,6 +473,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
                       const fullAyah = fullVerseData[index] || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
+                      const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
                       
                       return (
                         <Popover 
@@ -458,7 +485,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             <div 
                                 id={`verse-${verseNumber}`} 
                                 className={cn(
-                                  "border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg p-4 -m-4 cursor-pointer", 
+                                  "border-b border-border/50 pb-6 last:border-b-0 last:pb-0 scroll-mt-24 transition-colors duration-300 rounded-lg p-4 -m-4 cursor-pointer",
+                                  isBookmarked && "bg-orange-500/20"
                                 )}
                             >
                                 <p 
@@ -483,6 +511,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-1" side="bottom" align="center">
                             <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
+                                    <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                     <BookText className="h-5 w-5" />
                                 </Button>
@@ -515,6 +546,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       
                       const fullAyah = fullVerseData[index] || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
+                      const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
 
                       return (
                         <Popover 
@@ -525,7 +557,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             <PopoverTrigger asChild>
                                 <span 
                                     id={`verse-${verseNumber}`} 
-                                    className={cn("scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer")}
+                                    className={cn(
+                                      "scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer",
+                                      isBookmarked && "bg-orange-500/20"
+                                    )}
                                 >
                                     {ayah.text_uthmani}
                                     <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
@@ -534,6 +569,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-1" side="bottom" align="center">
                                 <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
+                                        <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
+                                    </Button>
                                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                         <BookText className="h-5 w-5" />
                                     </Button>

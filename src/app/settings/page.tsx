@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -70,6 +70,14 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex flex-col">
+            <Link href="/settings/bookmarks" className="block bg-card rounded-lg mb-4 p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
+              <div className="flex items-center gap-4">
+                <Bookmark className="h-6 w-6 text-primary" />
+                <p className="text-lg text-foreground">Bookmarked Verses</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Link>
+
             <SectionTitle>Display</SectionTitle>
             <div className="bg-card rounded-lg">
                 <SettingsListItem label="Translation Display" value="Arabic & Translation" href="/settings/translation-display" />
