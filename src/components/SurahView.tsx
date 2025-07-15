@@ -106,7 +106,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [settings.reciterId]);
   
   const fetchAudioFiles = useCallback(async () => {
-    if (!reciter) return;
+    if (!reciter || audioFiles.length > 0) return;
     setIsLoadingAudio(true);
     setAudioError(null);
     try {
@@ -114,13 +114,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       if (!response.ok) throw new Error('Failed to fetch audio files.');
       const data = await response.json();
       setAudioFiles(data.audio_files);
+      return data.audio_files; // Return files on success
     } catch (e) {
       console.error(e);
       setAudioError('Could not load audio for this surah.');
+      return []; // Return empty array on failure
     } finally {
       setIsLoadingAudio(false);
     }
-  }, [surahInfo.id, reciter]);
+  }, [surahInfo.id, reciter, audioFiles]);
+
 
   useEffect(() => {
     if (showAudioPlayer && audioFiles.length === 0) {
@@ -146,7 +149,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     audioElement.addEventListener('ended', handleAudioEnd);
 
     return () => {
-      audioElement.removeEventListener('ended', handleAudioEnd);
+      if (audioElement) {
+        audioElement.removeEventListener('ended', handleAudioEnd);
+      }
     };
   }, [currentVerse, surahInfo.versesCount]);
 
@@ -165,16 +170,27 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }
-    } else if (audioRef.current) {
+    } else if (!isPlaying && audioRef.current) {
       audioRef.current.pause();
     }
   }, [isPlaying, currentVerse, audioFiles, surahInfo.id]);
   
-  const handlePlayPause = () => {
-    if (audioFiles.length === 0 && !isLoadingAudio) {
-      fetchAudioFiles();
+  const handlePlayPause = async () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+      return;
     }
-    setIsPlaying(p => !p);
+  
+    // If files are already loaded, just play.
+    if (audioFiles.length > 0) {
+      setIsPlaying(true);
+    } else if (!isLoadingAudio) {
+      // If files are not loaded, fetch them and then play.
+      const fetchedFiles = await fetchAudioFiles();
+      if (fetchedFiles && fetchedFiles.length > 0) {
+        setIsPlaying(true);
+      }
+    }
   };
 
   const handleNext = () => {
