@@ -410,12 +410,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     )}
                     Summarize Surah
                 </Button>
-                <Button asChild variant="outline" className="w-full sm:w-auto">
-                    <Link href="/settings/bookmarks">
-                        <Bookmark className="mr-2 h-4 w-4" />
-                        Bookmarked Verses
-                    </Link>
-                </Button>
+                {bookmarkedVerses.length > 0 && (
+                  <Button asChild variant="outline" className="w-full sm:w-auto">
+                      <Link href="/settings/bookmarks">
+                          <Bookmark className="mr-2 h-4 w-4" />
+                          Bookmarked Verses
+                      </Link>
+                  </Button>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                   <Switch 
