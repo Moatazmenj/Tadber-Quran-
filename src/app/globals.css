@@ -125,3 +125,11 @@ body.theme-active {
   --foreground: 210 40% 98%;
   --muted-foreground: 215 20.2% 65.1%;
 }
+
+.record-button-container {
+  transition: bottom 0.3s ease-in-out;
+}
+
+body.audio-player-visible .record-button-container {
+  bottom: 6.5rem; /* Adjust this value to position the button above the audio player */
+}

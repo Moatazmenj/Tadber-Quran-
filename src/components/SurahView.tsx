@@ -104,6 +104,19 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     const currentReciter = reciters.find(r => r.id === settings.reciterId) || reciters[0];
     setReciter(currentReciter);
   }, [settings.reciterId]);
+
+  useEffect(() => {
+    if (showAudioPlayer) {
+      document.body.classList.add('audio-player-visible');
+    } else {
+      document.body.classList.remove('audio-player-visible');
+    }
+
+    // Cleanup function to remove the class when the component unmounts
+    return () => {
+      document.body.classList.remove('audio-player-visible');
+    };
+  }, [showAudioPlayer]);
   
   const fetchAudioFiles = useCallback(async () => {
     if (!reciter || audioFiles.length > 0) return;

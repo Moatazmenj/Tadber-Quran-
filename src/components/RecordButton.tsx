@@ -20,7 +20,7 @@ export function RecordButton() {
     <Link
       href="/record"
       passHref
-      className={cn("fixed right-4 bottom-4 z-50")}
+      className={cn("fixed right-4 bottom-4 z-50 record-button-container")}
     >
       <Button
         asChild
