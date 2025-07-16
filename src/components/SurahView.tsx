@@ -137,97 +137,82 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
   }, [surahInfo.id, reciter, audioFiles]);
 
-
-  useEffect(() => {
-    if (showAudioPlayer && audioFiles.length === 0) {
-      fetchAudioFiles();
+  const playVerse = useCallback((verseNumber: number) => {
+    if (audioFiles.length > 0 && audioRef.current) {
+      const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${verseNumber}`);
+      if (audioFile && typeof audioFile.audio_url === 'string') {
+        const audioUrl = audioFile.audio_url.startsWith('http')
+          ? audioFile.audio_url
+          : `https://${audioFile.audio_url}`;
+        
+        if (audioRef.current.src !== audioUrl) {
+          audioRef.current.src = audioUrl;
+        }
+        audioRef.current.play().catch(e => console.error("Audio play error", e));
+        
+        const verseElement = document.getElementById(`verse-${verseNumber}`);
+        if (verseElement) {
+          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
     }
-  }, [showAudioPlayer, audioFiles, fetchAudioFiles]);
+  }, [audioFiles, surahInfo.id]);
 
   useEffect(() => {
+    // Initialize Audio Element
     if (!audioRef.current) {
       audioRef.current = new Audio();
       audioRef.current.onplay = () => setIsPlaying(true);
       audioRef.current.onpause = () => setIsPlaying(false);
+      audioRef.current.onended = () => {
+        setCurrentVerse(v => {
+          if (v < surahInfo.versesCount) {
+            const nextVerse = v + 1;
+            playVerse(nextVerse);
+            return nextVerse;
+          }
+          setIsPlaying(false);
+          return v;
+        });
+      };
     }
     
-    const audioElement = audioRef.current;
-    
-    const handleAudioEnd = () => {
-      if (currentVerse < surahInfo.versesCount) {
-        setCurrentVerse(v => v + 1);
-      } else {
-        setIsPlaying(false);
-      }
-    };
-    
-    audioElement.addEventListener('ended', handleAudioEnd);
-
+    // Cleanup
     return () => {
-      if (audioElement) {
-        audioElement.removeEventListener('ended', handleAudioEnd);
-      }
+      audioRef.current?.pause();
     };
-  }, [currentVerse, surahInfo.versesCount]);
-
-  useEffect(() => {
-    const playCurrentVerse = () => {
-        if (audioFiles.length > 0) {
-            const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
-            if (audioFile && typeof audioFile.audio_url === 'string' && audioRef.current) {
-                const audioUrl = audioFile.audio_url.startsWith('https')
-                    ? audioFile.audio_url
-                    : `https://${audioFile.audio_url}`;
-
-                if (audioRef.current.src !== audioUrl) {
-                    audioRef.current.src = audioUrl;
-                }
-                audioRef.current.play().catch(e => console.error("Audio play error", e));
-
-                const verseElement = document.getElementById(`verse-${currentVerse}`);
-                if (verseElement) {
-                    verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        }
-    };
-
-    if (isPlaying) {
-        playCurrentVerse();
-    }
-  }, [isPlaying, currentVerse, audioFiles, surahInfo.id]);
+  }, [surahInfo.versesCount, playVerse]);
   
   const handlePlayPause = async () => {
     if (isPlaying) {
       audioRef.current?.pause();
-      setIsPlaying(false);
-      return;
-    }
-  
-    // If files are already loaded, just play.
-    if (audioFiles.length > 0) {
-      setIsPlaying(true);
-    } else if (!isLoadingAudio) {
-      // If files are not loaded, fetch them and then play.
-      const fetchedFiles = await fetchAudioFiles();
-      if (fetchedFiles && fetchedFiles.length > 0) {
-        setIsPlaying(true);
+    } else {
+      if (audioFiles.length === 0 && !isLoadingAudio) {
+        const fetchedFiles = await fetchAudioFiles();
+        if (fetchedFiles && fetchedFiles.length > 0) {
+          playVerse(currentVerse);
+        }
+      } else {
+        playVerse(currentVerse);
       }
     }
   };
 
   const handleNext = () => {
     if (currentVerse < surahInfo.versesCount) {
-      setCurrentVerse(v => v + 1);
+      const nextVerse = currentVerse + 1;
+      setCurrentVerse(nextVerse);
+      playVerse(nextVerse);
     }
   };
 
   const handlePrev = () => {
     if (currentVerse > 1) {
-      setCurrentVerse(v => v - 1);
+      const prevVerse = currentVerse - 1;
+      setCurrentVerse(prevVerse);
+      playVerse(prevVerse);
     }
   };
-
 
   const toggleBookmark = (verseKey: string) => {
     let updatedBookmarks;
@@ -795,7 +780,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
               <Link href={`/surah/${surahInfo.id + 1}`} passHref>
                 <Button variant="outline">
                   Next Surah
-                  <ChevronRight className="ml-2 h-4 w-4" />
+                  <ChevronRight className="ml-2 h-4" />
                 </Button>
               </Link>
             ): <div />}
