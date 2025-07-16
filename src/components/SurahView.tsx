@@ -172,9 +172,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (isPlaying && audioFiles.length > 0) {
       const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
       if (audioFile && audioRef.current) {
-        const url = `https://verses.quran.com/${audioFile.audio_url}`;
-        if (audioRef.current.src !== url) {
-            audioRef.current.src = url;
+        // Correctly construct the audio URL
+        const audioUrl = audioFile.audio_url.startsWith('https')
+          ? audioFile.audio_url
+          : `https://${audioFile.audio_url}`;
+
+        if (audioRef.current.src !== audioUrl) {
+            audioRef.current.src = audioUrl;
         }
         audioRef.current.play().catch(e => console.error("Audio play error", e));
         
