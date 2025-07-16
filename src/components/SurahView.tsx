@@ -214,7 +214,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   const handlePrev = () => {
     if (currentVerse > 1) {
-      setCurrentVerse(v => v + 1);
+      setCurrentVerse(v => v - 1);
     }
   };
 
