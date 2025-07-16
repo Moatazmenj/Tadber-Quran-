@@ -147,6 +147,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
+      audioRef.current.onplay = () => setIsPlaying(true);
+      audioRef.current.onpause = () => setIsPlaying(false);
     }
     
     const audioElement = audioRef.current;
@@ -169,31 +171,35 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [currentVerse, surahInfo.versesCount]);
 
   useEffect(() => {
-    if (isPlaying && audioFiles.length > 0) {
-      const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
-      if (audioFile && typeof audioFile.audio_url === 'string' && audioRef.current) {
-        // Correctly construct the audio URL
-        const audioUrl = audioFile.audio_url.startsWith('https')
-          ? audioFile.audio_url
-          : `https://${audioFile.audio_url}`;
+    const playCurrentVerse = () => {
+        if (audioFiles.length > 0) {
+            const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
+            if (audioFile && typeof audioFile.audio_url === 'string' && audioRef.current) {
+                const audioUrl = audioFile.audio_url.startsWith('https')
+                    ? audioFile.audio_url
+                    : `https://${audioFile.audio_url}`;
 
-        if (audioRef.current.src !== audioUrl) {
-            audioRef.current.src = audioUrl;
+                if (audioRef.current.src !== audioUrl) {
+                    audioRef.current.src = audioUrl;
+                }
+                audioRef.current.play().catch(e => console.error("Audio play error", e));
+
+                const verseElement = document.getElementById(`verse-${currentVerse}`);
+                if (verseElement) {
+                    verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
-        audioRef.current.play().catch(e => console.error("Audio play error", e));
-        
-        const verseElement = document.getElementById(`verse-${currentVerse}`);
-        if(verseElement) {
-          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
-    } else if (!isPlaying && audioRef.current) {
-      audioRef.current.pause();
+    };
+
+    if (isPlaying) {
+        playCurrentVerse();
     }
   }, [isPlaying, currentVerse, audioFiles, surahInfo.id]);
   
   const handlePlayPause = async () => {
     if (isPlaying) {
+      audioRef.current?.pause();
       setIsPlaying(false);
       return;
     }
