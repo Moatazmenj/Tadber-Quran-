@@ -171,7 +171,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   useEffect(() => {
     if (isPlaying && audioFiles.length > 0) {
       const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
-      if (audioFile && audioRef.current) {
+      if (audioFile && typeof audioFile.audio_url === 'string' && audioRef.current) {
         // Correctly construct the audio URL
         const audioUrl = audioFile.audio_url.startsWith('https')
           ? audioFile.audio_url
@@ -224,17 +224,20 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
 
   const toggleBookmark = (verseKey: string) => {
-    const updatedBookmarks = bookmarkedVerses.includes(verseKey)
-      ? bookmarkedVerses.filter((key) => key !== verseKey)
-      : [...bookmarkedVerses, verseKey];
-    
+    let updatedBookmarks;
+    if (bookmarkedVerses.includes(verseKey)) {
+        updatedBookmarks = bookmarkedVerses.filter((key) => key !== verseKey);
+        toast({
+            title: "Bookmark Removed",
+        });
+    } else {
+        updatedBookmarks = [...bookmarkedVerses, verseKey];
+        toast({
+            title: "Verse Bookmarked",
+        });
+    }
     setBookmarkedVerses(updatedBookmarks);
     localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(updatedBookmarks));
-
-    toast({
-      title: updatedBookmarks.includes(verseKey) ? "Verse Bookmarked" : "Bookmark Removed",
-      description: `Verse ${verseKey} has been ${updatedBookmarks.includes(verseKey) ? 'saved to' : 'removed from'} your bookmarks.`,
-    });
     setActivePopoverKey(null);
   };
 
