@@ -24,10 +24,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Expose server-side environment variables to Next.js
-  env: {
-    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
-  },
 };
 
 export default nextConfig;
