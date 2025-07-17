@@ -19,7 +19,7 @@ const defaultSettings: QuranSettings = {
   fontSize: 28,
   fontStyle: 'default',
   showTranslation: true,
-  translationId: 'en',
+  translationId: 'fr',
   theme: 'theme1',
   reciterId: 5, // Adjusted to Maher Al Muaiqly
 };
