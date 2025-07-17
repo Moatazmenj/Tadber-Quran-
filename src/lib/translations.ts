@@ -6,6 +6,6 @@ export const translationOptions: TranslationOption[] = [
     { id: 'fr', apiId: 20, language: 'French', nativeName: 'Français', translator: 'Muhammad Hamidullah', flag: '🇫🇷' },
     { id: 'id', apiId: 33, language: 'Indonesian', nativeName: 'Bahasa Indonesia', translator: 'Indonesian Ministry of Religious Affairs', flag: '🇮🇩' },
     { id: 'ru', apiId: 101, language: 'Russian', nativeName: 'Русский', translator: 'Abu Adel', flag: '🇷🇺' },
-    { id: 'tr', apiId: 214, language: 'Turkish', nativeName: 'Türkçe', translator: 'Diyanet Vakfi', flag: '🇹🇷' },
+    { id: 'tr', apiId: 85, language: 'Turkish', nativeName: 'Türkçe', translator: 'Elmalılı Hamdi Yazır', flag: '🇹🇷' },
     { id: 'ur', apiId: 819, language: 'Urdu', nativeName: 'اردو', translator: 'Fateh Muhammad Jalandhry', flag: '🇵🇰' },
 ];
