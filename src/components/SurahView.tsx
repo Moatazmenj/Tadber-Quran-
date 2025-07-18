@@ -926,7 +926,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     {selectedVerseForTafsir?.text_uthmani}
                 </SheetDescription>
             </SheetHeader>
-            <div className="flex-grow overflow-y-auto p-4" dir={tafsirLanguage === 'Arabic' ? 'rtl' : 'ltr'}>
+            <div className="flex-grow overflow-y-auto p-6" dir={tafsirLanguage === 'Arabic' ? 'rtl' : 'ltr'}>
                 {isLoadingTafsir ? (
                     <div className="space-y-4 pt-4">
                         <div className="h-4 bg-muted-foreground/10 rounded w-full animate-pulse mx-auto"></div>
@@ -942,8 +942,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     </Alert>
                 ) : (
                     <p className={cn(
-                        "text-lg leading-relaxed whitespace-pre-wrap text-center",
-                        tafsirLanguage === 'Arabic' ? "font-arabic" : "font-body"
+                        "text-base leading-relaxed whitespace-pre-wrap",
+                        tafsirLanguage === 'Arabic' ? "font-arabic text-right" : "font-body text-left",
+                        "text-foreground/90"
                     )}>
                         {tafsirContent}
                     </p>
