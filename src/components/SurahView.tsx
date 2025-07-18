@@ -27,6 +27,8 @@ import {
   SheetFooter,
 } from '@/components/ui/sheet';
 import Image from 'next/image';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -96,6 +98,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [currentVerse, setCurrentVerse] = useState(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [reciter, setReciter] = useState<Reciter | null>(null);
+  const [isReciterSheetOpen, setIsReciterSheetOpen] = useState(false);
 
   const tafsirLanguages = [
     { id: 'english', name: 'English', nativeName: 'English', flag: '🇬🇧' },
@@ -112,9 +115,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (savedBookmarks) {
       setBookmarkedVerses(JSON.parse(savedBookmarks));
     }
+  }, []);
+
+  // Update reciter when settings change
+  useEffect(() => {
     const currentReciter = reciters.find(r => r.id === settings.reciterId) || reciters[0];
     setReciter(currentReciter);
+    // When reciter changes, we need to refetch audio files
+    setAudioFiles([]);
   }, [settings.reciterId]);
+
 
   useEffect(() => {
     if (showAudioPlayer) {
@@ -129,7 +139,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [showAudioPlayer]);
   
   const fetchAudioFiles = useCallback(async () => {
-    if (!reciter || audioFiles.length > 0) return;
+    if (!reciter) return [];
+    if (audioFiles.length > 0) return audioFiles;
+    
     setIsLoadingAudio(true);
     setAudioError(null);
     try {
@@ -239,13 +251,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setCurrentVerse(verseNumber);
   
     if (audioFiles.length === 0 && !isLoadingAudio) {
-      const fetchedFiles = await fetchAudioFiles();
-      if (fetchedFiles && fetchedFiles.length > 0) {
-        playVerse(verseNumber);
-      }
-    } else {
-      playVerse(verseNumber);
+      await fetchAudioFiles();
     }
+    // We need to use a timeout to ensure audioFiles state is updated before playing
+    setTimeout(() => playVerse(verseNumber), 0);
   }, [audioFiles.length, isLoadingAudio, fetchAudioFiles, playVerse]);
 
   const handleNext = () => {
@@ -271,6 +280,23 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
     setShowAudioPlayer(false);
     setIsPlaying(false);
+  };
+
+  const handleChangeReciter = (reciterId: number) => {
+    setSetting('reciterId', reciterId);
+    setIsReciterSheetOpen(false);
+
+    // If player was playing, continue playing with the new reciter
+    if (isPlaying) {
+        setIsPlaying(false); // Stop for a moment
+        // Refetch and play
+        setTimeout(async () => {
+            const fetchedFiles = await fetchAudioFiles();
+            if (fetchedFiles && fetchedFiles.length > 0) {
+                playVerse(currentVerse);
+            }
+        }, 100);
+    }
   };
 
   const toggleBookmark = (verseKey: string) => {
@@ -861,6 +887,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           onNext={handleNext}
           onPrev={handlePrev}
           onClose={handleStopAndClosePlayer}
+          onReciterClick={() => setIsReciterSheetOpen(true)}
           reciterName={reciter.name}
           reciterImage={reciter.imageUrl}
         />
@@ -1010,6 +1037,39 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     </p>
                 )}
             </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isReciterSheetOpen} onOpenChange={setIsReciterSheetOpen}>
+        <SheetContent side="bottom" className="w-full max-w-xl mx-auto h-[60vh] flex flex-col rounded-t-2xl">
+          <SheetHeader className="text-center pb-4 border-b">
+            <SheetTitle>Choose Reciter</SheetTitle>
+            <SheetDescription>Select your preferred reciter for listening.</SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="flex-grow">
+            <div className="p-4 space-y-2">
+              {reciters.map((r) => (
+                <button
+                  key={r.id}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-3 rounded-lg text-left transition-colors",
+                    settings.reciterId === r.id ? "bg-primary/10 text-primary" : "hover:bg-accent/50"
+                  )}
+                  onClick={() => handleChangeReciter(r.id)}
+                >
+                  <Avatar className="w-12 h-12 border-2 border-primary/20">
+                    <AvatarImage src={r.imageUrl || undefined} alt={r.name} />
+                    <AvatarFallback>{r.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-grow">
+                    <p className="font-semibold text-base text-foreground">{r.name}</p>
+                    {r.style && <p className="text-sm text-muted-foreground">{r.style}</p>}
+                  </div>
+                  {settings.reciterId === r.id && <Check className="h-6 w-6 text-primary" />}
+                </button>
+              ))}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
     </>

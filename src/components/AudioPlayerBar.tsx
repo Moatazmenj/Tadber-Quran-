@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import type { Surah } from '@/types';
@@ -17,6 +17,7 @@ interface AudioPlayerBarProps {
   onNext: () => void;
   onPrev: () => void;
   onClose: () => void;
+  onReciterClick: () => void;
   reciterName: string;
   reciterImage: string | null;
 }
@@ -29,6 +30,7 @@ export function AudioPlayerBar({
   onNext,
   onPrev,
   onClose,
+  onReciterClick,
   reciterName,
   reciterImage,
 }: AudioPlayerBarProps) {
@@ -40,15 +42,15 @@ export function AudioPlayerBar({
       )}>
         <SoundWave isRecording={isPlaying} />
 
-        <div className="relative z-10 flex items-center justify-between p-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="relative z-10 flex items-center justify-between p-3 gap-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="flex-shrink-0">
-                <button onClick={onClose} className="relative group">
+                <button onClick={onReciterClick} className="relative group">
                     <Avatar className="w-10 h-10 border-2 border-white/20 group-hover:border-white/50 transition-colors">
                         <AvatarImage src={reciterImage || undefined} alt={reciterName} />
                         <AvatarFallback>{reciterName.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="sr-only">Close Player</span>
+                    <span className="sr-only">Change Reciter</span>
                 </button>
             </div>
             <div className="min-w-0">
@@ -57,7 +59,7 @@ export function AudioPlayerBar({
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Button variant="translucent" size="icon" onClick={onPrev} className="h-10 w-10" disabled={currentVerse <= 1}>
               <SkipBack className="h-5 w-5 fill-current" />
             </Button>
@@ -66,6 +68,13 @@ export function AudioPlayerBar({
             </Button>
             <Button variant="translucent" size="icon" onClick={onNext} className="h-10 w-10" disabled={currentVerse >= surah.versesCount}>
               <SkipForward className="h-5 w-5 fill-current" />
+            </Button>
+          </div>
+          
+          <div className="absolute top-2 right-2">
+            <Button variant="translucent" size="icon" onClick={onClose} className="h-7 w-7 rounded-full">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close Player</span>
             </Button>
           </div>
         </div>
