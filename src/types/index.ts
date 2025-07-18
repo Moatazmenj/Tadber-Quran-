@@ -48,4 +48,5 @@ export interface Reciter {
   id: number;
   name: string;
   style: string | null;
+  imageUrl: string | null;
 }

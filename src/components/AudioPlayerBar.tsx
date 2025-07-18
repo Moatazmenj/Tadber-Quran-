@@ -1,11 +1,13 @@
 
 'use client';
 
-import { Play, Pause, SkipBack, SkipForward, X } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from './ui/button';
 import type { Surah } from '@/types';
 import { SoundWave } from './SoundWave';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface AudioPlayerBarProps {
   surah: Surah;
@@ -16,6 +18,7 @@ interface AudioPlayerBarProps {
   onPrev: () => void;
   onClose: () => void;
   reciterName: string;
+  reciterImage: string | null;
 }
 
 export function AudioPlayerBar({
@@ -27,6 +30,7 @@ export function AudioPlayerBar({
   onPrev,
   onClose,
   reciterName,
+  reciterImage,
 }: AudioPlayerBarProps) {
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50">
@@ -39,15 +43,13 @@ export function AudioPlayerBar({
         <div className="relative z-10 flex items-center justify-between p-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex-shrink-0">
-              <Button
-                variant="translucent"
-                size="icon"
-                className="w-10 h-10"
-                onClick={onClose}
-              >
-                <X className="h-5 w-5" />
-                <span className="sr-only">Close Player</span>
-              </Button>
+                <button onClick={onClose} className="relative group">
+                    <Avatar className="w-10 h-10 border-2 border-white/20 group-hover:border-white/50 transition-colors">
+                        <AvatarImage src={reciterImage || undefined} alt={reciterName} />
+                        <AvatarFallback>{reciterName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="sr-only">Close Player</span>
+                </button>
             </div>
             <div className="min-w-0">
               <p className="font-bold text-sm truncate">{`Surah ${surah.name}`}</p>

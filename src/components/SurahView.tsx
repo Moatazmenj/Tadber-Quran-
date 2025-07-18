@@ -862,6 +862,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           onPrev={handlePrev}
           onClose={handleStopAndClosePlayer}
           reciterName={reciter.name}
+          reciterImage={reciter.imageUrl}
         />
       )}
       
