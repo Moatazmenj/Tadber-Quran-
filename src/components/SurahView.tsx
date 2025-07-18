@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import type { Ayah, Surah, AudioFile, Reciter, TranslationOption } from '@/types';
+import type { Ayah, Surah, Reciter, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -115,7 +115,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
   }, []);
 
-  // Update reciter when settings change
   useEffect(() => {
     const currentReciter = reciters.find(r => r.id === settings.reciterId) || reciters[0];
     setReciter(currentReciter);
@@ -145,13 +144,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     
     if (audioRef.current.src !== audioUrl) {
       audioRef.current.src = audioUrl;
+      audioRef.current.load();
     }
     
-    audioRef.current.play().catch(e => {
-      console.error("Audio play error", e);
-      setAudioError('Could not play audio. The file might not be available.');
-      setIsPlaying(false);
-    });
+    const playPromise = audioRef.current.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(e => {
+        console.error("Audio play error", e);
+        setAudioError('Could not play audio. The file might not be available.');
+        setIsPlaying(false);
+      });
+    }
 
     const verseElement = document.getElementById(`verse-${verseNumber}`);
     if (verseElement) {
@@ -161,8 +164,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   
   const handleNextVerse = useCallback(() => {
-    if (!audioRef.current) return;
-  
     setCurrentVerse(v => {
       if (v < surahInfo.versesCount) {
         const nextVerse = v + 1;
@@ -175,58 +176,50 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [surahInfo.versesCount, playVerse]);
 
   useEffect(() => {
+    if (!audioRef.current) {
+        audioRef.current = new Audio();
+    }
     const audio = audioRef.current;
   
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => handleNextVerse();
-    const handleError = () => {
+    const handleError = (e: Event) => {
+        const mediaError = (e.target as HTMLAudioElement).error;
+        console.error('Audio Element Error:', mediaError);
         setAudioError('Could not play audio. The file might not be available.');
         setIsPlaying(false);
     };
   
-    if (audio) {
-      audio.addEventListener('play', handlePlay);
-      audio.addEventListener('pause', handlePause);
-      audio.addEventListener('ended', handleEnded);
-      audio.addEventListener('error', handleError);
-    } else {
-      audioRef.current = new Audio();
-    }
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
   
     return () => {
-      if (audio) {
-        audio.removeEventListener('play', handlePlay);
-        audio.removeEventListener('pause', handlePause);
-        audio.removeEventListener('ended', handleEnded);
-        audio.removeEventListener('error', handleError);
-        audio.pause();
-      }
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
     };
   }, [handleNextVerse]);
   
-  const handlePlayPause = async () => {
+  const handlePlayPause = () => {
     if (!audioRef.current) return;
-  
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      if (!audioRef.current.src || audioRef.current.ended) {
-        playVerse(currentVerse);
-      } else {
-        audioRef.current.play().catch(e => console.error("Audio play error", e));
-      }
+      playVerse(currentVerse);
     }
   };
   
-  const handleStartPlaybackFromVerse = useCallback(async (verseNumber: number) => {
+  const handleStartPlaybackFromVerse = (verseNumber: number) => {
     setActivePopoverKey(null);
     setShowAudioPlayer(true);
     setCurrentVerse(verseNumber);
-  
-    // We need to use a timeout to ensure audio state is updated before playing
+    // Let the state update then trigger playVerse
     setTimeout(() => playVerse(verseNumber), 0);
-  }, [playVerse]);
+  };
 
   const handleNext = () => {
     if (currentVerse < surahInfo.versesCount) {
@@ -258,10 +251,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setIsReciterSheetOpen(false);
     setAudioError(null);
 
-    // If player was playing, continue playing with the new reciter
     if (showAudioPlayer && isPlaying) {
-        setIsPlaying(false); // Stop for a moment
-        // Refetch and play
+        setIsPlaying(false);
         setTimeout(() => {
           playVerse(currentVerse);
         }, 100);
@@ -686,7 +677,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                         const fullAyah = fullVerseData[index] || ayah;
                         const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
                         const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
-                        const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
+                        const isCurrentlyPlaying = isPlaying && currentVerse === parseInt(verseNumber, 10);
                         
                         return (
                           <Popover 
@@ -764,7 +755,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                       const fullAyah = fullVerseData.find(v => v.id === ayah.id) || ayah;
                       const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber})`;
                       const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
-                      const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
+                      const isCurrentlyPlaying = isPlaying && currentVerse === parseInt(verseNumber, 10);
                       
                       return (
                         <Popover 
