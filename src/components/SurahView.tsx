@@ -3,11 +3,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import type { Ayah, Surah, AudioFile, Reciter } from '@/types';
+import type { Ayah, Surah, AudioFile, Reciter, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause, Headphones } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause, Headphones, Check } from 'lucide-react';
 import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -84,6 +84,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [tafsirError, setTafsirError] = useState('');
   const [selectedVerseForTafsir, setSelectedVerseForTafsir] = useState<Ayah | null>(null);
   const [tafsirLanguage, setTafsirLanguage] = useState('Arabic');
+  const [isLangPopoverOpen, setIsLangPopoverOpen] = useState(false);
 
   const [bookmarkedVerses, setBookmarkedVerses] = useState<string[]>([]);
   
@@ -95,6 +96,11 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [currentVerse, setCurrentVerse] = useState(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [reciter, setReciter] = useState<Reciter | null>(null);
+
+  const tafsirLanguages = [
+    { id: 'arabic', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦' },
+    ...translationOptions.map(t => ({ id: t.language.toLowerCase(), name: t.language, nativeName: t.nativeName, flag: t.flag }))
+  ];
 
   useEffect(() => {
     const savedBookmarks = localStorage.getItem(BOOKMARKS_KEY);
@@ -882,10 +888,33 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         <SheetContent side="bottom" className="w-full max-w-2xl mx-auto h-[75vh] flex flex-col rounded-t-2xl">
             <SheetHeader className="text-center pb-4 border-b border-border/20 relative" dir={tafsirLanguage === 'Arabic' ? 'rtl' : 'ltr'}>
                 <div className="absolute top-0 left-4">
-                  <Button variant="ghost" size="icon" onClick={() => setTafsirLanguage(lang => lang === 'Arabic' ? 'English' : 'Arabic')}>
-                      <Languages className="h-5 w-5" />
-                      <span className="sr-only">Translate</span>
-                  </Button>
+                  <Popover open={isLangPopoverOpen} onOpenChange={setIsLangPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                          <Languages className="h-5 w-5" />
+                          <span className="sr-only">Translate</span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2">
+                        <div className="flex flex-col gap-1">
+                          {tafsirLanguages.map((lang) => (
+                              <Button
+                                key={lang.id}
+                                variant="ghost"
+                                className="w-full justify-start gap-2"
+                                onClick={() => {
+                                  setTafsirLanguage(lang.name);
+                                  setIsLangPopoverOpen(false);
+                                }}
+                              >
+                                {tafsirLanguage === lang.name ? <Check className="h-4 w-4" /> : <div className="w-4 h-4" />}
+                                <span>{lang.flag}</span>
+                                {lang.nativeName}
+                              </Button>
+                          ))}
+                        </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <SheetTitle className="text-center">
                   {tafsirLanguage === 'Arabic' ? `تفسير الآية: ${selectedVerseForTafsir?.verse_key}` : `Tafsir for Verse: ${selectedVerseForTafsir?.verse_key}`}
