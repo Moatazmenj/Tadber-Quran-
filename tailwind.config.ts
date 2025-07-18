@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -91,8 +92,8 @@ export default {
           },
         },
         'wave': {
-          '0%, 100%': { transform: 'scaleY(1)' },
-          '50%': { transform: 'scaleY(10)' },
+          '0%, 100%': { transform: 'scaleY(0.1)' },
+          '50%': { transform: 'scaleY(1)' },
         },
       },
       animation: {
@@ -103,7 +104,7 @@ export default {
     },
   },
   plugins: [require('tailwindcss-animate'),
-    function ({ addUtilities }) {
+    function ({ addUtilities, addComponents }) {
       addUtilities({
         '.sr-only': {
           position: 'absolute',
@@ -115,6 +116,12 @@ export default {
           clip: 'rect(0, 0, 0, 0)',
           whiteSpace: 'nowrap',
           borderWidth: '0',
+        },
+      });
+      addComponents({
+        '.mask-wave': {
+          'mask-image': 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
+          '-webkit-mask-image': 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%)',
         },
       });
     },

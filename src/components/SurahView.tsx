@@ -218,6 +218,11 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     }
   };
 
+  const handleStopAndClosePlayer = () => {
+    audioRef.current?.pause();
+    setShowAudioPlayer(false);
+  };
+
   const toggleBookmark = (verseKey: string) => {
     let updatedBookmarks;
     if (bookmarkedVerses.includes(verseKey)) {
@@ -739,6 +744,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           onPlayPause={handlePlayPause}
           onNext={handleNext}
           onPrev={handlePrev}
+          onClose={handleStopAndClosePlayer}
           reciterName={reciter.name}
         />
       )}
