@@ -83,7 +83,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
   const [tafsirError, setTafsirError] = useState('');
   const [selectedVerseForTafsir, setSelectedVerseForTafsir] = useState<Ayah | null>(null);
-  const [tafsirLanguage, setTafsirLanguage] = useState('Arabic');
+  const [tafsirLanguage, setTafsirLanguage] = useState('English');
   const [isLangPopoverOpen, setIsLangPopoverOpen] = useState(false);
 
   const [bookmarkedVerses, setBookmarkedVerses] = useState<string[]>([]);
@@ -146,10 +146,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const playVerse = useCallback((verseNumber: number) => {
     if (audioFiles.length > 0 && audioRef.current) {
       const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${verseNumber}`);
-      if (audioFile && typeof audioFile.audio_url === 'string') {
-        const audioUrl = audioFile.audio_url.startsWith('http')
-          ? audioFile.audio_url
-          : `https://${audioFile.audio_url}`;
+      if (audioFile && typeof audioFile.url === 'string') {
+        const audioUrl = `https://verses.quran.com/${audioFile.url}`;
         
         if (audioRef.current.src !== audioUrl) {
           audioRef.current.src = audioUrl;
@@ -273,7 +271,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         ...verse,
         translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
       }));
+
       setFullVerseData(versesWithTranslations);
+      if(settings.showTranslation) {
+        setDisplayVerses(versesWithTranslations);
+      } else {
+        setDisplayVerses(initialVerses.map(v => ({...v, translation: undefined})));
+      }
+
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
@@ -281,19 +286,11 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } finally {
       setIsLoadingTranslation(false);
     }
-  }, [settings.translationId, initialVerses, surahInfo.id]);
+  }, [settings.translationId, initialVerses, surahInfo.id, settings.showTranslation]);
 
   useEffect(() => {
     fetchAndStoreTranslations();
   }, [fetchAndStoreTranslations]);
-
-  useEffect(() => {
-    if (settings.showTranslation) {
-      setDisplayVerses(fullVerseData);
-    } else {
-      setDisplayVerses(initialVerses.map(v => ({...v, translation: undefined})));
-    }
-  }, [settings.showTranslation, fullVerseData, initialVerses]);
 
 
   useEffect(() => {
@@ -630,7 +627,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                 </div>
             )}
             
-            {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
+            {!isLoadingTranslation && displayVerses.length > 0 && (
                 <div className="space-y-8">
                     {displayVerses.map((ayah, index) => {
                         const verseNumber = ayah.verse_key.split(':')[1];
@@ -671,7 +668,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                     {ayah.translation ? (
                                       <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
                                     ) : (
-                                      !translationError && <p className="text-sm">Loading translation...</p>
+                                      !translationError && !settings.showTranslation ? null : <p className="text-sm">Loading translation...</p>
                                     )}
                                 </div>
                               </div>
@@ -698,67 +695,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                 </div>
             )}
 
-            {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
-                <div
-                    dir="rtl"
-                    className={cn(
-                      "leading-loose text-foreground text-justify",
-                      settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
-                    )}
-                    style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
-                >
-                    {displayVerses.map((ayah, index) => {
-                        const verseNumber = ayah.verse_key.split(':')[1];
-                        const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
-                        
-                        const fullAyah = fullVerseData[index] || ayah;
-                        const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber}) \n\n${fullAyah.translation || ''}`;
-                        const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
-                        const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
-
-                        return (
-                          <Popover 
-                              key={ayah.id}
-                              open={activePopoverKey === ayah.verse_key}
-                              onOpenChange={(isOpen) => setActivePopoverKey(isOpen ? ayah.verse_key : null)}
-                          >
-                              <PopoverTrigger asChild>
-                                  <span 
-                                      id={`verse-${verseNumber}`} 
-                                      className={cn(
-                                        "scroll-mt-24 transition-colors duration-300 p-1 rounded-md cursor-pointer",
-                                        isBookmarked && "bg-orange-500/20",
-                                        isCurrentlyPlaying && "bg-primary/20"
-                                      )}
-                                  >
-                                      {ayah.text_uthmani}
-                                      <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
-                                      {' '}
-                                  </span>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-1" side="bottom" align="center">
-                                  <div className="flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
-                                          <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
-                                          <BookText className="h-5 w-5" />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
-                                          <Copy className="h-5 w-5" />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
-                                          <Share2 className="h-5 w-5" />
-                                      </Button>
-                                  </div>
-                              </PopoverContent>
-                          </Popover>
-                        );
-                    })}
-                </div>
-            )}
-
-            {translationError && (
+            {translationError && settings.showTranslation && (
                 <Alert variant="destructive" className="mt-4">
                     <AlertTitle>Translation Error</AlertTitle>
                     <AlertDescription className="flex items-center justify-between">

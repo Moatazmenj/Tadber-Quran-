@@ -41,7 +41,7 @@ export interface ThemeOption {
 export interface AudioFile {
   id: number;
   verse_key: string;
-  audio_url: string;
+  url: string;
 }
 
 export interface Reciter {
