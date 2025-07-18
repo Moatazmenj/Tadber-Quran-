@@ -51,7 +51,7 @@ export function AudioPlayerBar({
             </div>
             <div className="min-w-0">
               <p className="font-bold text-sm truncate">{`Surah ${surah.name}`}</p>
-              <p className="text-xs text-primary-foreground/80">{`Verse ${currentVerse}`}</p>
+              <p className="text-xs text-primary-foreground/80 truncate">{`${reciterName} - Verse ${currentVerse}`}</p>
             </div>
           </div>
 
