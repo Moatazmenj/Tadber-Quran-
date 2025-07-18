@@ -185,20 +185,26 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [surahInfo.versesCount, playVerse]);
 
   useEffect(() => {
-    if (!audioRef.current) {
-        audioRef.current = new Audio();
-        audioRef.current.onplay = () => setIsPlaying(true);
-        audioRef.current.onpause = () => setIsPlaying(false);
-        // Important: Attach the onended listener only once
-        audioRef.current.onended = () => {
-          handleNextVerse();
-        };
+    const audio = audioRef.current;
+    
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => handleNextVerse();
+
+    if (audio) {
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+      audio.addEventListener('ended', handleEnded);
+    } else {
+      audioRef.current = new Audio();
     }
     
     return () => {
-        if(audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current.onended = null;
+        if(audio) {
+            audio.removeEventListener('play', handlePlay);
+            audio.removeEventListener('pause', handlePause);
+            audio.removeEventListener('ended', handleEnded);
+            audio.pause();
         }
     };
   }, [handleNextVerse]);
@@ -210,22 +216,29 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } else {
       if (audioFiles.length === 0 && !isLoadingAudio) {
         const fetchedFiles = await fetchAudioFiles();
-        // Check if fetch was successful and we have files now
         if (fetchedFiles && fetchedFiles.length > 0) {
-          // Manually trigger playVerse after fetch
-          const audioFile = fetchedFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
-          if (audioFile && typeof audioFile.url === 'string' && audioRef.current) {
-            const audioUrl = `https://verses.quran.com/${audioFile.url}`;
-            audioRef.current.src = audioUrl;
-            audioRef.current.play().catch(e => console.error("Audio play error", e));
-          }
+          playVerse(currentVerse);
         }
       } else {
-        // Files are already loaded, just play
         audioRef.current?.play().catch(e => console.error("Audio play error", e));
       }
     }
   };
+  
+  const handleStartPlaybackFromVerse = useCallback(async (verseNumber: number) => {
+    setActivePopoverKey(null);
+    setShowAudioPlayer(true);
+    setCurrentVerse(verseNumber);
+  
+    if (audioFiles.length === 0 && !isLoadingAudio) {
+      const fetchedFiles = await fetchAudioFiles();
+      if (fetchedFiles && fetchedFiles.length > 0) {
+        playVerse(verseNumber);
+      }
+    } else {
+      playVerse(verseNumber);
+    }
+  }, [audioFiles.length, isLoadingAudio, fetchAudioFiles, playVerse]);
 
   const handleNext = () => {
     if (currentVerse < surahInfo.versesCount) {
@@ -703,6 +716,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-1" side="bottom" align="center">
                               <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleStartPlaybackFromVerse(parseInt(verseNumber, 10))}>
+                                      <Play className="h-5 w-5" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
                                       <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
                                   </Button>
