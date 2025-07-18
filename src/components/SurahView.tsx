@@ -98,9 +98,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const [reciter, setReciter] = useState<Reciter | null>(null);
 
   const tafsirLanguages = [
+    { id: 'english', name: 'English', nativeName: 'English', flag: '🇬🇧' },
     { id: 'arabic', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦' },
-    ...translationOptions.map(t => ({ id: t.language.toLowerCase(), name: t.language, nativeName: t.nativeName, flag: t.flag }))
+    ...translationOptions
+      .filter(t => t.id !== 'en')
+      .map(t => ({ id: t.language.toLowerCase(), name: t.language, nativeName: t.nativeName, flag: t.flag }))
   ];
+
 
   useEffect(() => {
     const savedBookmarks = localStorage.getItem(BOOKMARKS_KEY);
@@ -263,7 +267,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (!selectedTranslation) {
       setTranslationError('Selected translation not found.');
       setIsLoadingTranslation(false);
-      setFullVerseData(initialVerses.map(v => ({ ...v, translation: undefined })));
+      setFullVerseData(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
       return;
     }
 
@@ -278,20 +283,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       }));
 
       setFullVerseData(versesWithTranslations);
-      if(settings.showTranslation) {
-        setDisplayVerses(versesWithTranslations);
-      } else {
-        setDisplayVerses(initialVerses.map(v => ({...v, translation: undefined})));
-      }
+      setDisplayVerses(versesWithTranslations);
 
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
-      setFullVerseData(initialVerses.map(v => ({ ...v, translation: undefined })));
+      setFullVerseData(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
+      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
     } finally {
       setIsLoadingTranslation(false);
     }
-  }, [settings.translationId, initialVerses, surahInfo.id, settings.showTranslation]);
+  }, [settings.translationId, initialVerses, surahInfo.id]);
 
   useEffect(() => {
     fetchAndStoreTranslations();
@@ -670,10 +672,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                       <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
                                   </p>
                                 <div className="text-muted-foreground text-lg leading-relaxed text-center">
-                                    {ayah.translation ? (
+                                    {(settings.showTranslation && ayah.translation) ? (
                                       <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
                                     ) : (
-                                      !translationError && !settings.showTranslation ? null : <p className="text-sm">Loading translation...</p>
+                                      (settings.showTranslation && !translationError) ? <p className="text-sm">Loading translation...</p> : null
                                     )}
                                 </div>
                               </div>
@@ -885,8 +887,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     </Alert>
                 ) : (
                     <p className={cn(
-                        "text-base leading-relaxed whitespace-pre-wrap",
-                        tafsirLanguage === 'Arabic' ? "font-arabic text-right" : "font-body text-left",
+                        "leading-relaxed whitespace-pre-wrap",
+                        tafsirLanguage === 'Arabic' ? "font-arabic text-right text-lg" : "font-body text-left text-base",
                         "text-foreground/90"
                     )}>
                         {tafsirContent}
@@ -898,3 +900,5 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
+
+    
