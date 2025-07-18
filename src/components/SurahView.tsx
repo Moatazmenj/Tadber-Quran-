@@ -122,7 +122,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       document.body.classList.remove('audio-player-visible');
     }
 
-    // Cleanup function to remove the class when the component unmounts
     return () => {
       document.body.classList.remove('audio-player-visible');
     };
@@ -137,59 +136,73 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
       if (!response.ok) throw new Error('Failed to fetch audio files.');
       const data = await response.json();
       setAudioFiles(data.audio_files);
-      return data.audio_files; // Return files on success
+      return data.audio_files;
     } catch (e) {
       console.error(e);
       setAudioError('Could not load audio for this surah.');
-      return []; // Return empty array on failure
+      return [];
     } finally {
       setIsLoadingAudio(false);
     }
   }, [surahInfo.id, reciter, audioFiles]);
 
   const playVerse = useCallback((verseNumber: number) => {
-    if (audioFiles.length > 0 && audioRef.current) {
-      const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${verseNumber}`);
-      if (audioFile && typeof audioFile.url === 'string') {
-        const audioUrl = `https://verses.quran.com/${audioFile.url}`;
-        
-        if (audioRef.current.src !== audioUrl) {
+    if (!audioRef.current || !audioFiles || audioFiles.length === 0) return;
+      
+    const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${verseNumber}`);
+    if (audioFile && typeof audioFile.url === 'string') {
+      const audioUrl = `https://verses.quran.com/${audioFile.url}`;
+      
+      if (audioRef.current.src !== audioUrl) {
           audioRef.current.src = audioUrl;
-        }
-        audioRef.current.play().catch(e => console.error("Audio play error", e));
-        
-        const verseElement = document.getElementById(`verse-${verseNumber}`);
-        if (verseElement) {
-          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
       }
+      
+      audioRef.current.play().catch(e => {
+        console.error("Audio play error", e);
+        setIsPlaying(false);
+      });
+      
+      const verseElement = document.getElementById(`verse-${verseNumber}`);
+      if (verseElement) {
+        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+        setIsPlaying(false);
     }
   }, [audioFiles, surahInfo.id]);
+  
+  const handleNextVerse = useCallback(() => {
+    setCurrentVerse(v => {
+      if (v < surahInfo.versesCount) {
+        const nextVerse = v + 1;
+        playVerse(nextVerse);
+        return nextVerse;
+      }
+      // Reached end of Surah
+      setIsPlaying(false);
+      return v;
+    });
+  }, [surahInfo.versesCount, playVerse]);
 
   useEffect(() => {
-    // Initialize Audio Element
     if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.onplay = () => setIsPlaying(true);
-      audioRef.current.onpause = () => setIsPlaying(false);
-      audioRef.current.onended = () => {
-        setCurrentVerse(v => {
-          if (v < surahInfo.versesCount) {
-            const nextVerse = v + 1;
-            playVerse(nextVerse);
-            return nextVerse;
-          }
-          setIsPlaying(false);
-          return v;
-        });
-      };
+        audioRef.current = new Audio();
+        audioRef.current.onplay = () => setIsPlaying(true);
+        audioRef.current.onpause = () => setIsPlaying(false);
+        // Important: Attach the onended listener only once
+        audioRef.current.onended = () => {
+          handleNextVerse();
+        };
     }
     
-    // Cleanup
     return () => {
-      audioRef.current?.pause();
+        if(audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.onended = null;
+        }
     };
-  }, [surahInfo.versesCount, playVerse]);
+  }, [handleNextVerse]);
+
   
   const handlePlayPause = async () => {
     if (isPlaying) {
@@ -197,11 +210,19 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } else {
       if (audioFiles.length === 0 && !isLoadingAudio) {
         const fetchedFiles = await fetchAudioFiles();
+        // Check if fetch was successful and we have files now
         if (fetchedFiles && fetchedFiles.length > 0) {
-          playVerse(currentVerse);
+          // Manually trigger playVerse after fetch
+          const audioFile = fetchedFiles.find(f => f.verse_key === `${surahInfo.id}:${currentVerse}`);
+          if (audioFile && typeof audioFile.url === 'string' && audioRef.current) {
+            const audioUrl = `https://verses.quran.com/${audioFile.url}`;
+            audioRef.current.src = audioUrl;
+            audioRef.current.play().catch(e => console.error("Audio play error", e));
+          }
         }
       } else {
-        playVerse(currentVerse);
+        // Files are already loaded, just play
+        audioRef.current?.play().catch(e => console.error("Audio play error", e));
       }
     }
   };
@@ -887,9 +908,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     </Alert>
                 ) : (
                     <p className={cn(
-                        "leading-relaxed whitespace-pre-wrap",
+                        "whitespace-pre-wrap",
                         tafsirLanguage === 'Arabic' ? "font-arabic text-right text-lg" : "font-body text-left text-base",
-                        "text-foreground/90"
+                        "text-foreground/90 leading-relaxed"
                     )}>
                         {tafsirContent}
                     </p>
@@ -900,5 +921,3 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
-
-    
