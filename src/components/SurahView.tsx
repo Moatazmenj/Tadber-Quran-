@@ -134,13 +134,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [showAudioPlayer]);
   
   
-  const playVerse = useCallback((verseNumber: number) => {
-    if (!audioRef.current || !reciter?.server) return;
+  const playVerse = useCallback((verseNumber: number, reciterToUse?: Reciter | null) => {
+    const currentReciter = reciterToUse || reciter;
+    if (!audioRef.current || !currentReciter?.server) return;
     
     setAudioError(null);
     const surahNumPadded = String(surahInfo.id).padStart(3, '0');
     const verseNumPadded = String(verseNumber).padStart(3, '0');
-    const audioUrl = `https://everyayah.com/data/${reciter.server}/${surahNumPadded}${verseNumPadded}.mp3`;
+    const audioUrl = `https://everyayah.com/data/${currentReciter.server}/${surahNumPadded}${verseNumPadded}.mp3`;
     
     if (audioRef.current.src !== audioUrl) {
       audioRef.current.src = audioUrl;
@@ -250,12 +251,15 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setSetting('reciterId', reciterId);
     setIsReciterSheetOpen(false);
     setAudioError(null);
+    const newReciter = reciters.find(r => r.id === reciterId);
 
     if (showAudioPlayer && isPlaying) {
-        setIsPlaying(false);
-        setTimeout(() => {
-          playVerse(currentVerse);
-        }, 100);
+        if (audioRef.current) {
+            audioRef.current.pause();
+            setTimeout(() => {
+              playVerse(currentVerse, newReciter);
+            }, 100);
+        }
     }
   };
 
@@ -1042,3 +1046,5 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
+
+    
