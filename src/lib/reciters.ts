@@ -6,4 +6,5 @@ export const reciters: Reciter[] = [
   { id: 1, name: 'AbdulBaset AbdulSamad', style: 'Mujawwad', imageUrl: 'https://i.postimg.cc/6pT50P5b/326162-1421686257.jpg' },
   { id: 4, name: 'Abdur-Rahman as-Sudais', style: 'Murattal', imageUrl: 'https://i.postimg.cc/0j0CjLzN/abdur-rahman-as-sudais.jpg' },
   { id: 11, name: 'Yasser Ad-Dussary', style: 'Murattal', imageUrl: 'https://i.postimg.cc/q79pS2Xg/Yasser-Al-Dosari.jpg' },
+  { id: 12, name: 'Islam Sobhi', style: 'Murattal', imageUrl: 'https://i.postimg.cc/qBThT9sY/Islam-Sobhi.jpg' },
 ];
