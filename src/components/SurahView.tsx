@@ -101,8 +101,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     { id: 'english', name: 'English', nativeName: 'English', flag: '🇬🇧' },
     { id: 'arabic', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦' },
     ...translationOptions
-      .filter(t => t.id !== 'en')
-      .map(t => ({ id: t.language.toLowerCase(), name: t.language, nativeName: t.nativeName, flag: t.flag }))
+      .filter(t => t.id !== 'en' && t.id !== 'fr')
+      .map(t => ({ id: t.language.toLowerCase(), name: t.language, nativeName: t.nativeName, flag: t.flag })),
+    { id: 'french', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
   ];
 
 
@@ -172,13 +173,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, [audioFiles, surahInfo.id]);
   
   const handleNextVerse = useCallback(() => {
+    if (!audioRef.current) return;
+  
     setCurrentVerse(v => {
       if (v < surahInfo.versesCount) {
         const nextVerse = v + 1;
         playVerse(nextVerse);
         return nextVerse;
       }
-      // Reached end of Surah
       setIsPlaying(false);
       return v;
     });
@@ -186,11 +188,11 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   useEffect(() => {
     const audio = audioRef.current;
-    
+  
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => handleNextVerse();
-
+  
     if (audio) {
       audio.addEventListener('play', handlePlay);
       audio.addEventListener('pause', handlePause);
@@ -198,21 +200,22 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } else {
       audioRef.current = new Audio();
     }
-    
+  
     return () => {
-        if(audio) {
-            audio.removeEventListener('play', handlePlay);
-            audio.removeEventListener('pause', handlePause);
-            audio.removeEventListener('ended', handleEnded);
-            audio.pause();
-        }
+      if (audio) {
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+        audio.removeEventListener('ended', handleEnded);
+        audio.pause();
+      }
     };
   }, [handleNextVerse]);
-
   
   const handlePlayPause = async () => {
+    if (!audioRef.current) return;
+  
     if (isPlaying) {
-      audioRef.current?.pause();
+      audioRef.current.pause();
     } else {
       if (audioFiles.length === 0 && !isLoadingAudio) {
         const fetchedFiles = await fetchAudioFiles();
@@ -220,7 +223,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           playVerse(currentVerse);
         }
       } else {
-        audioRef.current?.play().catch(e => console.error("Audio play error", e));
+        // If there's no source or it's ended, start from currentVerse.
+        if (!audioRef.current.src || audioRef.current.ended) {
+          playVerse(currentVerse);
+        } else {
+          audioRef.current.play().catch(e => console.error("Audio play error", e));
+        }
       }
     }
   };
@@ -257,8 +265,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   };
 
   const handleStopAndClosePlayer = () => {
-    audioRef.current?.pause();
+    if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+    }
     setShowAudioPlayer(false);
+    setIsPlaying(false);
   };
 
   const toggleBookmark = (verseKey: string) => {
@@ -301,8 +313,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (!selectedTranslation) {
       setTranslationError('Selected translation not found.');
       setIsLoadingTranslation(false);
-      setFullVerseData(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
-      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
+      const versesWithoutTranslation = initialVerses.map(v => ({ ...v, translation: 'Translation not available.' }));
+      setFullVerseData(versesWithoutTranslation);
+      setDisplayVerses(versesWithoutTranslation);
       return;
     }
 
@@ -322,8 +335,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     } catch (e: any) {
       console.error('Translation fetch error:', e);
       setTranslationError('Could not load translation. Please check your connection and try again.');
-      setFullVerseData(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
-      setDisplayVerses(initialVerses.map(v => ({ ...v, translation: 'Translation not available.' })));
+      const versesWithFetchError = initialVerses.map(v => ({ ...v, translation: 'Translation not available.' }));
+      setFullVerseData(versesWithFetchError);
+      setDisplayVerses(versesWithFetchError);
     } finally {
       setIsLoadingTranslation(false);
     }
@@ -667,8 +681,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                     {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
                 </div>
             )}
-            
-            {!isLoadingTranslation && displayVerses.length > 0 && (
+
+            {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
                 <div className="space-y-8">
                     {displayVerses.map((ayah, index) => {
                         const verseNumber = ayah.verse_key.split(':')[1];
@@ -737,6 +751,69 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                         );
                     })}
                 </div>
+            )}
+            
+            {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
+              <div 
+                dir="rtl" 
+                className={cn(
+                  "leading-loose text-foreground text-justify",
+                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                )}
+                style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
+              >
+                  {displayVerses.map((ayah) => {
+                      const verseNumber = ayah.verse_key.split(':')[1];
+                      const verseEndSymbol = `\u06dd${toArabicNumerals(verseNumber)}`;
+
+                      const fullAyah = fullVerseData.find(v => v.id === ayah.id) || ayah;
+                      const textToCopy = `${fullAyah.text_uthmani} (${surahInfo.name}:${verseNumber})`;
+                      const isBookmarked = bookmarkedVerses.includes(ayah.verse_key);
+                      const isCurrentlyPlaying = isPlaying && `${surahInfo.id}:${currentVerse}` === ayah.verse_key;
+                      
+                      return (
+                        <Popover 
+                            key={ayah.id}
+                            open={activePopoverKey === ayah.verse_key}
+                            onOpenChange={(isOpen) => setActivePopoverKey(isOpen ? ayah.verse_key : null)}
+                        >
+                          <PopoverTrigger asChild>
+                            <span 
+                                id={`verse-${verseNumber}`}
+                                className={cn(
+                                  "scroll-mt-24 transition-colors duration-300 rounded-md p-1 -m-1 cursor-pointer hover:bg-primary/10",
+                                  isBookmarked && "bg-orange-500/20",
+                                  isCurrentlyPlaying && "bg-primary/20"
+                                )}
+                            >
+                                {ayah.text_uthmani}
+                                <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
+                                {' '}
+                            </span>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-1" side="bottom" align="center">
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleStartPlaybackFromVerse(parseInt(verseNumber, 10))}>
+                                    <Play className="h-5 w-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
+                                    <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
+                                    <BookText className="h-5 w-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleCopy(textToCopy); setActivePopoverKey(null); }}>
+                                    <Copy className="h-5 w-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setVerseToShare(fullAyah); setIsShareSheetOpen(true); setActivePopoverKey(null); }}>
+                                    <Share2 className="h-5 w-5" />
+                                </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      );
+                  })}
+              </div>
             )}
 
             {translationError && settings.showTranslation && (
