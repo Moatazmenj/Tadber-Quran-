@@ -90,8 +90,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
 
   const [bookmarkedVerses, setBookmarkedVerses] = useState<string[]>([]);
   
-  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -121,8 +119,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   useEffect(() => {
     const currentReciter = reciters.find(r => r.id === settings.reciterId) || reciters[0];
     setReciter(currentReciter);
-    // When reciter changes, we need to refetch audio files
-    setAudioFiles([]);
   }, [settings.reciterId]);
 
 
@@ -138,51 +134,31 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     };
   }, [showAudioPlayer]);
   
-  const fetchAudioFiles = useCallback(async () => {
-    if (!reciter) return [];
-    if (audioFiles.length > 0) return audioFiles;
-    
-    setIsLoadingAudio(true);
-    setAudioError(null);
-    try {
-      const response = await fetch(`https://api.quran.com/api/v4/recitations/${reciter.id}/by_chapter/${surahInfo.id}?word_timing=false&per_page=all`);
-      if (!response.ok) throw new Error('Failed to fetch audio files.');
-      const data = await response.json();
-      setAudioFiles(data.audio_files);
-      return data.audio_files;
-    } catch (e) {
-      console.error(e);
-      setAudioError('Could not load audio for this surah.');
-      return [];
-    } finally {
-      setIsLoadingAudio(false);
-    }
-  }, [surahInfo.id, reciter, audioFiles]);
-
+  
   const playVerse = useCallback((verseNumber: number) => {
-    if (!audioRef.current || !audioFiles || audioFiles.length === 0) return;
-      
-    const audioFile = audioFiles.find(f => f.verse_key === `${surahInfo.id}:${verseNumber}`);
-    if (audioFile && typeof audioFile.url === 'string') {
-      const audioUrl = `https://verses.quran.com/${audioFile.url}`;
-      
-      if (audioRef.current.src !== audioUrl) {
-          audioRef.current.src = audioUrl;
-      }
-      
-      audioRef.current.play().catch(e => {
-        console.error("Audio play error", e);
-        setIsPlaying(false);
-      });
-      
-      const verseElement = document.getElementById(`verse-${verseNumber}`);
-      if (verseElement) {
-        verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    } else {
-        setIsPlaying(false);
+    if (!audioRef.current || !reciter?.server) return;
+    
+    setAudioError(null);
+    const surahNumPadded = String(surahInfo.id).padStart(3, '0');
+    const verseNumPadded = String(verseNumber).padStart(3, '0');
+    const audioUrl = `https://everyayah.com/data/${reciter.server}/${surahNumPadded}${verseNumPadded}.mp3`;
+    
+    if (audioRef.current.src !== audioUrl) {
+      audioRef.current.src = audioUrl;
     }
-  }, [audioFiles, surahInfo.id]);
+    
+    audioRef.current.play().catch(e => {
+      console.error("Audio play error", e);
+      setAudioError('Could not play audio. The file might not be available.');
+      setIsPlaying(false);
+    });
+
+    const verseElement = document.getElementById(`verse-${verseNumber}`);
+    if (verseElement) {
+      verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [reciter, surahInfo.id]);
+
   
   const handleNextVerse = useCallback(() => {
     if (!audioRef.current) return;
@@ -204,11 +180,16 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => handleNextVerse();
+    const handleError = () => {
+        setAudioError('Could not play audio. The file might not be available.');
+        setIsPlaying(false);
+    };
   
     if (audio) {
       audio.addEventListener('play', handlePlay);
       audio.addEventListener('pause', handlePause);
       audio.addEventListener('ended', handleEnded);
+      audio.addEventListener('error', handleError);
     } else {
       audioRef.current = new Audio();
     }
@@ -218,6 +199,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         audio.removeEventListener('play', handlePlay);
         audio.removeEventListener('pause', handlePause);
         audio.removeEventListener('ended', handleEnded);
+        audio.removeEventListener('error', handleError);
         audio.pause();
       }
     };
@@ -229,18 +211,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      if (audioFiles.length === 0 && !isLoadingAudio) {
-        const fetchedFiles = await fetchAudioFiles();
-        if (fetchedFiles && fetchedFiles.length > 0) {
-          playVerse(currentVerse);
-        }
+      if (!audioRef.current.src || audioRef.current.ended) {
+        playVerse(currentVerse);
       } else {
-        // If there's no source or it's ended, start from currentVerse.
-        if (!audioRef.current.src || audioRef.current.ended) {
-          playVerse(currentVerse);
-        } else {
-          audioRef.current.play().catch(e => console.error("Audio play error", e));
-        }
+        audioRef.current.play().catch(e => console.error("Audio play error", e));
       }
     }
   };
@@ -250,12 +224,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     setShowAudioPlayer(true);
     setCurrentVerse(verseNumber);
   
-    if (audioFiles.length === 0 && !isLoadingAudio) {
-      await fetchAudioFiles();
-    }
-    // We need to use a timeout to ensure audioFiles state is updated before playing
+    // We need to use a timeout to ensure audio state is updated before playing
     setTimeout(() => playVerse(verseNumber), 0);
-  }, [audioFiles.length, isLoadingAudio, fetchAudioFiles, playVerse]);
+  }, [playVerse]);
 
   const handleNext = () => {
     if (currentVerse < surahInfo.versesCount) {
@@ -285,16 +256,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   const handleChangeReciter = (reciterId: number) => {
     setSetting('reciterId', reciterId);
     setIsReciterSheetOpen(false);
+    setAudioError(null);
 
     // If player was playing, continue playing with the new reciter
-    if (isPlaying) {
+    if (showAudioPlayer && isPlaying) {
         setIsPlaying(false); // Stop for a moment
         // Refetch and play
-        setTimeout(async () => {
-            const fetchedFiles = await fetchAudioFiles();
-            if (fetchedFiles && fetchedFiles.length > 0) {
-                playVerse(currentVerse);
-            }
+        setTimeout(() => {
+          playVerse(currentVerse);
         }, 100);
     }
   };
@@ -878,6 +847,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
         </div>
       </div>
       
+      {audioError && showAudioPlayer && (
+        <Alert variant="destructive" className="fixed bottom-24 left-1/2 -translate-x-1/2 w-auto z-[60]">
+            <AlertTitle>Audio Error</AlertTitle>
+            <AlertDescription>{audioError}</AlertDescription>
+        </Alert>
+      )}
+
       {showAudioPlayer && reciter && (
         <AudioPlayerBar
           surah={surahInfo}
