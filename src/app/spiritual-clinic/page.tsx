@@ -7,15 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getSpiritualRemedy } from '@/lib/actions';
 import type { SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
-import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft } from 'lucide-react';
+import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft, Share2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SpiritualClinicPage() {
   const searchParams = useSearchParams();
   const initialFeeling = searchParams.get('feeling');
+  const { toast } = useToast();
 
   const [feeling, setFeeling] = useState(initialFeeling || '');
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +59,39 @@ export default function SpiritualClinicPage() {
     setIsLoading(false);
     // Clear the query param from URL without reloading
     window.history.replaceState(null, '', '/spiritual-clinic');
+  };
+
+  const handleShare = async () => {
+    if (!remedy) return;
+
+    const versesText = remedy.verses
+      .map(v => `${v.text} (${toArabicNumerals(v.verse_key)})`)
+      .join('\n');
+
+    const shareText = `وصفة إيمانية من العيادة الروحية:\n\n📖 *آيات السكينة:*\n${versesText}\n\n📜 *تفسير ميسّر:*\n${remedy.tafsir}\n\n🤲 *دعاء نبوي:*\n${remedy.dua}\n\n🎧 *توصية استماع:*\nننصحك بالاستماع إلى ${remedy.recitationSuggestion.surahName} بصوت القارئ ${remedy.recitationSuggestion.reciterName} لراحة قلبك.\n\nتطبيق تدبر القرآن`;
+
+    try {
+        if (navigator.share) {
+            await navigator.share({
+                title: 'وصفة إيمانية - تدبر القرآن',
+                text: shareText,
+            });
+        } else {
+            // Fallback for browsers that don't support navigator.share
+            await navigator.clipboard.writeText(shareText);
+            toast({
+                title: 'تم النسخ',
+                description: 'تم نسخ الوصفة الإيمانية إلى الحافظة.',
+            });
+        }
+    } catch (err) {
+        console.error('Share failed:', err);
+        toast({
+            variant: 'destructive',
+            title: 'فشلت المشاركة',
+            description: 'لم نتمكن من مشاركة الوصفة. يرجى المحاولة مرة أخرى.',
+        });
+    }
   };
   
   const renderContent = () => {
@@ -131,10 +166,14 @@ export default function SpiritualClinicPage() {
                 </div>
             </div>
 
-            <div className="text-center pt-4">
+            <div className="text-center pt-4 flex flex-col sm:flex-row gap-2 justify-center">
                 <Button onClick={handleReset} className="w-full sm:w-auto">
                     <RefreshCw className="ml-2 h-4 w-4" />
                     البحث عن وصفة أخرى
+                </Button>
+                <Button onClick={handleShare} variant="outline" className="w-full sm:w-auto">
+                    <Share2 className="ml-2 h-4 w-4" />
+                    مشاركة الوصفة
                 </Button>
             </div>
         </div>
