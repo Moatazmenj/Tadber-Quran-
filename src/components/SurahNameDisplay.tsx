@@ -3,17 +3,28 @@ import type { Surah } from '@/types';
 
 const Ornament = ({ className }: { className?: string }) => (
     <svg 
-        viewBox="0 0 400 100" 
+        viewBox="0 0 500 100" 
         fill="none" 
         xmlns="http://www.w3.org/2000/svg" 
-        className={cn("text-primary/40", className)}
+        className={cn("text-primary/50", className)}
     >
-        <path d="M50 50 L150 50" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M250 50 L350 50" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="155" cy="50" r="3" fill="currentColor" />
-        <circle cx="245" cy="50" r="3" fill="currentColor" />
-        <path d="M165 50 C175 35, 225 35, 235 50" stroke="currentColor" strokeWidth="1.5" fill="none" />
-        <path d="M165 50 C175 65, 225 65, 235 50" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        {/* Right Side Ornament */}
+        <path d="M350 50 H450" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M450 50 C440 50, 440 60, 450 60 L470 60" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M450 50 C440 50, 440 40, 450 40 L470 40" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <circle cx="475" cy="50" r="4" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="345" cy="50" r="2" fill="currentColor" />
+
+        {/* Left Side Ornament */}
+        <path d="M150 50 H50" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M50 50 C60 50, 60 60, 50 60 L30 60" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <path d="M50 50 C60 50, 60 40, 50 40 L30 40" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        <circle cx="25" cy="50" r="4" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="155" cy="50" r="2" fill="currentColor" />
+
+        {/* Center decorative element */}
+        <path d="M250 25 C240 35, 240 65, 250 75" stroke="currentColor" strokeWidth="1" fill="none"/>
+        <path d="M250 25 C260 35, 260 65, 250 75" stroke="currentColor" strokeWidth="1" fill="none"/>
     </svg>
 );
 
