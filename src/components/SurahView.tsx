@@ -7,7 +7,7 @@ import type { Ayah, Surah, Reciter, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause, Headphones, Check, MessageSquare } from 'lucide-react';
+import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause, Headphones, Check } from 'lucide-react';
 import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
@@ -729,11 +729,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                   <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
                                       <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
                                   </Button>
-                                   <Link href={`/message/${ayah.verse_key}`} passHref>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                      <span><MessageSquare className="h-5 w-5" /></span>
-                                    </Button>
-                                  </Link>
                                   <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                       <BookText className="h-5 w-5" />
                                   </Button>
@@ -797,11 +792,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => toggleBookmark(ayah.verse_key)}>
                                     <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-orange-500")} />
                                 </Button>
-                                <Link href={`/message/${ayah.verse_key}`} passHref>
-                                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                    <span><MessageSquare className="h-5 w-5" /></span>
-                                  </Button>
-                                </Link>
                                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => { handleTafsir(fullAyah); setActivePopoverKey(null); }}>
                                     <BookText className="h-5 w-5" />
                                 </Button>
