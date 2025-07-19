@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTypewriter } from '@/hooks/useTypewriter';
 
 export default function SpiritualClinicPage() {
   const searchParams = useSearchParams();
@@ -21,6 +22,11 @@ export default function SpiritualClinicPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remedy, setRemedy] = useState<SpiritualRemedyOutput | null>(null);
+
+  const typewriterTafsir = useTypewriter(remedy?.tafsir || '');
+  const typewriterDua = useTypewriter(remedy?.dua || '');
+  const typewriterRecitation = useTypewriter(remedy ? `ننصحك بالاستماع إلى ${remedy.recitationSuggestion.surahName} بصوت القارئ ${remedy.recitationSuggestion.reciterName} لراحة قلبك.` : '');
+
 
   const fetchRemedy = useCallback(async (currentFeeling: string) => {
     if (!currentFeeling.trim()) return;
@@ -108,9 +114,7 @@ export default function SpiritualClinicPage() {
                     <ScrollText className="h-6 w-6"/>
                     تفسير ميسّر
                 </h3>
-                <div className="rounded-lg">
-                    <p className="leading-relaxed text-right text-foreground" style={{fontSize: '20px'}}>{remedy.tafsir}</p>
-                </div>
+                <p className="leading-relaxed text-right text-foreground" style={{fontSize: '20px'}}>{typewriterTafsir}</p>
             </div>
 
             <div>
@@ -118,9 +122,7 @@ export default function SpiritualClinicPage() {
                     <HeartPulse className="h-6 w-6"/>
                     دعاء نبوي
                 </h3>
-                <div className="rounded-lg">
-                    <p className="leading-loose font-medium text-right text-foreground" style={{fontSize: '20px'}}>{remedy.dua}</p>
-                </div>
+                <p className="leading-loose font-medium text-right text-foreground" style={{fontSize: '20px'}}>{typewriterDua}</p>
             </div>
 
             <div>
@@ -130,7 +132,7 @@ export default function SpiritualClinicPage() {
                 </h3>
                 <div className="text-right rounded-lg">
                     <p className="mb-2 text-foreground" style={{fontSize: '20px'}}>
-                        ننصحك بالاستماع إلى <span className="font-bold">{remedy.recitationSuggestion.surahName}</span> بصوت القارئ <span className="font-bold">{remedy.recitationSuggestion.reciterName}</span> لراحة قلبك.
+                        {typewriterRecitation}
                     </p>
                 </div>
             </div>
