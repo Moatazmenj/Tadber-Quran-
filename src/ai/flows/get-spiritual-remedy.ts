@@ -14,6 +14,7 @@ import { surahs } from '@/lib/quran';
 
 const SpiritualRemedyInputSchema = z.object({
   feeling: z.string().describe('The user’s description of their current feeling or situation.'),
+  language: z.string().optional().default('Arabic').describe('The target language for the remedy (e.g., "English", "Arabic", "French").'),
 });
 export type SpiritualRemedyInput = z.infer<typeof SpiritualRemedyInputSchema>;
 
@@ -52,19 +53,19 @@ const prompt = ai.definePrompt({
       reciterName: z.string(),
     }),
   })},
-  prompt: `أنت مرشد روحي وعالم بالقرآن والنفس البشرية في "عيادة قرآنية". مهمتك هي فهم مشاعر المستخدم المسلم بعمق وتقديم وصفة إيمانية شاملة ودقيقة من القرآن الكريم. يجب أن تكون إجابتك باللغة العربية، بأسلوب يجمع بين الحكمة والرحمة.
+  prompt: `You are a spiritual guide and a scholar of the Quran and the human psyche in a "Quranic Clinic." Your task is to deeply understand the Muslim user's feelings and provide a comprehensive and precise faith-based prescription from the Holy Quran. Your entire response, including tafsir, dua, and the recitation suggestion text, must be in {{language}}.
 
-  شعور المستخدم: "{{feeling}}"
+  User's feeling: "{{feeling}}"
 
-  قم بتحليل هذا الشعور من منظور إسلامي. فكر في المفاهيم المتعلقة به مثل الصبر، الرضا، اليقين، الخوف، الرجاء، والتوكل على الله.
+  Analyze this feeling from an Islamic perspective. Consider concepts related to it such as patience (Sabr), contentment (Rida), certainty (Yaqeen), fear (Khawf), hope (Raja'), and reliance on Allah (Tawakkul).
 
-  بناءً على هذا الفهم العميق، قم بتوفير ما يلي:
-  1.  **آيات السكينة:** اختر بدقة من 1 إلى 3 آيات قرآنية تكون بمثابة علاج مباشر ومواساة للحالة. اذكر الآية مع مرجعها (مثال: "3:139").
-  2.  **تفسير ميسّر وواسع:** قدم تفسيراً للآيات المقترحة يلامس القلب. لا تكتفِ بالشرح الحرفي، بل اربط المعنى بحياة المستخدم ومشاعره، أبرز رسالة الأمل والسكينة فيها، وكيف يمكن تطبيقها عمليًا. اجعل التفسير غنيًا بالحكمة وواسع الفهم.
-  3.  **دعاء مأثور ومناسب:** اختر دعاءً مؤثراً من القرآن أو السنة النبوية يتناسب تماماً مع حالة المستخدم ويفتح له باب المناجاة.
-  4.  **توصية استماع:** اقترح سورة لتلاوة مؤثرة، مع اقتراح اسم قارئ معروف بتلاوته الخاشعة والمؤثرة (مثل ياسر الدوسري أو مشاري العفاسي) لتعميق الأثر الروحي والوصول إلى الطمأنينة.
+  Based on this deep understanding, provide the following:
+  1.  **Verses of Tranquility:** Meticulously select 1 to 3 Quranic verses that serve as a direct remedy and solace for the situation. Provide the verse text in Arabic, along with its reference (e.g., "3:139").
+  2.  **Gentle & Insightful Tafsir:** Provide an interpretation of the suggested verses that touches the heart. Do not just give a literal explanation; connect the meaning to the user's life and feelings, highlighting the message of hope and serenity within them and how they can be practically applied. Make the tafsir rich with wisdom and broad understanding.
+  3.  **A Fitting Supplication (Dua):** Choose a relevant and impactful Dua from the Quran or Sunnah that perfectly suits the user's condition and opens the door for conversation with Allah.
+  4.  **Listening Recommendation:** Suggest a Surah for an emotional recitation, along with the name of a reciter known for their touching and heartfelt recitation style (like Yasser Ad-Dussary or Mishary Alafasy) to deepen the spiritual impact and achieve tranquility.
 
-  يجب أن تكون جميع الردود باللغة العربية الفصحى، وبأسلوب بليغ وجميل يبعث على الطمأنينة والراحة، ويظهر فهماً واسعاً للدين والنفس.`,
+  All text in the output (tafsir, dua, recitation suggestion) must be in the target language: {{language}}.`,
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },

@@ -1,28 +1,231 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getSpiritualRemedy } from '@/lib/actions';
 import type { SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
-import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft, Share2, Play } from 'lucide-react';
+import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft, Share2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { translationOptions } from '@/lib/translations';
+
+const translations: Record<string, Record<string, string>> = {
+    en: {
+        title: "Spiritual Clinic",
+        subtitle: "Let the Quran be your doctor.",
+        placeholder: "Describe how you feel... e.g., I feel anxious, sad, lost...",
+        button: "Find My Spiritual Remedy",
+        loading: "Preparing your spiritual remedy...",
+        errorTitle: "An error occurred",
+        retry: "Try Again",
+        remedyTitle: "Your Spiritual Remedy",
+        versesTitle: "Verses of Serenity",
+        tafsirTitle: "Gentle Interpretation",
+        duaTitle: "Prophetic Dua",
+        recitationTitle: "Listening Recommendation",
+        recitationText: "We recommend listening to {surahName} by reciter {reciterName} for your heart's comfort.",
+        newRemedy: "Find Another Remedy",
+        share: "Share Remedy",
+        shareSuccess: "Copied",
+        shareSuccessDesc: "The spiritual remedy has been copied to the clipboard.",
+        shareFail: "Share Failed",
+        shareFailDesc: "Could not share the remedy. Please try again.",
+        shareTitle: "Spiritual Remedy - Tadber Quran",
+        shareVerses: "Verses of Serenity",
+        shareTafsir: "Gentle Interpretation",
+        shareDua: "Prophetic Dua",
+        shareRecitation: "Listening Recommendation",
+        shareApp: "Tadber Quran App"
+    },
+    fr: {
+        title: "Clinique Spirituelle",
+        subtitle: "Laissez le Coran être votre médecin.",
+        placeholder: "Décrivez ce que vous ressentez... ex: je me sens anxieux, triste, perdu...",
+        button: "Trouver Mon Remède Spirituel",
+        loading: "Préparation de votre remède spirituel...",
+        errorTitle: "Une erreur est survenue",
+        retry: "Réessayer",
+        remedyTitle: "Votre Remède Spirituel",
+        versesTitle: "Versets de Sérénité",
+        tafsirTitle: "Interprétation Douce",
+        duaTitle: "Dua Prophétique",
+        recitationTitle: "Recommandation d'Écoute",
+        recitationText: "Nous vous recommandons d'écouter {surahName} par le récitateur {reciterName} pour apaiser votre cœur.",
+        newRemedy: "Trouver un autre remède",
+        share: "Partager le Remède",
+        shareSuccess: "Copié",
+        shareSuccessDesc: "Le remède spirituel a été copié dans le presse-papiers.",
+        shareFail: "Partage Échoué",
+        shareFailDesc: "Impossible de partager le remède. Veuillez réessayer.",
+        shareTitle: "Remède Spirituel - Tadber Quran",
+        shareVerses: "Versets de Sérénité",
+        shareTafsir: "Interprétation Douce",
+        shareDua: "Dua Prophétique",
+        shareRecitation: "Recommandation d'Écoute",
+        shareApp: "Application Tadber Quran"
+    },
+    ar: {
+        title: "العيادة الروحية",
+        subtitle: "هنا تجد السكينة لقلبك والشفاء لروحك.",
+        placeholder: "صف شعورك هنا... مثلاً: أشعر بالقلق، بالحزن، بالضياع...",
+        button: "ابحث عن وصفتي الإيمانية",
+        loading: "...جاري تحضير وصفتك الإيمانية",
+        errorTitle: "حدث خطأ",
+        retry: "حاول مرة أخرى",
+        remedyTitle: "وصفتك الإيمانية",
+        versesTitle: "آيات السكينة",
+        tafsirTitle: "تفسير ميسّر",
+        duaTitle: "دعاء نبوي",
+        recitationTitle: "توصية استماع",
+        recitationText: "ننصحك بالاستماع إلى {surahName} بصوت القارئ {reciterName} لراحة قلبك.",
+        newRemedy: "البحث عن وصفة أخرى",
+        share: "مشاركة الوصفة",
+        shareSuccess: "تم النسخ",
+        shareSuccessDesc: "تم نسخ الوصفة الإيمانية إلى الحافظة.",
+        shareFail: "فشلت المشاركة",
+        shareFailDesc: "لم نتمكن من مشاركة الوصفة. يرجى المحاولة مرة أخرى.",
+        shareTitle: "وصفة إيمانية - تدبر القرآن",
+        shareVerses: "آيات السكينة",
+        shareTafsir: "تفسير ميسّر",
+        shareDua: "دعاء نبوي",
+        shareRecitation: "توصية استماع",
+        shareApp: "تطبيق تدبر القرآن"
+    },
+     es: {
+        title: "Clínica Espiritual",
+        subtitle: "Deja que el Corán sea tu médico.",
+        placeholder: "Describe cómo te sientes... ej: me siento ansioso, triste, perdido...",
+        button: "Encontrar Mi Remedio Espiritual",
+        loading: "Preparando tu remedio espiritual...",
+        errorTitle: "Ocurrió un error",
+        retry: "Intentar de nuevo",
+        remedyTitle: "Tu Remedio Espiritual",
+        versesTitle: "Versos de Serenidad",
+        tafsirTitle: "Interpretación Suave",
+        duaTitle: "Dua Profética",
+        recitationTitle: "Recomendación de Escucha",
+        recitationText: "Te recomendamos escuchar {surahName} por el recitador {reciterName} para el consuelo de tu corazón.",
+        newRemedy: "Buscar Otro Remedio",
+        share: "Compartir Remedio",
+        shareSuccess: "Copiado",
+        shareSuccessDesc: "El remedio espiritual ha sido copiado al portapapeles.",
+        shareFail: "Error al Compartir",
+        shareFailDesc: "No se pudo compartir el remedio. Por favor, inténtalo de nuevo.",
+        shareTitle: "Remedio Espiritual - Tadber Quran",
+        shareVerses: "Versos de Serenidad",
+        shareTafsir: "Interpretación Suave",
+        shareDua: "Dua Profética",
+        shareRecitation: "Recomendación de Escucha",
+        shareApp: "Aplicación Tadber Quran"
+    },
+    id: {
+        title: "Klinik Spiritual",
+        subtitle: "Biarkan Al-Qur'an menjadi dokter Anda.",
+        placeholder: "Jelaskan perasaan Anda... misal: Saya merasa cemas, sedih, tersesat...",
+        button: "Temukan Obat Spiritual Saya",
+        loading: "Menyiapkan obat spiritual Anda...",
+        errorTitle: "Terjadi kesalahan",
+        retry: "Coba Lagi",
+        remedyTitle: "Obat Spiritual Anda",
+        versesTitle: "Ayat-ayat Ketenangan",
+        tafsirTitle: "Tafsir Lembut",
+        duaTitle: "Doa Kenabian",
+        recitationTitle: "Rekomendasi Mendengarkan",
+        recitationText: "Kami merekomendasikan mendengarkan {surahName} oleh qari {reciterName} untuk ketenangan hati Anda.",
+        newRemedy: "Cari Obat Lain",
+        share: "Bagikan Obat",
+        shareSuccess: "Disalin",
+        shareSuccessDesc: "Obat spiritual telah disalin ke clipboard.",
+        shareFail: "Gagal Berbagi",
+        shareFailDesc: "Tidak dapat membagikan obat. Silakan coba lagi.",
+        shareTitle: "Obat Spiritual - Tadber Quran",
+        shareVerses: "Ayat-ayat Ketenangan",
+        shareTafsir: "Tafsir Lembut",
+        shareDua: "Doa Kenabian",
+        shareRecitation: "Rekomendasi Mendengarkan",
+        shareApp: "Aplikasi Tadber Quran"
+    },
+    ru: {
+        title: "Духовная Клиника",
+        subtitle: "Пусть Коран будет вашим врачом.",
+        placeholder: "Опишите, что вы чувствуете... например: я чувствую тревогу, грусть, растерянность...",
+        button: "Найти Мое Духовное Лекарство",
+        loading: "Подготовка вашего духовного лекарства...",
+        errorTitle: "Произошла ошибка",
+        retry: "Попробовать снова",
+        remedyTitle: "Ваше Духовное Лекарство",
+        versesTitle: "Аяты Спокойствия",
+        tafsirTitle: "Мягкое Толкование",
+        duaTitle: "Пророческое Дуа",
+        recitationTitle: "Рекомендация к Прослушиванию",
+        recitationText: "Мы рекомендуем слушать {surahName} в исполнении чтеца {reciterName} для успокоения вашего сердца.",
+        newRemedy: "Найти Другое Лекарство",
+        share: "Поделиться Лекарством",
+        shareSuccess: "Скопировано",
+        shareSuccessDesc: "Духовное лекарство скопировано в буфер обмена.",
+        shareFail: "Ошибка при отправке",
+        shareFailDesc: "Не удалось поделиться лекарством. Пожалуйста, попробуйте еще раз.",
+        shareTitle: "Духовное Лекарство - Tadber Quran",
+        shareVerses: "Аяты Спокойствия",
+        shareTafsir: "Мягкое Толкование",
+        shareDua: "Пророческое Дуа",
+        shareRecitation: "Рекомендация к Прослушиванию",
+        shareApp: "Приложение Tadber Quran"
+    },
+    ur: {
+        title: "روحانی کلینک",
+        subtitle: "قرآن کو اپنا معالج بننے دیں۔",
+        placeholder: "بیان کریں کہ آپ کیسا محسوس کر رہے ہیں... مثال کے طور پر: میں پریشان، اداس، کھویا ہوا محسوس کر رہا ہوں...",
+        button: "میرا روحانی علاج تلاش کریں",
+        loading: "آپ کا روحانی علاج تیار کیا جا رہا ہے...",
+        errorTitle: "ایک خامی پیش آگئی",
+        retry: "دوبارہ کوشش کریں",
+        remedyTitle: "آپ کا روحانی علاج",
+        versesTitle: "آیاتِ سکون",
+        tafsirTitle: "نرم تفسیر",
+        duaTitle: "مسنون دعا",
+        recitationTitle: "سننے کی تجویز",
+        recitationText: "ہم آپ کو قاری {reciterName} کی آواز میں {surahName} سننے کی تجویز کرتے ہیں تاکہ آپ کے دل کو سکون ملے۔",
+        newRemedy: "دوسرا علاج تلاش کریں",
+        share: "علاج شیئر کریں",
+        shareSuccess: "کاپی ہوگیا",
+        shareSuccessDesc: "روحانی علاج کلپ بورڈ پر کاپی کر لیا گیا ہے۔",
+        shareFail: "شیئر ناکام",
+        shareFailDesc: "علاج شیئر نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+        shareTitle: "روحانی علاج - تدبر قرآن",
+        shareVerses: "آیاتِ سکون",
+        shareTafsir: "نرم تفسیر",
+        shareDua: "مسنون دعا",
+        shareRecitation: "سننے کی تجویز",
+        shareApp: "تدبر قرآن ایپ"
+    }
+};
 
 export default function SpiritualClinicPage() {
   const searchParams = useSearchParams();
   const initialFeeling = searchParams.get('feeling');
   const { toast } = useToast();
+  const { settings } = useQuranSettings();
 
   const [feeling, setFeeling] = useState(initialFeeling || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remedy, setRemedy] = useState<SpiritualRemedyOutput | null>(null);
+
+  const lang = useMemo(() => {
+    const langCode = settings.translationId;
+    return translations[langCode] ? langCode : 'ar';
+  }, [settings.translationId]);
+
+  const t = useMemo(() => translations[lang] || translations['ar'], [lang]);
+  const isRtl = lang === 'ar' || lang === 'ur';
 
   const fetchRemedy = useCallback(async (currentFeeling: string) => {
     if (!currentFeeling.trim()) return;
@@ -32,14 +235,15 @@ export default function SpiritualClinicPage() {
     setRemedy(null);
 
     try {
-      const result = await getSpiritualRemedy({ feeling: currentFeeling });
+      const targetLanguage = translationOptions.find(opt => opt.id === lang)?.language || 'Arabic';
+      const result = await getSpiritualRemedy({ feeling: currentFeeling, language: targetLanguage });
       setRemedy(result);
     } catch (err: any) {
       setError(err.message || 'حدث خطأ ما، يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     if (initialFeeling) {
@@ -57,7 +261,6 @@ export default function SpiritualClinicPage() {
     setRemedy(null);
     setError(null);
     setIsLoading(false);
-    // Clear the query param from URL without reloading
     window.history.replaceState(null, '', '/spiritual-clinic');
   };
 
@@ -65,31 +268,30 @@ export default function SpiritualClinicPage() {
     if (!remedy) return;
 
     const versesText = remedy.verses
-      .map(v => `${v.text} (${toArabicNumerals(v.verse_key)})`)
+      .map(v => `${v.text} (${isRtl ? toArabicNumerals(v.verse_key) : v.verse_key})`)
       .join('\n');
 
-    const shareText = `وصفة إيمانية من العيادة الروحية:\n\n📖 *آيات السكينة:*\n${versesText}\n\n📜 *تفسير ميسّر:*\n${remedy.tafsir}\n\n🤲 *دعاء نبوي:*\n${remedy.dua}\n\n🎧 *توصية استماع:*\nننصحك بالاستماع إلى ${remedy.recitationSuggestion.surahName} بصوت القارئ ${remedy.recitationSuggestion.reciterName} لراحة قلبك.\n\nتطبيق تدبر القرآن`;
+    const shareText = `${t.shareTitle}:\n\n📖 *${t.shareVerses}:*\n${versesText}\n\n📜 *${t.shareTafsir}:*\n${remedy.tafsir}\n\n🤲 *${t.shareDua}:*\n${remedy.dua}\n\n🎧 *${t.shareRecitation}:*\n${remedy.recitationSuggestion.surahName} - ${remedy.recitationSuggestion.reciterName}\n\n${t.shareApp}`;
 
     try {
         if (navigator.share) {
             await navigator.share({
-                title: 'وصفة إيمانية - تدبر القرآن',
+                title: t.shareTitle,
                 text: shareText,
             });
         } else {
-            // Fallback for browsers that don't support navigator.share
             await navigator.clipboard.writeText(shareText);
             toast({
-                title: 'تم النسخ',
-                description: 'تم نسخ الوصفة الإيمانية إلى الحافظة.',
+                title: t.shareSuccess,
+                description: t.shareSuccessDesc,
             });
         }
     } catch (err) {
         console.error('Share failed:', err);
         toast({
             variant: 'destructive',
-            title: 'فشلت المشاركة',
-            description: 'لم نتمكن من مشاركة الوصفة. يرجى المحاولة مرة أخرى.',
+            title: t.shareFail,
+            description: t.shareFailDesc,
         });
     }
   };
@@ -101,22 +303,22 @@ export default function SpiritualClinicPage() {
           <h1 className="text-3xl font-headline font-bold text-primary animate-pulse">
             Tadber Quran
           </h1>
-          <p className="text-muted-foreground">...جاري تحضير وصفتك الإيمانية</p>
+          <p className="text-muted-foreground">{t.loading}</p>
         </div>
       );
     }
     
     if (error) {
         return (
-            <div className="text-center p-4 min-h-[300px]" dir="rtl">
+            <div className="text-center p-4 min-h-[300px]" dir={isRtl ? "rtl" : "ltr"}>
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>حدث خطأ</AlertTitle>
+                    <AlertTitle>{t.errorTitle}</AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
                 <Button onClick={handleReset} className="mt-4">
-                    <RefreshCw className="ml-2 h-4 w-4" />
-                    حاول مرة أخرى
+                    <RefreshCw className={isRtl ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {t.retry}
                 </Button>
             </div>
         )
@@ -124,11 +326,11 @@ export default function SpiritualClinicPage() {
 
     if (remedy) {
       return (
-        <div dir="rtl" className="p-2 space-y-8">
+        <div dir={isRtl ? "rtl" : "ltr"} className="p-2 space-y-8">
             <div>
                 <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
                     <BookOpen className="h-6 w-6"/>
-                    آيات السكينة
+                    {t.versesTitle}
                 </h3>
                 <div className="space-y-4 text-right">
                     {remedy.verses.map(v => (
@@ -142,27 +344,29 @@ export default function SpiritualClinicPage() {
             <div>
                 <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
                     <ScrollText className="h-6 w-6"/>
-                    تفسير ميسّر
+                    {t.tafsirTitle}
                 </h3>
-                <p className="leading-relaxed text-right text-foreground" style={{fontSize: '20px'}}>{remedy.tafsir}</p>
+                <p className="leading-relaxed text-foreground" style={{fontSize: '20px'}}>{remedy.tafsir}</p>
             </div>
 
             <div>
                 <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
                     <HeartPulse className="h-6 w-6"/>
-                    دعاء نبوي
+                    {t.duaTitle}
                 </h3>
-                <p className="leading-loose font-medium text-right text-foreground" style={{fontSize: '20px'}}>{remedy.dua}</p>
+                <p className="leading-loose font-medium text-foreground" style={{fontSize: '20px'}}>{remedy.dua}</p>
             </div>
 
             <div>
                 <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
                     <Headphones className="h-6 w-6"/>
-                    توصية استماع
+                    {t.recitationTitle}
                 </h3>
-                <div className="flex items-center justify-between text-right">
+                <div className="flex items-center justify-between">
                     <p className="text-foreground" style={{fontSize: '20px'}}>
-                        {`ننصحك بالاستماع إلى ${remedy.recitationSuggestion.surahName} بصوت القارئ ${remedy.recitationSuggestion.reciterName} لراحة قلبك.`}
+                        {t.recitationText
+                            .replace('{surahName}', remedy.recitationSuggestion.surahName)
+                            .replace('{reciterName}', remedy.recitationSuggestion.reciterName)}
                     </p>
                     <Link href={`/surah/${remedy.recitationSuggestion.surahId}?autoplay=true&reciter=${remedy.recitationSuggestion.reciterId}`} passHref>
                         <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
@@ -175,12 +379,12 @@ export default function SpiritualClinicPage() {
 
             <div className="text-center pt-4 flex flex-col sm:flex-row gap-2 justify-center">
                 <Button onClick={handleReset} className="w-full sm:w-auto">
-                    <RefreshCw className="ml-2 h-4 w-4" />
-                    البحث عن وصفة أخرى
+                    <RefreshCw className={isRtl ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {t.newRemedy}
                 </Button>
                 <Button onClick={handleShare} variant="outline" className="w-full sm:w-auto">
-                    <Share2 className="ml-2 h-4 w-4" />
-                    مشاركة الوصفة
+                    <Share2 className={isRtl ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {t.share}
                 </Button>
             </div>
         </div>
@@ -188,12 +392,12 @@ export default function SpiritualClinicPage() {
     }
 
     return (
-      <form onSubmit={handleSubmit} dir="rtl">
+      <form onSubmit={handleSubmit} dir={isRtl ? "rtl" : "ltr"}>
         <div className="my-6">
-          <label htmlFor="feeling" className="text-lg font-medium mb-3 block">ماذا تشعر به الآن؟</label>
+          <label htmlFor="feeling" className="text-lg font-medium mb-3 block">{t.subtitle}</label>
           <Textarea
             id="feeling"
-            placeholder="صف شعورك هنا... مثلاً: أشعر بالقلق، بالحزن، بالضياع..."
+            placeholder={t.placeholder}
             rows={4}
             value={feeling}
             onChange={(e) => setFeeling(e.target.value)}
@@ -201,27 +405,27 @@ export default function SpiritualClinicPage() {
           />
         </div>
         <Button type="submit" className="w-full" disabled={!feeling.trim()}>
-          ابحث عن وصفتي الإيمانية
+          {t.button}
         </Button>
       </form>
     );
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-2xl">
+    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-2xl" dir={isRtl ? "rtl" : "ltr"}>
       <header className="flex items-center mb-8 relative">
         <Link href="/" passHref>
           <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className={!isRtl ? "" : "rotate-180"} />
             <span className="sr-only">Back</span>
           </Button>
         </Link>
         <div className="w-full text-center">
             <h1 className="flex items-center justify-center gap-2 text-2xl font-bold">
                 <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="AI Icon" width={24} height={24} />
-                العيادة الروحية
+                {t.title}
             </h1>
-            <p className="text-muted-foreground mt-1">هنا تجد السكينة لقلبك والشفاء لروحك.</p>
+            <p className="text-muted-foreground mt-1">{isRtl ? "هنا تجد السكينة لقلبك والشفاء لروحك." : "Here you find serenity for your heart and healing for your soul."}</p>
         </div>
       </header>
       <main>
