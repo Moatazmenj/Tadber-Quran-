@@ -165,7 +165,7 @@ export default function SpiritualClinicPage() {
                     </p>
                     <Link href={`/surah/${remedy.recitationSuggestion.surahId}?autoplay=true&reciter=${remedy.recitationSuggestion.reciterId}`} passHref>
                         <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
-                            <Play className="h-6 w-6 fill-current" />
+                            <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="Play" width={24} height={24} />
                             <span className="sr-only">Play</span>
                         </Button>
                     </Link>
