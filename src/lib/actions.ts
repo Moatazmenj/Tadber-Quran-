@@ -3,6 +3,7 @@
 import { summarizeSurah, SummarizeSurahInput, SummarizeSurahOutput } from '@/ai/flows/summarize-surah';
 import { getVerseTafsir as getVerseTafsirFlow, type GetVerseTafsirInput } from '@/ai/flows/get-verse-tafsir';
 import { analyzeRecitation as analyzeRecitationFlow, type AnalyzeRecitationInput, type AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
+import { getVerseMessage as getVerseMessageFlow, type GetVerseMessageInput, type GetVerseMessageOutput } from '@/ai/flows/get-verse-message';
 
 export async function getSurahSummary(surahName: string, surahText: string): Promise<string> {
   // Add a rate limit check here in a real application
@@ -40,5 +41,18 @@ export async function getRecitationAnalysis(input: AnalyzeRecitationInput): Prom
             throw error;
         }
         throw new Error('Failed to generate recitation analysis due to a server error.');
+    }
+}
+
+export async function getVerseMessage(input: GetVerseMessageInput): Promise<GetVerseMessageOutput> {
+    try {
+        const result = await getVerseMessageFlow(input);
+        return result;
+    } catch (error) {
+        console.error('Error in getVerseMessage action:', error);
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Failed to generate verse message due to a server error.');
     }
 }
