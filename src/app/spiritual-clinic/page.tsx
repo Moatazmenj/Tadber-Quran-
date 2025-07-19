@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getSpiritualRemedy } from '@/lib/actions';
@@ -12,27 +13,40 @@ import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
 
 export default function SpiritualClinicPage() {
-  const [feeling, setFeeling] = useState('');
+  const searchParams = useSearchParams();
+  const initialFeeling = searchParams.get('feeling');
+
+  const [feeling, setFeeling] = useState(initialFeeling || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remedy, setRemedy] = useState<SpiritualRemedyOutput | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!feeling.trim()) return;
+  const fetchRemedy = useCallback(async (currentFeeling: string) => {
+    if (!currentFeeling.trim()) return;
 
     setIsLoading(true);
     setError(null);
     setRemedy(null);
 
     try {
-      const result = await getSpiritualRemedy({ feeling });
+      const result = await getSpiritualRemedy({ feeling: currentFeeling });
       setRemedy(result);
     } catch (err: any) {
       setError(err.message || 'حدث خطأ ما، يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    if (initialFeeling) {
+      fetchRemedy(initialFeeling);
+    }
+  }, [initialFeeling, fetchRemedy]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchRemedy(feeling);
   };
 
   const handleReset = () => {
@@ -40,6 +54,8 @@ export default function SpiritualClinicPage() {
     setRemedy(null);
     setError(null);
     setIsLoading(false);
+    // Clear the query param from URL without reloading
+    window.history.replaceState(null, '', '/spiritual-clinic');
   };
   
   const renderContent = () => {

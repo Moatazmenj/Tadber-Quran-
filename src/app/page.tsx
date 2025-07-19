@@ -5,6 +5,7 @@ import { VerseOfTheDayDialog } from '@/components/VerseOfTheDayDialog';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
+import { SpiritualClinicDialog } from '@/components/SpiritualClinicDialog';
 
 export default function Home() {
   return (
@@ -25,6 +26,7 @@ export default function Home() {
         <SurahList surahs={surahs} juzs={juzs} />
       </div>
       <VerseOfTheDayDialog />
+      <SpiritualClinicDialog />
     </>
   );
 }
