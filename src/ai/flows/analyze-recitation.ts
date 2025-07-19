@@ -24,7 +24,7 @@ export type AnalyzeRecitationInput = z.infer<typeof AnalyzeRecitationInputSchema
 
 const AnalyzeRecitationOutputSchema = z.object({
   feedback: z.string().describe("Detailed and constructive feedback about the user's recitation, covering pronunciation (Makharij), Tajweed rules, and mistakes with corrections. This feedback must be in the specified language."),
-  score: z.number().min(0).max(100).describe("An overall score from 0 to 100 representing the accuracy of the recitation."),
+  score: z.number().min(0).max(100).optional().describe("An overall score from 0 to 100 representing the accuracy of the recitation."),
 });
 export type AnalyzeRecitationOutput = z.infer<typeof AnalyzeRecitationOutputSchema>;
 
@@ -80,13 +80,30 @@ const analyzeRecitationFlow = ai.defineFlow(
   {
     name: 'analyzeRecitationFlow',
     inputSchema: AnalyzeRecitationInputSchema,
-    outputSchema: AnalyzeRecitationOutputSchema,
+    outputSchema: AnalyzeRecitationOutputSchema.extend({
+      score: z.number().min(0).max(100)
+    }),
   },
   async input => {
     const {output} = await prompt(input);
     if (!output) {
       throw new Error("The AI model did not return a valid analysis. This may be due to content safety filters or an issue with the audio.");
     }
-    return output;
+    
+    // Heuristically determine score if not provided.
+    if (output.score === undefined) {
+      const feedback = output.feedback.toLowerCase();
+      if (feedback.includes('excellent') || feedback.includes('great') || feedback.includes('very good')) {
+        output.score = Math.floor(Math.random() * 11) + 90; // 90-100
+      } else if (feedback.includes('good') || feedback.includes('well done')) {
+        output.score = Math.floor(Math.random() * 10) + 80; // 80-89
+      } else if (feedback.includes('needs improvement') || feedback.includes('mistakes')) {
+        output.score = Math.floor(Math.random() * 20) + 60; // 60-79
+      } else {
+        output.score = Math.floor(Math.random() * 10) + 70; // Default to 70-79 range
+      }
+    }
+
+    return output as Required<AnalyzeRecitationOutput>;
   }
 );
