@@ -12,6 +12,7 @@ import type { AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { translationOptions } from '@/lib/translations';
 
 const ANALYSIS_STORAGE_KEY = 'recitationAnalysisData';
 
@@ -134,6 +135,7 @@ export default function AnalysisPage() {
 
   const lang = useMemo(() => {
     const langCode = settings.translationId;
+    // Fallback to 'ar' if the selected language isn't in our translation dictionary
     return translations[langCode] ? langCode : 'ar';
   }, [settings.translationId]);
   
@@ -157,7 +159,8 @@ export default function AnalysisPage() {
       setOriginalText(originalText);
       setSurahName(surahName);
 
-      const result = await getRecitationAnalysis({ audioDataUri, originalText, surahName });
+      const targetLanguage = translationOptions.find(opt => opt.id === lang)?.language || 'Arabic';
+      const result = await getRecitationAnalysis({ audioDataUri, originalText, surahName, language: targetLanguage });
       setAnalysis(result);
 
       // IMPORTANT: Clean up storage only on success
@@ -170,7 +173,7 @@ export default function AnalysisPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [t, lang]);
 
   useEffect(() => {
     performAnalysis();
@@ -181,7 +184,7 @@ export default function AnalysisPage() {
       return (
         <div className="flex flex-col items-center justify-center text-center p-8 gap-4">
             <h1 className="text-3xl font-headline font-bold text-primary animate-pulse">
-              {t.loadingTitle}
+              Tadber Quran
             </h1>
             <p className="text-muted-foreground">{t.loadingDescription}</p>
         </div>
@@ -197,8 +200,8 @@ export default function AnalysisPage() {
                 <AlertDescription>{error}</AlertDescription>
             </Alert>
             <Button onClick={performAnalysis} className="mt-4">
+                <RefreshCw className={isRtl ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
                 {t.retry}
-                <RefreshCw className={isRtl ? "mr-2 h-4 w-4" : "ml-2 h-4 w-4"} />
             </Button>
         </div>
       );
@@ -206,7 +209,7 @@ export default function AnalysisPage() {
 
     if (analysis) {
       return (
-        <div dir="rtl">
+        <div dir={isRtl ? 'rtl' : 'ltr'}>
           <Card className="w-full overflow-hidden shadow-lg bg-transparent relative border-none">
             <div className="absolute top-0 left-0 h-28 w-28 pointer-events-none">
               <Image
@@ -220,7 +223,7 @@ export default function AnalysisPage() {
             </div>
 
             <div className="relative z-10">
-              <CardHeader className="p-6 text-right">
+              <CardHeader className="p-6">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div>
                     <CardTitle className="text-xl font-bold text-primary">{t.reportTitle}</CardTitle>
@@ -242,7 +245,7 @@ export default function AnalysisPage() {
                           <MessageSquareQuote className="h-5 w-5 text-primary" />
                           {t.teacherFeedback}
                       </h3>
-                      <p className="text-base leading-relaxed whitespace-pre-wrap font-arabic text-foreground/90">
+                      <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90">
                           {analysis.feedback}
                       </p>
                   </div>
@@ -252,7 +255,7 @@ export default function AnalysisPage() {
                           <BookText className="h-5 w-5 text-primary" />
                           {t.originalTextTitle}
                       </h3>
-                      <div className="p-4">
+                      <div className="p-4" dir="rtl">
                         <p
                           className="font-arabic leading-loose text-justify text-foreground"
                           style={{ fontSize: `${settings.fontSize * 0.7}px`, lineHeight: `${settings.fontSize * 1.6}px` }}
