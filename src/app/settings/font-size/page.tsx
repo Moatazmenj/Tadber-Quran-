@@ -11,6 +11,7 @@ import { surahs } from '@/lib/quran';
 import type { Ayah } from '@/types';
 import { useQuranSettings, type FontStyleOption } from '@/hooks/use-quran-settings';
 import { cn, toArabicNumerals } from '@/lib/utils';
+import { SurahNameDisplay } from '@/components/SurahNameDisplay';
 
 const FontStyleItem = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
   <div onClick={onClick} className="flex items-center justify-between py-4 cursor-pointer px-4 hover:bg-card/80 transition-colors">
@@ -23,6 +24,9 @@ export default function FontSizePage() {
   const { settings, setSetting } = useQuranSettings();
   
   const surahInfo = surahs.find(s => s.id === 1);
+  if (!surahInfo) {
+    return null; // Or some fallback UI
+  }
   const verses: Ayah[] = getLocalVersesForSurah(1) || [];
 
   return (
@@ -88,13 +92,7 @@ export default function FontSizePage() {
             </h3>
             <Card className="bg-card/50">
                 <CardContent className="p-6">
-                    <div className="text-center mb-8 border-b-2 border-primary pb-4">
-                        <h2 className={cn(
-                          "text-4xl font-bold text-foreground",
-                          settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic',
-                          settings.fontStyle === 'uthmanic' && 'font-arabic-uthmanic'
-                        )}>{surahInfo?.arabicName}</h2>
-                    </div>
+                    <SurahNameDisplay surahInfo={surahInfo} fontStyle={settings.fontStyle} />
                     
                     <div className="space-y-8">
                         {verses.map((ayah, index) => {

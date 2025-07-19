@@ -29,6 +29,7 @@ import {
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SurahNameDisplay } from './SurahNameDisplay';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -655,6 +656,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           )}
 
           <div className="surah-view-card rounded-lg p-4 md:p-8">
+            <SurahNameDisplay surahInfo={surahInfo} fontStyle={settings.fontStyle} />
+            
             {initialVerses.length === 0 && !isLoadingTranslation && (
                 <Alert variant="destructive">
                     <AlertTitle>Could Not Load Verses</AlertTitle>
