@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { ChevronLeft, Loader2, AlertCircle, RefreshCw, Share2 } from 'lucide-react';
 import { getVerseMessage } from '@/lib/actions';
 import { surahs } from '@/lib/quran';
@@ -14,6 +14,8 @@ import type { Ayah, Surah } from '@/types';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertTitle as AlertTitleShadcn, AlertDescription as AlertDescriptionShadcn } from '@/components/ui/alert';
+
 
 interface UthmaniVerse {
   id: number;
@@ -37,67 +39,65 @@ export default function MessagePage() {
   const [verse, setVerse] = useState<Ayah | null>(null);
   const [surah, setSurah] = useState<Surah | null>(null);
 
-  useEffect(() => {
-    const fetchVerseData = async () => {
-      if (!verseKey) return;
+  const fetchVerseAndMessage = async () => {
+    if (!verseKey) return;
 
-      try {
-        const [surahIdStr, verseIdStr] = verseKey.split(':');
-        const surahId = parseInt(surahIdStr, 10);
-        
-        const surahInfo = surahs.find(s => s.id === surahId);
-        if (!surahInfo) throw new Error("Surah not found.");
-        setSurah(surahInfo);
+    setIsLoading(true);
+    setError(null);
+    setMessage(null);
 
-        let verseData: Omit<Ayah, 'translation'> | undefined;
-        let localVerses = getLocalVersesForSurah(surahId);
+    try {
+      const [surahIdStr, verseIdStr] = verseKey.split(':');
+      const surahId = parseInt(surahIdStr, 10);
+      
+      const surahInfo = surahs.find(s => s.id === surahId);
+      if (!surahInfo) throw new Error("Surah not found.");
+      setSurah(surahInfo);
 
-        if (localVerses) {
-          verseData = localVerses.find(v => v.verse_key === verseKey);
-        } else {
-          const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
-          const data: UthmaniVerseApiResponse = await res.json();
-          verseData = data.verses.find(v => v.verse_key === verseKey);
-        }
+      let verseData: Omit<Ayah, 'translation'> | undefined;
+      const localVerses = getLocalVersesForSurah(surahId);
 
-        if (!verseData) throw new Error("Verse not found.");
-        setVerse(verseData);
-
-      } catch (e: any) {
-        console.error("Error fetching verse data:", e);
-        setError(e.message || "Could not load verse data.");
-        setIsLoading(false);
+      if (localVerses) {
+        verseData = localVerses.find(v => v.verse_key === verseKey);
       }
-    };
-    
-    fetchVerseData();
+      
+      if (!verseData) {
+        const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
+        const data: UthmaniVerseApiResponse = await res.json();
+        verseData = data.verses.find(v => v.verse_key === verseKey);
+      }
+
+      if (!verseData) throw new Error("Verse not found.");
+      
+      // Set verse state to be used in UI
+      const verseWithText: Ayah = {
+        id: verseData.id,
+        verse_key: verseData.verse_key,
+        text_uthmani: verseData.text_uthmani
+      };
+      setVerse(verseWithText);
+
+      // Now generate the message
+      const result = await getVerseMessage({
+        surahName: surahInfo.name,
+        verseNumber: verseIdStr,
+        verseText: verseWithText.text_uthmani,
+      });
+      setMessage(result.message);
+
+    } catch (e: any) {
+      console.error("Error fetching data:", e);
+      setError(e.message || "Could not load the message.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchVerseAndMessage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verseKey]);
 
-  useEffect(() => {
-    if (!verse || !surah) return;
-
-    const performGeneration = async () => {
-      setIsLoading(true);
-      setError(null);
-      setMessage(null);
-
-      try {
-        const result = await getVerseMessage({
-          surahName: surah.name,
-          verseNumber: verse.verse_key.split(':')[1],
-          verseText: verse.text_uthmani,
-        });
-        setMessage(result.message);
-      } catch (e: any) {
-        console.error('Message generation error:', e);
-        setError(e.message || 'An unknown error occurred while generating the message.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    performGeneration();
-  }, [verse, surah]);
 
   const handleShare = () => {
     if (!message || !verse || !surah) return;
@@ -130,9 +130,13 @@ export default function MessagePage() {
         <div className="max-w-lg mx-auto text-center" dir="rtl">
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>فشل الحصول على الرسالة</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitleShadcn>فشل الحصول على الرسالة</AlertTitleShadcn>
+                <AlertDescriptionShadcn>{error}</AlertDescriptionShadcn>
             </Alert>
+             <Button onClick={fetchVerseAndMessage} className="mt-4">
+                إعادة المحاولة
+                <RefreshCw className="mr-2 h-4 w-4" />
+            </Button>
         </div>
       );
     }
@@ -161,16 +165,16 @@ export default function MessagePage() {
                           {message}
                       </p>
                   </div>
-
-                  {navigator.share && (
-                    <div className="flex justify-center">
-                        <Button onClick={handleShare}>
-                            <Share2 className="mr-2 h-4 w-4" />
-                            شارك هذه الرسالة
-                        </Button>
-                    </div>
-                  )}
               </CardContent>
+
+              {navigator.share && (
+                <CardFooter className="flex justify-center">
+                    <Button onClick={handleShare}>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        شارك هذه الرسالة
+                    </Button>
+                </CardFooter>
+              )}
           </Card>
         </div>
       );
@@ -203,4 +207,3 @@ export default function MessagePage() {
     </div>
   );
 }
-
