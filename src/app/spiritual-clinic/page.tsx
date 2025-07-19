@@ -88,60 +88,52 @@ export default function SpiritualClinicPage() {
 
     if (remedy) {
       return (
-        <div dir="rtl" className="p-2 space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-primary">
-                        <BookOpen className="h-5 w-5"/>
-                        آيات السكينة
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+        <div dir="rtl" className="p-2 space-y-8">
+            <div>
+                <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
+                    <BookOpen className="h-6 w-6"/>
+                    آيات السكينة
+                </h3>
+                <div className="space-y-4 bg-primary/5 p-4 rounded-lg">
                     {remedy.verses.map(v => (
-                         <p key={v.verse_key} className="font-arabic text-lg leading-loose text-center">
-                            {v.text} <span className="text-sm text-primary">({toArabicNumerals(v.verse_key)})</span>
+                         <p key={v.verse_key} className="font-arabic text-lg leading-loose text-center text-foreground">
+                            {v.text} <span className="text-sm text-primary font-sans">({toArabicNumerals(v.verse_key)})</span>
                         </p>
                     ))}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-primary">
-                        <ScrollText className="h-5 w-5"/>
-                        تفسير ميسّر
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="leading-relaxed">{remedy.tafsir}</p>
-                </CardContent>
-            </Card>
+            <div>
+                <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
+                    <ScrollText className="h-6 w-6"/>
+                    تفسير ميسّر
+                </h3>
+                <div className="bg-primary/5 p-4 rounded-lg">
+                    <p className="leading-relaxed text-foreground">{remedy.tafsir}</p>
+                </div>
+            </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-primary">
-                        <HeartPulse className="h-5 w-5"/>
-                        دعاء نبوي
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="leading-loose font-medium text-center">{remedy.dua}</p>
-                </CardContent>
-            </Card>
+            <div>
+                <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
+                    <HeartPulse className="h-6 w-6"/>
+                    دعاء نبوي
+                </h3>
+                <div className="bg-primary/5 p-4 rounded-lg">
+                    <p className="leading-loose font-medium text-center text-foreground">{remedy.dua}</p>
+                </div>
+            </div>
 
-            <Card className="bg-primary/10">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3 text-primary">
-                        <Headphones className="h-5 w-5"/>
-                        توصية استماع
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                    <p className="mb-2">
+            <div>
+                <h3 className="flex items-center gap-3 text-primary text-xl font-bold mb-4">
+                    <Headphones className="h-6 w-6"/>
+                    توصية استماع
+                </h3>
+                <div className="text-center bg-primary/5 p-4 rounded-lg">
+                    <p className="mb-2 text-foreground">
                         ننصحك بالاستماع إلى <span className="font-bold">{remedy.recitationSuggestion.surahName}</span> بصوت القارئ <span className="font-bold">{remedy.recitationSuggestion.reciterName}</span> لراحة قلبك.
                     </p>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             <div className="text-center pt-4">
                 <Button onClick={handleReset} className="w-full sm:w-auto">
