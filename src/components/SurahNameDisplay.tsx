@@ -16,7 +16,7 @@ export function SurahNameDisplay({ surahInfo }: { surahInfo: Surah }) {
       <div className="relative z-10 flex items-center justify-center h-full">
         <h2
           className={cn(
-            'text-3xl font-bold text-white px-4 z-10 bg-transparent',
+            'text-2xl font-bold text-white px-4 z-10 bg-transparent',
             'font-arabic-uthmanic'
           )}
         >
