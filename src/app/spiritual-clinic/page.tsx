@@ -129,7 +129,7 @@ export default function SpiritualClinicPage() {
                     <BookOpen className="h-6 w-6"/>
                     آيات السكينة
                 </h3>
-                <div className="space-y-4 rounded-lg">
+                <div className="space-y-4">
                     {remedy.verses.map(v => (
                          <p key={v.verse_key} className="font-arabic leading-loose text-right text-foreground" style={{fontSize: '20px'}}>
                             {v.text} <span className="text-sm text-primary font-sans">({toArabicNumerals(v.verse_key)})</span>
@@ -159,8 +159,8 @@ export default function SpiritualClinicPage() {
                     <Headphones className="h-6 w-6"/>
                     توصية استماع
                 </h3>
-                <div className="text-right rounded-lg flex items-center justify-between">
-                    <p className="mb-2 text-foreground" style={{fontSize: '20px'}}>
+                <div className="flex items-center justify-between text-right">
+                    <p className="text-foreground" style={{fontSize: '20px'}}>
                         {`ننصحك بالاستماع إلى ${remedy.recitationSuggestion.surahName} بصوت القارئ ${remedy.recitationSuggestion.reciterName} لراحة قلبك.`}
                     </p>
                     <Link href={`/surah/${remedy.recitationSuggestion.surahId}?autoplay=true&reciter=${remedy.recitationSuggestion.reciterId}`} passHref>
