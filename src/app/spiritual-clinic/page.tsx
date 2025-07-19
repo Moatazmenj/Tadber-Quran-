@@ -177,8 +177,8 @@ export default function SpiritualClinicPage() {
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-2xl">
       <header className="flex items-center mb-8 relative">
         <Link href="/" passHref>
-          <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
-            <ChevronLeft className="h-6 w-6 rotate-180" />
+          <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
+            <ChevronLeft className="h-6 w-6" />
             <span className="sr-only">Back</span>
           </Button>
         </Link>
