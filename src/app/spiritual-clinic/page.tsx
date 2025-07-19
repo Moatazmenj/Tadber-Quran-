@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getSpiritualRemedy } from '@/lib/actions';
 import type { SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
-import { Loader2, AlertCircle, Sparkles, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft } from 'lucide-react';
+import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SpiritualClinicPage() {
   const searchParams = useSearchParams();
@@ -183,7 +184,7 @@ export default function SpiritualClinicPage() {
         </Link>
         <div className="w-full text-center">
             <h1 className="flex items-center justify-center gap-2 text-2xl font-bold">
-                <Sparkles className="h-6 w-6 text-primary" />
+                <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="AI Icon" width={24} height={24} />
                 العيادة الروحية
             </h1>
             <p className="text-muted-foreground mt-1">هنا تجد السكينة لقلبك والشفاء لروحك.</p>

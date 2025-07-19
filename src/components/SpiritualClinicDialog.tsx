@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles } from 'lucide-react';
+import Image from 'next/image';
 
 const CLINIC_STORAGE_KEY = 'spiritualClinicStatus';
 
@@ -38,7 +38,7 @@ export function SpiritualClinicDialog() {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader className="text-center items-center">
-          <Sparkles className="h-8 w-8 text-primary mb-2" />
+          <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="AI Icon" width={32} height={32} className="mb-2" />
           <DialogTitle className="text-2xl">العيادة الروحية</DialogTitle>
           <DialogDescription className="text-base">
             دع القرآن يكون طبيبك. صف لنا ما تشعر به، وسنقدم لك وصفة إيمانية لراحة قلبك.

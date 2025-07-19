@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { VerseOfTheDayDialog } from '@/components/VerseOfTheDayDialog';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import Image from 'next/image';
 import { SpiritualClinicDialog } from '@/components/SpiritualClinicDialog';
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
         <div className="flex justify-center mb-8">
             <Button asChild size="lg" className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
                 <Link href="/spiritual-clinic">
-                    <Sparkles className="mr-2 h-5 w-5" />
+                    <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="AI Icon" width={20} height={20} className="mr-2" />
                     اذهب إلى العيادة الروحية
                 </Link>
             </Button>
