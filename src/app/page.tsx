@@ -18,8 +18,8 @@ export default function Home() {
         <div className="flex justify-center mb-8">
             <Button asChild size="lg" className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-shadow">
                 <Link href="/spiritual-clinic">
-                    <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="AI Icon" width={20} height={20} className="mr-2" />
                     اذهب إلى العيادة الروحية
+                    <Image src="https://i.postimg.cc/T3mTt8kc/ai.png" alt="AI Icon" width={20} height={20} className="ml-2" />
                 </Link>
             </Button>
         </div>
