@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,7 +9,6 @@ import { getSpiritualRemedy } from '@/lib/actions';
 import type { SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
 import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -94,9 +94,9 @@ export default function SpiritualClinicPage() {
                     <BookOpen className="h-6 w-6"/>
                     آيات السكينة
                 </h3>
-                <div className="space-y-4 bg-primary/5 p-4 rounded-lg">
+                <div className="space-y-4 rounded-lg">
                     {remedy.verses.map(v => (
-                         <p key={v.verse_key} className="font-arabic text-lg leading-loose text-center text-foreground">
+                         <p key={v.verse_key} className="font-arabic leading-loose text-right text-foreground" style={{fontSize: '20px'}}>
                             {v.text} <span className="text-sm text-primary font-sans">({toArabicNumerals(v.verse_key)})</span>
                         </p>
                     ))}
@@ -108,8 +108,8 @@ export default function SpiritualClinicPage() {
                     <ScrollText className="h-6 w-6"/>
                     تفسير ميسّر
                 </h3>
-                <div className="bg-primary/5 p-4 rounded-lg">
-                    <p className="leading-relaxed text-foreground">{remedy.tafsir}</p>
+                <div className="rounded-lg">
+                    <p className="leading-relaxed text-right text-foreground" style={{fontSize: '20px'}}>{remedy.tafsir}</p>
                 </div>
             </div>
 
@@ -118,8 +118,8 @@ export default function SpiritualClinicPage() {
                     <HeartPulse className="h-6 w-6"/>
                     دعاء نبوي
                 </h3>
-                <div className="bg-primary/5 p-4 rounded-lg">
-                    <p className="leading-loose font-medium text-center text-foreground">{remedy.dua}</p>
+                <div className="rounded-lg">
+                    <p className="leading-loose font-medium text-right text-foreground" style={{fontSize: '20px'}}>{remedy.dua}</p>
                 </div>
             </div>
 
@@ -128,8 +128,8 @@ export default function SpiritualClinicPage() {
                     <Headphones className="h-6 w-6"/>
                     توصية استماع
                 </h3>
-                <div className="text-center bg-primary/5 p-4 rounded-lg">
-                    <p className="mb-2 text-foreground">
+                <div className="text-right rounded-lg">
+                    <p className="mb-2 text-foreground" style={{fontSize: '20px'}}>
                         ننصحك بالاستماع إلى <span className="font-bold">{remedy.recitationSuggestion.surahName}</span> بصوت القارئ <span className="font-bold">{remedy.recitationSuggestion.reciterName}</span> لراحة قلبك.
                     </p>
                 </div>
