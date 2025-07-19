@@ -24,13 +24,9 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
       >
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10 text-center">
-            <Image 
-              src="https://i.postimg.cc/KcLqFC88/20250707-093634.png"
-              alt="Tadber Quran Logo"
-              width={100}
-              height={38}
-              priority
-            />
+            <h1 className="text-4xl font-headline font-bold text-white animate-pulse">
+              Tadber Quran
+            </h1>
         </div>
       </div>
     );

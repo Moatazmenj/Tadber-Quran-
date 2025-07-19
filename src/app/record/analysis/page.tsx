@@ -63,9 +63,10 @@ export default function AnalysisPage() {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center text-center p-8 gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h2 className="text-2xl font-bold">...جاري تحليل تلاوتك</h2>
-          <p className="text-muted-foreground">قد يستغرق هذا بعض الوقت. يقوم خبير ذكاء اصطناعي بمراجعة تجويدك.</p>
+            <h1 className="text-3xl font-headline font-bold text-primary animate-pulse">
+              Tadber Quran
+            </h1>
+            <p className="text-muted-foreground">...جاري تحليل تلاوتك، قد يستغرق هذا بعض الوقت</p>
         </div>
       );
     }

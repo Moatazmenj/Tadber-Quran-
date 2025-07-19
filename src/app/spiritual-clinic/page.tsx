@@ -98,9 +98,10 @@ export default function SpiritualClinicPage() {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center text-center p-8 gap-4 min-h-[300px]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h2 className="text-xl font-bold">...جاري تحضير وصفتك الإيمانية</h2>
-          <p className="text-muted-foreground">لحظات من فضلك...</p>
+          <h1 className="text-3xl font-headline font-bold text-primary animate-pulse">
+            Tadber Quran
+          </h1>
+          <p className="text-muted-foreground">...جاري تحضير وصفتك الإيمانية</p>
         </div>
       );
     }
