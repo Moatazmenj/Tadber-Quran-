@@ -157,7 +157,7 @@ export default function BookmarksPage() {
                                 dir="rtl"
                                 className={cn(
                                     "leading-loose text-foreground",
-                                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                                 )}
                                 style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                             >

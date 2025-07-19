@@ -91,7 +91,8 @@ export default function FontSizePage() {
                     <div className="text-center mb-8 border-b-2 border-primary pb-4">
                         <h2 className={cn(
                           "text-4xl font-bold text-foreground",
-                          settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                          settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic',
+                          settings.fontStyle === 'uthmanic' && 'font-arabic-uthmanic'
                         )}>{surahInfo?.arabicName}</h2>
                     </div>
                     
@@ -106,7 +107,8 @@ export default function FontSizePage() {
                                       dir="rtl" 
                                       className={cn(
                                         "leading-loose text-foreground mb-3 text-center",
-                                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic',
+                                        settings.fontStyle === 'uthmanic' && 'font-arabic-uthmanic'
                                       )}
                                       style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                                     >

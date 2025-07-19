@@ -386,7 +386,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          const arabicFont = `56px ${settings.fontStyle === 'indopak' ? "'Noto Naskh Arabic'" : "'Noto Kufi Arabic'"}`;
+          const arabicFont = `56px ${settings.fontStyle === 'indopak' ? "'Noto Naskh Arabic'" : (settings.fontStyle === 'uthmanic' ? "'Noto Naskh Arabic'" : "'Noto Kufi Arabic'")}`;
           const refFont = '28px Alegreya';
           const translationFont = '32px PT Sans';
 
@@ -663,7 +663,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
             )}
             
             {surahInfo.id !== 1 && surahInfo.id !== 9 && (
-                <p className={cn("text-center text-3xl mb-8", settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic')}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
+                <p className={cn("text-center text-3xl mb-8", settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic'))}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
             )}
 
             {(isLoadingTranslation && settings.showTranslation) && (
@@ -702,7 +702,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                                       dir="rtl" 
                                       className={cn(
                                         "leading-loose text-foreground mb-4 text-center",
-                                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                                       )}
                                       style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                                   >
@@ -748,7 +748,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                 dir="rtl" 
                 className={cn(
                   "leading-loose text-foreground text-justify",
-                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                 )}
                 style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
               >
@@ -978,7 +978,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                 </SheetTitle>
                 <SheetDescription className={cn(
                   "text-lg text-foreground/90 text-center pt-2",
-                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                 )}>
                     {selectedVerseForTafsir?.text_uthmani}
                 </SheetDescription>

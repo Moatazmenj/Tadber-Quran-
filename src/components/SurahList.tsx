@@ -60,7 +60,8 @@ export function SurahList({ surahs, juzs }: SurahListProps) {
                 </div>
                 <p className={cn(
                   "text-xl text-primary",
-                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic',
+                  settings.fontStyle === 'uthmanic' && 'font-arabic-uthmanic'
                 )}>{surah.arabicName}</p>
               </CardHeader>
               <CardContent>

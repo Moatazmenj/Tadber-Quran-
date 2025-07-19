@@ -256,14 +256,14 @@ export default function RecordPage() {
                 {currentPage === 0 && selectedSurah.id !== 1 && selectedSurah.id !== 9 && (
                     <p className={cn(
                         "text-center text-3xl mb-8 pb-4",
-                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                        settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                       )}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
                 )}
                 <div 
                   dir="rtl"
                   className={cn(
                     "leading-loose text-foreground text-center text-justify",
-                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                   )}
                   style={{ fontSize: `${settings.fontSize}px`, lineHeight: `${settings.fontSize * 1.8}px` }}
                 >
@@ -355,7 +355,7 @@ export default function RecordPage() {
                                 </div>
                                 <p className={cn(
                                     "text-2xl text-primary",
-                                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : 'font-arabic'
+                                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
                                   )}>{surah.arabicName}</p>
                                 </div>
                             </div>
