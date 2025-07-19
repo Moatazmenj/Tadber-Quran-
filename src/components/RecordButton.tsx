@@ -11,8 +11,9 @@ export function RecordButton() {
   const isRecordPage = pathname === '/record';
   const isAnalysisPage = pathname.startsWith('/record/analysis');
   const isSearchPage = pathname === '/search';
+  const isSpiritualClinicPage = pathname === '/spiritual-clinic';
 
-  if (isRecordPage || isAnalysisPage || isSearchPage) {
+  if (isRecordPage || isAnalysisPage || isSearchPage || isSpiritualClinicPage) {
     return null;
   }
 
