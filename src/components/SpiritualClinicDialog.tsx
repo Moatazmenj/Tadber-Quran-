@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,8 +14,6 @@ import { toArabicNumerals } from '@/lib/utils';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import Link from 'next/link';
 
-const CLINIC_SESSION_KEY = 'hasSeenClinicDialog';
-
 export function SpiritualClinicDialog() {
   const { settings } = useQuranSettings();
   const [isOpen, setIsOpen] = useState(false);
@@ -24,11 +23,8 @@ export function SpiritualClinicDialog() {
   const [remedy, setRemedy] = useState<SpiritualRemedyOutput | null>(null);
 
   useEffect(() => {
-    const hasSeen = sessionStorage.getItem(CLINIC_SESSION_KEY);
-    if (!hasSeen) {
-      setIsOpen(true);
-      sessionStorage.setItem(CLINIC_SESSION_KEY, 'true');
-    }
+    // This dialog should appear on every visit to the home page.
+    setIsOpen(true);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

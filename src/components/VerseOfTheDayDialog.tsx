@@ -16,6 +16,9 @@ const verses = [
     { surah: "Al-Asr", verse: "103:2", text: "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", translation: "Indeed, mankind is in loss." },
 ];
 
+const VOD_STORAGE_KEY = 'verseOfTheDayStatus';
+const MAX_VIEWS_PER_DAY = 5;
+
 function VisuallyHidden({ children }: { children: React.ReactNode }) {
   return (
     <div className="sr-only">
@@ -30,17 +33,43 @@ export function VerseOfTheDayDialog() {
     const [selectedVerse, setSelectedVerse] = useState(verses[0]);
 
     useEffect(() => {
-        const hasSeenDialogToday = sessionStorage.getItem('hasSeenVerseDialog');
-        if (!hasSeenDialogToday) {
+        try {
+            const storedStatus = localStorage.getItem(VOD_STORAGE_KEY);
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+            let viewCount = 0;
+            let lastSeenDate = '';
+
+            if (storedStatus) {
+                const { date, count } = JSON.parse(storedStatus);
+                lastSeenDate = date;
+                viewCount = count;
+            }
+
+            if (lastSeenDate === today) {
+                if (viewCount < MAX_VIEWS_PER_DAY) {
+                    setIsOpen(true);
+                    localStorage.setItem(VOD_STORAGE_KEY, JSON.stringify({ date: today, count: viewCount + 1 }));
+                }
+            } else {
+                // It's a new day, reset the counter
+                setIsOpen(true);
+                localStorage.setItem(VOD_STORAGE_KEY, JSON.stringify({ date: today, count: 1 }));
+            }
+            
             const randomIndex = Math.floor(Math.random() * verses.length);
             const randomVerse = verses[randomIndex];
-            
             if (randomVerse) {
               setSelectedVerse(randomVerse);
             }
-            
-            setIsOpen(true);
-            sessionStorage.setItem('hasSeenVerseDialog', 'true');
+
+        } catch (e) {
+            console.error("Could not access localStorage for Verse of the Day", e);
+            // Fallback for environments where localStorage is not available, show once per session
+            const hasSeen = sessionStorage.getItem('hasSeenVerseDialog');
+            if (!hasSeen) {
+                setIsOpen(true);
+                sessionStorage.setItem('hasSeenVerseDialog', 'true');
+            }
         }
     }, []);
 
@@ -56,8 +85,6 @@ export function VerseOfTheDayDialog() {
             });
             setIsOpen(false);
         } catch (error) {
-            // The user cancelled the share operation.
-            // We can safely ignore this error.
             if ((error as DOMException).name === 'AbortError') {
                 return;
             }
