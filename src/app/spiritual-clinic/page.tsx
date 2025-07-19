@@ -1,31 +1,21 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getSpiritualRemedy } from '@/lib/actions';
 import type { SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
-import { Loader2, AlertCircle, Sparkles, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle, Sparkles, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toArabicNumerals } from '@/lib/utils';
-import { useQuranSettings } from '@/hooks/use-quran-settings';
 import Link from 'next/link';
 
-export function SpiritualClinicDialog() {
-  const { settings } = useQuranSettings();
-  const [isOpen, setIsOpen] = useState(false);
+export default function SpiritualClinicPage() {
   const [feeling, setFeeling] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [remedy, setRemedy] = useState<SpiritualRemedyOutput | null>(null);
-
-  useEffect(() => {
-    // This dialog should appear on every visit to the home page.
-    setIsOpen(true);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,21 +125,19 @@ export function SpiritualClinicDialog() {
                     </p>
                 </CardContent>
             </Card>
+
+            <div className="text-center pt-4">
+                <Button onClick={handleReset} className="w-full sm:w-auto">
+                    <RefreshCw className="ml-2 h-4 w-4" />
+                    البحث عن وصفة أخرى
+                </Button>
+            </div>
         </div>
       );
     }
 
     return (
       <form onSubmit={handleSubmit} dir="rtl">
-        <DialogHeader className="text-right">
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <Sparkles className="h-6 w-6 text-primary" />
-            العيادة الروحية
-          </DialogTitle>
-          <DialogDescription>
-            هنا تجد السكينة لقلبك والشفاء لروحك.
-          </DialogDescription>
-        </DialogHeader>
         <div className="my-6">
           <label htmlFor="feeling" className="text-lg font-medium mb-3 block">ماذا تشعر به الآن؟</label>
           <Textarea
@@ -161,30 +149,33 @@ export function SpiritualClinicDialog() {
             className="text-base"
           />
         </div>
-        <DialogFooter className="sm:justify-start">
-          <Button type="submit" className="w-full" disabled={!feeling.trim()}>
-            ابحث عن وصفتي الإيمانية
-          </Button>
-        </DialogFooter>
+        <Button type="submit" className="w-full" disabled={!feeling.trim()}>
+          ابحث عن وصفتي الإيمانية
+        </Button>
       </form>
     );
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-lg rounded-xl max-h-[90vh] flex flex-col">
-        <div className="flex-grow overflow-y-auto -mx-6 px-6 pt-2 pb-6">
-            {renderContent()}
+    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-2xl">
+      <header className="flex items-center mb-8 relative">
+        <Link href="/" passHref>
+          <Button variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
+            <ChevronLeft className="h-6 w-6 rotate-180" />
+            <span className="sr-only">Back</span>
+          </Button>
+        </Link>
+        <div className="w-full text-center">
+            <h1 className="flex items-center justify-center gap-2 text-2xl font-bold">
+                <Sparkles className="h-6 w-6 text-primary" />
+                العيادة الروحية
+            </h1>
+            <p className="text-muted-foreground mt-1">هنا تجد السكينة لقلبك والشفاء لروحك.</p>
         </div>
-        {remedy && (
-             <DialogFooter className="border-t pt-4 -mx-6 px-6">
-                <Button onClick={handleReset} className="w-full">
-                    <RefreshCw className="ml-2 h-4 w-4" />
-                    البحث عن وصفة أخرى
-                </Button>
-            </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+      </header>
+      <main>
+        {renderContent()}
+      </main>
+    </div>
   );
 }
