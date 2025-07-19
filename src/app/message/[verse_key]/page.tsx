@@ -61,6 +61,7 @@ export default function MessagePage() {
         verseData = localVerses.find(v => v.verse_key === verseKey);
       }
       
+      // If not found in local data, fetch from API
       if (!verseData) {
         const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
         const data: UthmaniVerseApiResponse = await res.json();
@@ -69,7 +70,7 @@ export default function MessagePage() {
 
       if (!verseData) throw new Error("Verse not found.");
       
-      // Set verse state to be used in UI
+      // We have the verse data, create a temporary Ayah object to display
       const verseWithText: Ayah = {
         id: verseData.id,
         verse_key: verseData.verse_key,
@@ -77,7 +78,7 @@ export default function MessagePage() {
       };
       setVerse(verseWithText);
 
-      // Now generate the message
+      // Now generate the message using the found text
       const result = await getVerseMessage({
         surahName: surahInfo.name,
         verseNumber: verseIdStr,
