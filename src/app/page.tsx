@@ -2,6 +2,7 @@ import { surahs, juzs } from '@/lib/quran';
 import { SurahList } from '@/components/SurahList';
 import { Header } from '@/components/Header';
 import { VerseOfTheDayDialog } from '@/components/VerseOfTheDayDialog';
+import { SpiritualClinicDialog } from '@/components/SpiritualClinicDialog';
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
         <SurahList surahs={surahs} juzs={juzs} />
       </div>
       <VerseOfTheDayDialog />
+      <SpiritualClinicDialog />
     </>
   );
 }
