@@ -979,10 +979,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
                 <SheetTitle className="text-center">
                   {tafsirLanguage === 'Arabic' ? `تفسير الآية: ${selectedVerseForTafsir?.verse_key}` : `Tafsir for Verse: ${selectedVerseForTafsir?.verse_key}`}
                 </SheetTitle>
-                <SheetDescription className={cn(
-                  "text-lg text-foreground/90 text-center pt-2",
-                  settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
-                )}>
+                <SheetDescription 
+                  className={cn(
+                    "font-arabic text-orange-500 text-center pt-2",
+                    settings.fontStyle === 'indopak' ? 'font-arabic-indopak' : (settings.fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
+                  )}
+                  style={{ fontSize: '20px' }}
+                >
                     {selectedVerseForTafsir?.text_uthmani}
                 </SheetDescription>
             </SheetHeader>
