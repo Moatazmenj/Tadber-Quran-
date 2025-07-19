@@ -92,7 +92,7 @@ export default function FontSizePage() {
             </h3>
             <Card className="bg-card/50">
                 <CardContent className="p-6">
-                    <SurahNameDisplay surahInfo={surahInfo} fontStyle={settings.fontStyle} />
+                    <SurahNameDisplay surahInfo={surahInfo} />
                     
                     <div className="space-y-8">
                         {verses.map((ayah, index) => {

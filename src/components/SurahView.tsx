@@ -656,7 +656,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           )}
 
           <div className="surah-view-card rounded-lg p-4 md:p-8">
-            <SurahNameDisplay surahInfo={surahInfo} fontStyle={settings.fontStyle} />
+            <SurahNameDisplay surahInfo={surahInfo} />
             
             {initialVerses.length === 0 && !isLoadingTranslation && (
                 <Alert variant="destructive">
@@ -1048,5 +1048,3 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
     </>
   );
 }
-
-    
