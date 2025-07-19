@@ -16,7 +16,6 @@ interface AudioPlayerBarProps {
   onPlayPause: () => void;
   onNext: () => void;
   onPrev: () => void;
-  onClose: () => void;
   onReciterClick: () => void;
   reciterName: string;
   reciterImage: string | null;
@@ -29,7 +28,6 @@ export function AudioPlayerBar({
   onPlayPause,
   onNext,
   onPrev,
-  onClose,
   onReciterClick,
   reciterName,
   reciterImage,
@@ -71,12 +69,6 @@ export function AudioPlayerBar({
             </Button>
           </div>
           
-          <div className="absolute top-2 right-2">
-            <Button variant="translucent" size="icon" onClick={onClose} className="h-7 w-7 rounded-full">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close Player</span>
-            </Button>
-          </div>
         </div>
       </div>
     </div>

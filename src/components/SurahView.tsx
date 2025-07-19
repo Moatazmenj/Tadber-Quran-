@@ -857,7 +857,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
           onPlayPause={handlePlayPause}
           onNext={handleNext}
           onPrev={handlePrev}
-          onClose={handleStopAndClosePlayer}
           onReciterClick={() => setIsReciterSheetOpen(true)}
           reciterName={reciter.name}
           reciterImage={reciter.imageUrl}
