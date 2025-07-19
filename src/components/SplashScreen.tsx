@@ -27,8 +27,8 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
             <Image
               src="https://i.postimg.cc/wMpJrZZN/20250707-093634.png"
               alt="Tadber Quran Logo"
-              width={350}
-              height={150}
+              width={200}
+              height={86}
               priority
               className="object-contain"
             />
