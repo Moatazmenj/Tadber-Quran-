@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getSpiritualRemedy } from '@/lib/actions';
 import type { SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
-import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft, Share2 } from 'lucide-react';
+import { Loader2, AlertCircle, BookOpen, ScrollText, Headphones, HeartPulse, RefreshCw, ChevronLeft, Share2, Play } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { toArabicNumerals } from '@/lib/utils';
 import Link from 'next/link';
@@ -159,10 +159,16 @@ export default function SpiritualClinicPage() {
                     <Headphones className="h-6 w-6"/>
                     توصية استماع
                 </h3>
-                <div className="text-right rounded-lg">
+                <div className="text-right rounded-lg flex items-center justify-between">
                     <p className="mb-2 text-foreground" style={{fontSize: '20px'}}>
                         {`ننصحك بالاستماع إلى ${remedy.recitationSuggestion.surahName} بصوت القارئ ${remedy.recitationSuggestion.reciterName} لراحة قلبك.`}
                     </p>
+                    <Link href={`/surah/${remedy.recitationSuggestion.surahId}?autoplay=true&reciter=${remedy.recitationSuggestion.reciterId}`} passHref>
+                        <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10">
+                            <Play className="h-6 w-6 fill-current" />
+                            <span className="sr-only">Play</span>
+                        </Button>
+                    </Link>
                 </div>
             </div>
 

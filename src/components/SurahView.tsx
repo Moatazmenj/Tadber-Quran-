@@ -35,6 +35,8 @@ interface SurahViewProps {
   surahInfo: Surah;
   verses: Ayah[];
   surahText: string;
+  autoplay?: boolean;
+  reciterId?: number;
 }
 
 const BOOKMARKS_KEY = 'quranBookmarks';
@@ -60,7 +62,7 @@ function wrapText(context: CanvasRenderingContext2D, text: string, maxWidth: num
   return lines;
 }
 
-export function SurahView({ surahInfo, verses: initialVerses, surahText }: SurahViewProps) {
+export function SurahView({ surahInfo, verses: initialVerses, surahText, autoplay = false, reciterId: autoplayReciterId }: SurahViewProps) {
   const { settings, setSetting } = useQuranSettings();
   const { toast } = useToast();
   
@@ -117,10 +119,20 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText }: Surah
   }, []);
 
   useEffect(() => {
-    const currentReciter = reciters.find(r => r.id === settings.reciterId) || reciters[0];
-    setReciter(currentReciter);
-  }, [settings.reciterId]);
+    const reciterToSet = autoplayReciterId 
+        ? reciters.find(r => r.id === autoplayReciterId) 
+        : reciters.find(r => r.id === settings.reciterId);
+        
+    setReciter(reciterToSet || reciters[0]);
+  }, [settings.reciterId, autoplayReciterId]);
 
+  useEffect(() => {
+    if (autoplay) {
+        setShowAudioPlayer(true);
+        // A small delay to ensure the UI updates before playing
+        setTimeout(() => handleStartPlaybackFromVerse(1), 100);
+    }
+  }, [autoplay]);
 
   useEffect(() => {
     if (showAudioPlayer) {

@@ -11,6 +11,10 @@ interface SurahPageProps {
   params: {
     id: string;
   };
+  searchParams: {
+    autoplay?: string;
+    reciter?: string;
+  };
 }
 
 async function getSurahData(id: number): Promise<{ surahInfo: Surah, verses: Ayah[], surahText: string }> {
@@ -70,7 +74,7 @@ export async function generateMetadata({ params }: SurahPageProps) {
   };
 }
 
-export default async function SurahPage({ params }: SurahPageProps) {
+export default async function SurahPage({ params, searchParams }: SurahPageProps) {
   const id = parseInt(params.id, 10);
   if (isNaN(id) || id < 1 || id > 114) {
     notFound();
@@ -78,9 +82,19 @@ export default async function SurahPage({ params }: SurahPageProps) {
 
   const { surahInfo, verses, surahText } = await getSurahData(id);
 
+  const autoplay = searchParams.autoplay === 'true';
+  const reciterId = searchParams.reciter ? parseInt(searchParams.reciter, 10) : undefined;
+
+
   return (
     <div className="flex flex-col min-h-screen">
-      <SurahView surahInfo={surahInfo} verses={verses} surahText={surahText} />
+      <SurahView 
+        surahInfo={surahInfo} 
+        verses={verses} 
+        surahText={surahText}
+        autoplay={autoplay}
+        reciterId={reciterId}
+      />
     </div>
   );
 }
