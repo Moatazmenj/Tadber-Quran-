@@ -19,7 +19,7 @@ const GetVerseMessageInputSchema = z.object({
 export type GetVerseMessageInput = z.infer<typeof GetVerseMessageInputSchema>;
 
 const GetVerseMessageOutputSchema = z.object({
-  message: z.string().describe('A short, inspirational, and reflective message in Arabic, as if it were a page from a book titled "رسائل من القرآن" (Messages from the Quran). The message should be directed to the reader.'),
+  message: z.string().describe('A short, inspirational, and reflective message in Arabic, written as if it is a page from a book titled "رسائل من القرآن" (Messages from the Quran). The message should be directed to the reader.'),
 });
 export type GetVerseMessageOutput = z.infer<typeof GetVerseMessageOutputSchema>;
 
@@ -31,12 +31,12 @@ const prompt = ai.definePrompt({
   name: 'getVerseMessagePrompt',
   input: {schema: GetVerseMessageInputSchema},
   output: {schema: GetVerseMessageOutputSchema},
-  prompt: `أنت مؤلف كتاب "رسائل من القرآن". مهمتك هي كتابة رسالة قصيرة وملهمة وموجهة للقارئ، مستوحاة من الآية القرآنية التالية. يجب أن تكون الرسالة باللغة العربية، وعاطفية، وتدعو إلى التأمل والتفكر.
+  prompt: `أنت مؤلف كتاب "رسائل من القرآن". مهمتك هي كتابة رسالة مباشرة من هذا الكتاب، مستوحاة من الآية القرآنية التالية. يجب أن تكون الرسالة باللغة العربية، وعاطفية، وتدعو إلى التأمل.
 
   الآية من سورة {{surahName}}، آية رقم {{verseNumber}}:
   "{{verseText}}"
 
-  اكتب رسالة وجدانية قصيرة تبدأ بـ "إلى كل قلب..." أو "يا صاحب القلب..." أو صيغة مشابهة، وركز على الدروس العملية والإيمانية التي يمكن استخلاصها من الآية وتطبيقها في الحياة اليومية. اجعل الرسالة تلامس القلب وتحفز على التغيير الإيجابي. لا تشرح الآية بشكل مباشر، بل استلهم منها رسالة روحانية.`,
+  اكتب الرسالة كما لو أنها صفحة مقتبسة من كتابك. يجب أن تبدأ بعبارة افتتاحية مؤثرة مثل "إلى القلب الذي..." أو "يا صاحب الروح...". ركز على الحكمة العميقة في الآية وكيف يمكن أن تلمس حياة القارئ اليومية، وتكون مصدر إلهام وعزاء له. لا تشرح الآية تفسيريًا، بل استخرج منها جوهر الرسالة الروحانية.`,
   config: {
     safetySettings: [
       {
