@@ -9,9 +9,10 @@ import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mic, Square, Loader2 } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -109,10 +110,18 @@ export default function RecordPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
-      <div className="text-center my-8">
-        <h1 className="text-3xl font-bold">Recitation Practice</h1>
-        <p className="text-muted-foreground mt-2">Choose a verse, record your recitation, and get AI-powered feedback on your Tajweed.</p>
-      </div>
+       <header className="flex items-center mb-8 relative">
+          <Link href="/" passHref>
+            <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
+              <ChevronLeft className="h-6 w-6" />
+              <span className="sr-only">Back</span>
+            </Button>
+          </Link>
+          <div className="w-full text-center">
+            <h1 className="text-2xl font-bold">Recitation Practice</h1>
+            <p className="text-sm text-muted-foreground mt-1">Choose a verse, record, and get AI feedback.</p>
+          </div>
+        </header>
 
       <Card className="mb-8">
         <CardContent className="p-6 space-y-4">
