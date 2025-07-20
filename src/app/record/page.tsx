@@ -110,7 +110,7 @@ export default function RecordPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl pb-32">
-       <header className="flex items-center mb-8 relative">
+       <header className="flex items-center mb-8 relative bg-transparent shadow-none">
           <Link href="/" passHref>
             <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
               <ChevronLeft className="h-6 w-6" />
@@ -172,26 +172,26 @@ export default function RecordPage() {
         </CardContent>
       </Card>
       
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border z-10">
+      <div className="fixed bottom-0 left-0 right-0 p-2 bg-background/80 backdrop-blur-sm border-t border-border z-10">
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl">
             <Button 
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={!selectedVerseKey || isProcessing}
                 size="icon"
                 className={cn(
-                    "rounded-full h-16 w-16 transition-all duration-300 shadow-lg",
+                    "rounded-full h-14 w-14 transition-all duration-300 shadow-lg",
                     isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-primary'
                 )}
             >
                 {isProcessing ? (
-                    <Loader2 className="h-7 w-7 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin" />
                 ) : isRecording ? (
-                    <Square className="h-7 w-7" />
+                    <Square className="h-6 w-6" />
                 ) : (
-                    <Mic className="h-7 w-7" />
+                    <Mic className="h-6 w-6" />
                 )}
             </Button>
-            <p className="text-muted-foreground mt-2 text-sm">
+            <p className="text-muted-foreground mt-1 text-xs">
                 {isProcessing ? 'Processing...' : (isRecording ? 'Tap to Stop Recording' : 'Tap to Start Recording')}
             </p>
         </div>
