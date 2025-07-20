@@ -13,6 +13,7 @@ import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { SoundWave } from '@/components/SoundWave';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -173,13 +174,14 @@ export default function RecordPage() {
       </Card>
       
       <div className="fixed bottom-0 left-0 right-0 p-2 bg-transparent z-10">
-        <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl">
+        <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl h-20 relative">
+            <SoundWave isRecording={isRecording} />
             <Button 
                 onClick={isRecording ? stopRecording : startRecording}
                 disabled={!selectedVerseKey || isProcessing}
                 size="icon"
                 className={cn(
-                    "rounded-full h-14 w-14 transition-all duration-300 shadow-lg",
+                    "rounded-full h-14 w-14 transition-all duration-300 shadow-lg z-10",
                     isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-primary'
                 )}
             >
@@ -191,7 +193,7 @@ export default function RecordPage() {
                     <Mic className="h-6 w-6" />
                 )}
             </Button>
-            <p className="text-muted-foreground mt-1 text-xs">
+            <p className="text-muted-foreground mt-1 text-xs z-10">
                 {isProcessing ? 'Processing...' : (isRecording ? 'Tap to Stop Recording' : 'Tap to Start Recording')}
             </p>
         </div>
