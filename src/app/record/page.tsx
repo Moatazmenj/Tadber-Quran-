@@ -181,8 +181,7 @@ export default function RecordPage() {
                 disabled={!selectedVerseKey || isProcessing}
                 size="icon"
                 className={cn(
-                    "rounded-full h-14 w-14 transition-all duration-300 shadow-lg z-10",
-                    isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-primary'
+                    "rounded-full h-14 w-14 transition-all duration-300 shadow-lg z-10 bg-primary"
                 )}
             >
                 {isProcessing ? (
