@@ -122,53 +122,57 @@ export default function RecordPage() {
             <p className="text-sm text-muted-foreground mt-1">Choose a verse, record, and get AI feedback.</p>
           </div>
         </header>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+           <div>
+              <label htmlFor="surah-select" className="text-sm font-medium text-muted-foreground mb-2 block">Surah</label>
+              <Select value={selectedSurahId} onValueChange={setSelectedSurahId}>
+                  <SelectTrigger id="surah-select">
+                      <SelectValue placeholder="Select a Surah" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {surahs.map(surah => (
+                          <SelectItem key={surah.id} value={surah.id.toString()}>
+                              {surah.id}. {surah.name} ({surah.arabicName})
+                          </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          </div>
+           <div>
+              <label htmlFor="verse-select" className="text-sm font-medium text-muted-foreground mb-2 block">Verse</label>
+              <Select value={selectedVerseKey} onValueChange={setSelectedVerseKey} disabled={versesForSurah.length === 0}>
+                  <SelectTrigger id="verse-select">
+                      <SelectValue placeholder="Select a Verse" />
+                  </SelectTrigger>
+                  <SelectContent>
+                       {versesForSurah.map(verse => (
+                          <SelectItem key={verse.verse_key} value={verse.verse_key}>
+                              Verse {verse.verse_key.split(':')[1]}
+                          </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+          </div>
+      </div>
 
-      <Card className="mb-8">
-        <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <div>
-                    <label htmlFor="surah-select" className="text-sm font-medium text-muted-foreground">Surah</label>
-                    <Select value={selectedSurahId} onValueChange={setSelectedSurahId}>
-                        <SelectTrigger id="surah-select">
-                            <SelectValue placeholder="Select a Surah" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {surahs.map(surah => (
-                                <SelectItem key={surah.id} value={surah.id.toString()}>
-                                    {surah.id}. {surah.name} ({surah.arabicName})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <div>
-                    <label htmlFor="verse-select" className="text-sm font-medium text-muted-foreground">Verse</label>
-                    <Select value={selectedVerseKey} onValueChange={setSelectedVerseKey} disabled={versesForSurah.length === 0}>
-                        <SelectTrigger id="verse-select">
-                            <SelectValue placeholder="Select a Verse" />
-                        </SelectTrigger>
-                        <SelectContent>
-                             {versesForSurah.map(verse => (
-                                <SelectItem key={verse.verse_key} value={verse.verse_key}>
-                                    Verse {verse.verse_key.split(':')[1]}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-
-            {selectedVerseText && (
-                <div className="pt-4 text-center border-t border-border/50">
+      <Card>
+        <CardContent className="p-6">
+            {selectedVerseText ? (
+                <div className="text-center">
                     <p dir="rtl" className="font-arabic text-3xl leading-loose">
                         {selectedVerseText}
                     </p>
+                </div>
+            ) : (
+                <div className="text-center text-muted-foreground h-20 flex items-center justify-center">
+                    <p>Select a verse to display.</p>
                 </div>
             )}
         </CardContent>
       </Card>
       
-      <div className="text-center">
+      <div className="text-center mt-8">
         <Button 
             onClick={isRecording ? stopRecording : startRecording}
             disabled={!selectedVerseKey || isProcessing}
