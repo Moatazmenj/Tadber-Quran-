@@ -258,7 +258,7 @@ export default function AnalysisPage() {
                       <div className="p-4" dir="rtl">
                         <p
                           className="font-arabic leading-loose text-justify text-foreground"
-                          style={{ fontSize: `${settings.fontSize * 0.7}px`, lineHeight: `${settings.fontSize * 1.6}px` }}
+                          style={{ fontSize: `${settings.fontSize * 0.8}px`, lineHeight: `${settings.fontSize * 1.6}px` }}
                         >
                             {originalText}
                         </p>
