@@ -1,19 +1,18 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
-import { getLocalVersesForSurah } from '@/lib/quran-verses';
-import type { Ayah, Surah } from '@/types';
+import { getLocalVersesForSurah, getLocalWordTimings } from '@/lib/quran-verses';
+import type { Ayah, Surah, WordTiming } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft, Info, Settings, Bookmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { SoundWave } from '@/components/SoundWave';
+import { KaraokeVerse } from '@/components/KaraokeVerse';
+import { useQuranSettings } from '@/hooks/use-quran-settings';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -21,18 +20,69 @@ const STORAGE_KEY_TEXT = 'recitationText';
 export default function RecordPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { settings } = useQuranSettings();
   
   const [selectedSurahId, setSelectedSurahId] = useState('1');
-  const [selectedVerseKey, setSelectedVerseKey] = useState('');
+  const [selectedVerseKey, setSelectedVerseKey] = useState('1:1');
   const [versesForSurah, setVersesForSurah] = useState<Ayah[]>([]);
-
+  const [surahInfo, setSurahInfo] = useState<Surah | null>(null);
+  
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [currentWordIndex, setCurrentWordIndex] = useState(-1);
+  const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
+  const [karaokeDisabled, setKaraokeDisabled] = useState(false);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const wordTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
-  // Fetch verses for the selected surah
+  useEffect(() => {
+    const surah = surahs.find(s => s.id === parseInt(selectedSurahId, 10));
+    setSurahInfo(surah || null);
+  }, [selectedSurahId]);
+
+  const clearWordTimeouts = () => {
+    wordTimeoutsRef.current.forEach(clearTimeout);
+    wordTimeoutsRef.current = [];
+  };
+
+  const fetchWordTimings = useCallback(async (verseKey: string) => {
+    if (!verseKey) return;
+    clearWordTimeouts();
+    setCurrentWordIndex(-1);
+    setWordTimings([]);
+    setKaraokeDisabled(false);
+
+    let timings = getLocalWordTimings(verseKey);
+    
+    if (!timings) {
+        try {
+            const reciterId = settings.reciterId || 7; // Default to Alafasy
+            const response = await fetch(`https://api.quran.com/api/v4/quran/recitations/${reciterId}/by_verse/${verseKey}?word_fields=text_uthmani,timestamps`);
+            if (!response.ok) throw new Error('Failed to fetch word timings');
+            const data = await response.json();
+            timings = data.audio_files[0].words;
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Karaoke Disabled', description: 'Could not load word timings for this verse. Karaoke highlighting is disabled.' });
+            setKaraokeDisabled(true);
+            return;
+        }
+    }
+
+    if (timings) {
+        setWordTimings(timings);
+        if (audioPlayerRef.current) {
+            const audioUrl = `https://verses.quran.com/${timings[0].audio_url}`;
+            audioPlayerRef.current.src = audioUrl;
+        }
+    } else {
+        setKaraokeDisabled(true);
+    }
+  }, [settings.reciterId, toast]);
+
   useEffect(() => {
     const fetchVerses = async () => {
         const surahId = parseInt(selectedSurahId, 10);
@@ -53,28 +103,47 @@ export default function RecordPage() {
         }
         
         setVersesForSurah(verses || []);
-        setSelectedVerseKey(verses?.[0]?.verse_key || '');
+        const firstVerseKey = verses?.[0]?.verse_key || '';
+        setSelectedVerseKey(firstVerseKey);
+        fetchWordTimings(firstVerseKey);
     };
     fetchVerses();
-  }, [selectedSurahId, toast]);
+  }, [selectedSurahId, toast, fetchWordTimings]);
 
   const startRecording = async () => {
+    if (wordTimings.length === 0 && !karaokeDisabled) {
+      toast({ variant: 'destructive', title: 'Timings not loaded', description: 'Please wait for word timings to load before recording.' });
+      return;
+    }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Audio recording is not supported in your browser.'});
-        return;
+      toast({ variant: 'destructive', title: 'Error', description: 'Audio recording is not supported in your browser.' });
+      return;
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsRecording(true);
+      setCurrentWordIndex(-1);
+      
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.currentTime = 0;
+        audioPlayerRef.current.play();
+      }
+
+      clearWordTimeouts();
+      wordTimings.forEach((word, index) => {
+        const timeout = setTimeout(() => {
+          setCurrentWordIndex(index);
+        }, word.timestamp_from);
+        wordTimeoutsRef.current.push(timeout);
+      });
+
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
-      
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
+      mediaRecorderRef.current.ondataavailable = (event) => audioChunksRef.current.push(event.data);
       mediaRecorderRef.current.onstop = async () => {
+        if (audioPlayerRef.current) audioPlayerRef.current.pause();
+        clearWordTimeouts();
         setIsProcessing(true);
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const reader = new FileReader();
@@ -92,7 +161,6 @@ export default function RecordPage() {
             }
         };
       };
-      
       mediaRecorderRef.current.start();
     } catch (err) {
       console.error("Error accessing microphone:", err);
@@ -106,97 +174,78 @@ export default function RecordPage() {
       setIsRecording(false);
     }
   };
-
-  const selectedVerseText = versesForSurah.find(v => v.verse_key === selectedVerseKey)?.text_uthmani;
+  
+  const selectedVerse = versesForSurah.find(v => v.verse_key === selectedVerseKey);
+  const verseNumber = selectedVerseKey.split(':')[1];
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl pb-32">
-       <header className="flex items-center mb-8 relative bg-black rounded-lg p-2">
-          <Link href="/" passHref>
-            <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10 text-primary-foreground hover:bg-white/20">
-              <ChevronLeft className="h-6 w-6" />
-              <span className="sr-only">Back</span>
-            </Button>
-          </Link>
-          <div className="w-full text-center">
-            <h1 className="text-xl font-bold text-primary-foreground">Recitation Practice</h1>
-            <p className="text-sm text-primary-foreground/80 mt-1">Choose a verse, record, and get AI feedback.</p>
-          </div>
-        </header>
-      
-      <div className="flex flex-row gap-4 mb-8">
-           <div className="flex-1">
-              <label htmlFor="surah-select" className="text-sm font-medium text-muted-foreground mb-2 block">Surah</label>
-              <Select value={selectedSurahId} onValueChange={setSelectedSurahId}>
-                  <SelectTrigger id="surah-select">
-                      <SelectValue placeholder="Select a Surah" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      {surahs.map(surah => (
-                          <SelectItem key={surah.id} value={surah.id.toString()}>
-                              {surah.id}. {surah.name} ({surah.arabicName})
-                          </SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-          </div>
-           <div className="flex-1">
-              <label htmlFor="verse-select" className="text-sm font-medium text-muted-foreground mb-2 block">Verse</label>
-              <Select value={selectedVerseKey} onValueChange={setSelectedVerseKey} disabled={versesForSurah.length === 0}>
-                  <SelectTrigger id="verse-select">
-                      <SelectValue placeholder="Select a Verse" />
-                  </SelectTrigger>
-                  <SelectContent>
-                       {versesForSurah.map(verse => (
-                          <SelectItem key={verse.verse_key} value={verse.verse_key}>
-                              Verse {verse.verse_key.split(':')[1]}
-                          </SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-          </div>
-      </div>
-
-      <Card>
-        <CardContent className="p-6 min-h-[150px] flex items-center justify-center">
-            {selectedVerseText ? (
+    <div className="bg-[#243431] text-white min-h-screen flex flex-col">
+       <header className="sticky top-0 z-20 bg-[#12211F] p-2">
+            <div className="container mx-auto flex items-center justify-between">
+                <Link href="/" passHref>
+                    <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                        <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                </Link>
                 <div className="text-center">
-                    <p dir="rtl" className="font-arabic text-3xl leading-loose">
-                        {selectedVerseText}
-                    </p>
+                    <h1 className="font-semibold">{surahInfo?.id}. {surahInfo?.name}</h1>
+                    <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
-            ) : (
-                <div className="text-center text-muted-foreground h-20 flex items-center justify-center">
-                    <p>Select a verse to display.</p>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                        <Info className="h-5 w-5" />
+                    </Button>
+                     <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                        <Settings className="h-5 w-5" />
+                    </Button>
                 </div>
-            )}
-        </CardContent>
-      </Card>
+            </div>
+       </header>
+
+       <div className="bg-[#2B3B38] p-2 shadow-md">
+            <div className="container mx-auto flex justify-between items-center text-xs text-white/80">
+                <span>Juz {selectedVerse?.juz || '...'} | Page {selectedVerse?.page || '...'}</span>
+                <div className="flex items-center gap-2">
+                    <Bookmark className="w-4 h-4" />
+                    <span>{verseNumber}/{surahInfo?.versesCount}</span>
+                </div>
+            </div>
+       </div>
       
-      <div className="fixed bottom-0 left-0 right-0 p-2 bg-transparent z-10">
-        <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl h-20 relative">
-            <SoundWave isRecording={isRecording} />
+      <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center">
+        <div className="w-full">
+            {selectedVerse && (
+                <KaraokeVerse 
+                    verse={selectedVerse}
+                    wordTimings={wordTimings}
+                    currentWordIndex={currentWordIndex}
+                    fontStyle={settings.fontStyle}
+                    fontSize={settings.fontSize}
+                    isKaraokeDisabled={karaokeDisabled}
+                />
+            )}
+        </div>
+      </main>
+      
+      <footer className="sticky bottom-0 left-0 right-0 p-4 bg-[#12211F]/80 backdrop-blur-sm border-t border-white/10">
+        <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl relative">
             <Button 
                 onClick={isRecording ? stopRecording : startRecording}
-                disabled={!selectedVerseKey || isProcessing}
+                disabled={!selectedVerseKey || isProcessing || (wordTimings.length === 0 && !karaokeDisabled)}
                 size="icon"
-                className={cn(
-                    "rounded-full h-14 w-14 transition-all duration-300 shadow-lg z-10 bg-primary"
-                )}
+                className="rounded-full h-16 w-16 transition-all duration-300 shadow-lg z-10 bg-primary hover:bg-primary/90"
             >
                 {isProcessing ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-7 w-7 animate-spin" />
                 ) : isRecording ? (
-                    <Square className="h-6 w-6" />
+                    <Square className="h-7 w-7" />
                 ) : (
-                    <Mic className="h-6 w-6" />
+                    <Mic className="h-7 w-7" />
                 )}
             </Button>
-            <p className="text-muted-foreground mt-1 text-xs z-10">
-                {isProcessing ? 'Processing...' : (isRecording ? 'Tap to Stop Recording' : 'Tap to Start Recording')}
-            </p>
         </div>
-      </div>
+      </footer>
+      <audio ref={audioPlayerRef} onEnded={() => setCurrentWordIndex(-1)} className="hidden" />
     </div>
   );
 }

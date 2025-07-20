@@ -1,3 +1,4 @@
+
 export interface Surah {
   id: number;
   name: string;
@@ -21,6 +22,8 @@ export interface Ayah {
   verse_key: string;
   text_uthmani: string;
   translation?: string;
+  juz?: number;
+  page?: number;
 }
 
 export interface Juz {
@@ -59,4 +62,12 @@ export interface Reciter {
   style: string | null;
   imageUrl: string | null;
   server: string;
+}
+
+export interface WordTiming {
+  word_position: number;
+  timestamp_from: number;
+  timestamp_to: number;
+  text_uthmani: string;
+  audio_url: string;
 }
