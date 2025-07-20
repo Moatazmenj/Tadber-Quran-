@@ -14,6 +14,7 @@ import { KaraokeVerse } from '@/components/KaraokeVerse';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VerseSelector } from '@/components/VerseSelector';
+import { SoundWave } from '@/components/SoundWave';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
