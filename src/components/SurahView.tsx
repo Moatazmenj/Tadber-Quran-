@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { BookOpenCheck, ChevronLeft, ChevronRight, Loader2, RefreshCw, BookText, Copy, Share2, Languages, X, Bookmark, Play, Pause, Headphones, Check } from 'lucide-react';
-import { getVerseTafsir, getSurahSummary } from '@/lib/actions';
+import { getVerseTafsir, summarizeSurah } from '@/lib/actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -467,21 +467,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     setIsLoadingSummary(true);
     setSummaryError('');
     setSummary('');
-
-    const cacheKey = `summary_${surahInfo.id}`;
-    const cachedSummary = sessionStorage.getItem(cacheKey);
-
-    if (cachedSummary) {
-      setSummary(cachedSummary);
-      setIsLoadingSummary(false);
-      return;
-    }
-
     try {
       if (!surahText) throw new Error("Surah text is not available to summarize.");
-      const result = await getSurahSummary({ surahName: surahInfo.name, surahText });
-      setSummary(result);
-      sessionStorage.setItem(cacheKey, result);
+      const result = await summarizeSurah({ surahName: surahInfo.name, surahText });
+      setSummary(result.summary);
     } catch (e) {
       setSummaryError('Failed to generate summary. Please try again later.');
       console.error(e);
@@ -492,20 +481,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   const handleTafsir = async (ayah: Ayah) => {
     setSelectedVerseForTafsir(ayah);
     setTafsirLanguage('Arabic'); // Default to Arabic
-    
-    // Check cache first
-    const cacheKey = `tafsir_${ayah.verse_key}_Arabic`;
-    const cachedTafsir = sessionStorage.getItem(cacheKey);
-    
-    if (cachedTafsir) {
-        setTafsirContent(cachedTafsir);
-        setIsTafsirSheetOpen(true);
-        setIsLoadingTafsir(false);
-        setTafsirError('');
-    } else {
-        setIsTafsirSheetOpen(true);
-        // fetchTafsir will be triggered by the useEffect for isTafsirSheetOpen
-    }
+    setIsTafsirSheetOpen(true);
+    // fetchTafsir will be triggered by the useEffect for isTafsirSheetOpen
   };
 
 
@@ -515,16 +492,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     }
 
     const fetchTafsir = async () => {
-      const cacheKey = `tafsir_${selectedVerseForTafsir.verse_key}_${tafsirLanguage}`;
-      const cachedTafsir = sessionStorage.getItem(cacheKey);
-      
-      if (cachedTafsir) {
-        setTafsirContent(cachedTafsir);
-        setIsLoadingTafsir(false);
-        setTafsirError('');
-        return;
-      }
-      
       setIsLoadingTafsir(true);
       setTafsirContent('');
       setTafsirError('');
@@ -541,7 +508,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
           targetLanguage: tafsirLanguage,
         });
         setTafsirContent(result.tafsir);
-        sessionStorage.setItem(cacheKey, result.tafsir);
       } catch (e: any) {
         setTafsirError(e.message || 'Failed to generate Tafsir. Please try again later.');
         console.error(e);

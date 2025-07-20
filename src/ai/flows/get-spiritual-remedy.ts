@@ -81,6 +81,7 @@ const getSpiritualRemedyFlow = ai.defineFlow(
     name: 'getSpiritualRemedyFlow',
     inputSchema: SpiritualRemedyInputSchema,
     outputSchema: SpiritualRemedyOutputSchema,
+    cache: {},
   },
   async input => {
     const {output} = await prompt(input);

@@ -44,6 +44,7 @@ const summarizeSurahFlow = ai.defineFlow(
     name: 'summarizeSurahFlow',
     inputSchema: SummarizeSurahInputSchema,
     outputSchema: SummarizeSurahOutputSchema,
+    cache: {},
   },
   async input => {
     const {output} = await prompt(input);

@@ -68,6 +68,7 @@ const getVerseTafsirFlow = ai.defineFlow(
     name: 'getVerseTafsirFlow',
     inputSchema: GetVerseTafsirInputSchema,
     outputSchema: GetVerseTafsirOutputSchema,
+    cache: {},
   },
   async input => {
     const {output} = await prompt(input);
