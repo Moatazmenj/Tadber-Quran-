@@ -118,7 +118,7 @@ export default function RecordPage() {
             </Button>
           </Link>
           <div className="w-full text-center">
-            <h1 className="text-2xl font-bold">Recitation Practice</h1>
+            <h1 className="text-xl font-bold">Recitation Practice</h1>
             <p className="text-sm text-muted-foreground mt-1">Choose a verse, record, and get AI feedback.</p>
           </div>
         </header>
@@ -172,25 +172,25 @@ export default function RecordPage() {
         </CardContent>
       </Card>
       
-      <div className="text-center mt-8">
+      <div className="text-center mt-6">
         <Button 
             onClick={isRecording ? stopRecording : startRecording}
             disabled={!selectedVerseKey || isProcessing}
-            size="lg"
+            size="icon"
             className={cn(
-                "rounded-full h-20 w-20 transition-all duration-300 shadow-lg",
+                "rounded-full h-16 w-16 transition-all duration-300 shadow-lg",
                 isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-primary'
             )}
         >
             {isProcessing ? (
-                <Loader2 className="h-8 w-8 animate-spin" />
+                <Loader2 className="h-7 w-7 animate-spin" />
             ) : isRecording ? (
-                <Square className="h-8 w-8" />
+                <Square className="h-7 w-7" />
             ) : (
-                <Mic className="h-8 w-8" />
+                <Mic className="h-7 w-7" />
             )}
         </Button>
-        <p className="text-muted-foreground mt-4">
+        <p className="text-muted-foreground mt-2">
             {isProcessing ? 'Processing...' : (isRecording ? 'Tap to Stop Recording' : 'Tap to Start Recording')}
         </p>
       </div>
