@@ -3,6 +3,15 @@ export interface Surah {
   name: string;
   arabicName: string;
   revelationPlace: 'Makkah' | 'Madinah';
+  revelationPlaceTranslations: {
+    en: string;
+    ar: string;
+    fr: string;
+    es: string;
+    id: string;
+    ru: string;
+    ur: string;
+  };
   versesCount: number;
   juz: number[];
 }

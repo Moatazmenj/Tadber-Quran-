@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -7,15 +8,62 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { cn } from '@/lib/utils';
+import { translationOptions } from '@/lib/translations';
 
 interface SurahListProps {
   surahs: Surah[];
   juzs: { id: number; name: string }[];
 }
 
+const listTranslations: Record<string, Record<string, string>> = {
+  en: {
+    filterPlaceholder: "Filter by Juz",
+    allJuz: "All Juz",
+    verses: "verses",
+  },
+  ar: {
+    filterPlaceholder: "تصفية حسب الجزء",
+    allJuz: "كل الأجزاء",
+    verses: "آيات",
+  },
+  fr: {
+    filterPlaceholder: "Filtrer par Juz",
+    allJuz: "Tous les Juz",
+    verses: "versets",
+  },
+  es: {
+    filterPlaceholder: "Filtrar por Juz",
+    allJuz: "Todos los Juz",
+    verses: "versos",
+  },
+  id: {
+    filterPlaceholder: "Saring berdasarkan Juz",
+    allJuz: "Semua Juz",
+    verses: "ayat",
+  },
+  ru: {
+    filterPlaceholder: "Фильтр по джузу",
+    allJuz: "Все джузы",
+    verses: "стихов",
+  },
+  ur: {
+    filterPlaceholder: "جزء کے لحاظ سے فلٹر کریں۔",
+    allJuz: "تمام اجزاء",
+    verses: "آیات",
+  },
+};
+
+
 export function SurahList({ surahs, juzs }: SurahListProps) {
   const [selectedJuz, setSelectedJuz] = useState('all');
   const { settings } = useQuranSettings();
+
+  const lang = useMemo(() => {
+    const langCode = settings.translationId;
+    return listTranslations[langCode] ? langCode : 'en';
+  }, [settings.translationId]);
+  
+  const t = useMemo(() => listTranslations[lang] || listTranslations['en'], [lang]);
 
   const filteredSurahs = useMemo(() => {
     return surahs.filter((surah) => {
@@ -31,10 +79,10 @@ export function SurahList({ surahs, juzs }: SurahListProps) {
       <div className="mb-8 flex justify-end">
         <Select value={selectedJuz} onValueChange={setSelectedJuz}>
           <SelectTrigger className="w-full sm:w-[180px] bg-card">
-            <SelectValue placeholder="Filter by Juz" />
+            <SelectValue placeholder={t.filterPlaceholder} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Juz</SelectItem>
+            <SelectItem value="all">{t.allJuz}</SelectItem>
             {juzs.map((juz) => (
               <SelectItem key={juz.id} value={juz.id.toString()}>
                 {juz.name}
@@ -55,7 +103,9 @@ export function SurahList({ surahs, juzs }: SurahListProps) {
                     </div>
                     <div>
                         <CardTitle className="font-headline text-lg">{surah.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{surah.revelationPlace}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(surah.revelationPlaceTranslations as any)[lang] || surah.revelationPlace}
+                        </p>
                     </div>
                 </div>
                 <p className={cn(
@@ -65,7 +115,7 @@ export function SurahList({ surahs, juzs }: SurahListProps) {
                 )}>{surah.arabicName}</p>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{surah.versesCount} verses</p>
+                <p className="text-sm text-muted-foreground">{surah.versesCount} {t.verses}</p>
               </CardContent>
             </Card>
           </Link>
