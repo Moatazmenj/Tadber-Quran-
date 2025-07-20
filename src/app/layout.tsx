@@ -3,7 +3,6 @@ import { Alegreya, Cairo, Noto_Kufi_Arabic, Noto_Naskh_Arabic } from 'next/font/
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import ThemeManager from '@/components/ThemeManager';
-import { RecordButton } from '@/components/RecordButton';
 import { SplashScreen } from '@/components/SplashScreen';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +59,6 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
           </div>
           <Toaster />
-          <RecordButton />
         </SplashScreen>
       </body>
     </html>
