@@ -110,7 +110,7 @@ export default function RecordPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl pb-32">
-       <header className="flex items-center mb-8 relative bg-primary rounded-lg p-2">
+       <header className="flex items-center mb-8 relative bg-black rounded-lg p-2">
           <Link href="/" passHref>
             <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10 text-primary-foreground hover:bg-white/20">
               <ChevronLeft className="h-6 w-6" />
