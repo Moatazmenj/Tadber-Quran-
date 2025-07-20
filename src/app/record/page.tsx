@@ -123,7 +123,7 @@ export default function RecordPage() {
           </div>
         </header>
       
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      <div className="flex flex-row gap-4 mb-8">
            <div className="flex-1">
               <label htmlFor="surah-select" className="text-sm font-medium text-muted-foreground mb-2 block">Surah</label>
               <Select value={selectedSurahId} onValueChange={setSelectedSurahId}>
