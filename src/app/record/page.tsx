@@ -172,7 +172,7 @@ export default function RecordPage() {
         </CardContent>
       </Card>
       
-      <div className="fixed bottom-0 left-0 right-0 p-2 bg-background/80 backdrop-blur-sm border-t border-border z-10">
+      <div className="fixed bottom-0 left-0 right-0 p-2 bg-background/80 backdrop-blur-sm z-10">
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl">
             <Button 
                 onClick={isRecording ? stopRecording : startRecording}
