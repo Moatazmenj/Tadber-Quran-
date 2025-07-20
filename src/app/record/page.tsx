@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -11,7 +12,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Header } from '@/components/Header';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -108,10 +108,8 @@ export default function RecordPage() {
   const selectedVerseText = versesForSurah.find(v => v.verse_key === selectedVerseKey)?.text_uthmani;
 
   return (
-    <>
-    <Header/>
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
-      <div className="text-center mb-8">
+      <div className="text-center my-8">
         <h1 className="text-3xl font-bold">Recitation Practice</h1>
         <p className="text-muted-foreground mt-2">Choose a verse, record your recitation, and get AI-powered feedback on your Tajweed.</p>
       </div>
@@ -184,6 +182,5 @@ export default function RecordPage() {
         </p>
       </div>
     </div>
-    </>
   );
 }
