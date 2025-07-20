@@ -1,4 +1,5 @@
 
+
 export interface Surah {
   id: number;
   name: string;
@@ -24,6 +25,7 @@ export interface Ayah {
   translation?: string;
   juz?: number;
   page?: number;
+  isActive?: boolean;
 }
 
 export interface Juz {

@@ -7,12 +7,13 @@ import { surahs } from '@/lib/quran';
 import { getLocalVersesForSurah, getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah, WordTiming } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Mic, Square, Loader2, ChevronLeft, Info, Settings, Bookmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { KaraokeVerse } from '@/components/KaraokeVerse';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { VerseSelector } from '@/components/VerseSelector';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -83,32 +84,41 @@ export default function RecordPage() {
     }
   }, [settings.reciterId, toast]);
 
-  useEffect(() => {
-    const fetchVerses = async () => {
-        const surahId = parseInt(selectedSurahId, 10);
-        let verses = getLocalVersesForSurah(surahId);
+  const fetchVerses = useCallback(async (surahId: number) => {
+    let verses = getLocalVersesForSurah(surahId);
 
-        if (!verses) {
-            try {
-                const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
-                if (!res.ok) throw new Error('Failed to fetch verses');
-                const data = await res.json();
-                verses = data.verses;
-            } catch (error) {
-                console.error(error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.'});
-                setVersesForSurah([]);
-                return;
-            }
+    if (!verses) {
+        try {
+            const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
+            if (!res.ok) throw new Error('Failed to fetch verses');
+            const data = await res.json();
+            verses = data.verses;
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.'});
+            setVersesForSurah([]);
+            return;
         }
-        
-        setVersesForSurah(verses || []);
-        const firstVerseKey = verses?.[0]?.verse_key || '';
-        setSelectedVerseKey(firstVerseKey);
-        fetchWordTimings(firstVerseKey);
-    };
-    fetchVerses();
-  }, [selectedSurahId, toast, fetchWordTimings]);
+    }
+    
+    setVersesForSurah(verses || []);
+    const firstVerseKey = verses?.[0]?.verse_key || '';
+    setSelectedVerseKey(firstVerseKey);
+    fetchWordTimings(firstVerseKey);
+  }, [toast, fetchWordTimings]);
+
+  useEffect(() => {
+    fetchVerses(parseInt(selectedSurahId, 10));
+  }, [selectedSurahId, fetchVerses]);
+
+  const handleSurahChange = (surahId: string) => {
+    setSelectedSurahId(surahId);
+  }
+
+  const handleVerseSelect = (verseKey: string) => {
+    setSelectedVerseKey(verseKey);
+    fetchWordTimings(verseKey);
+  }
 
   const startRecording = async () => {
     if (wordTimings.length === 0 && !karaokeDisabled) {
@@ -179,8 +189,8 @@ export default function RecordPage() {
   const verseNumber = selectedVerseKey.split(':')[1];
 
   return (
-    <div className="bg-[#243431] text-white min-h-screen flex flex-col">
-       <header className="sticky top-0 z-20 bg-[#12211F] p-2">
+    <div className="bg-[#12211F] text-white min-h-screen flex flex-col">
+       <header className="sticky top-0 z-20 bg-black p-2">
             <div className="container mx-auto flex items-center justify-between">
                 <Link href="/" passHref>
                     <Button variant="ghost" size="icon" className="hover:bg-white/10">
@@ -188,7 +198,16 @@ export default function RecordPage() {
                     </Button>
                 </Link>
                 <div className="text-center">
-                    <h1 className="font-semibold">{surahInfo?.id}. {surahInfo?.name}</h1>
+                    <Select value={selectedSurahId} onValueChange={handleSurahChange}>
+                        <SelectTrigger className="w-auto bg-transparent border-0 text-white font-semibold text-lg focus:ring-0">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {surahs.map(s => (
+                                <SelectItem key={s.id} value={s.id.toString()}>{s.id}. {s.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -213,7 +232,7 @@ export default function RecordPage() {
        </div>
       
       <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center">
-        <div className="w-full">
+        <div className="w-full mb-8">
             {selectedVerse && (
                 <KaraokeVerse 
                     verse={selectedVerse}
@@ -225,24 +244,38 @@ export default function RecordPage() {
                 />
             )}
         </div>
+        <div className="w-full flex-grow">
+          <VerseSelector 
+            verses={versesForSurah.map(v => ({...v, isActive: v.verse_key === selectedVerseKey}))}
+            onVerseSelect={handleVerseSelect} 
+            fontStyle={settings.fontStyle}
+            fontSize={settings.fontSize * 0.75} // Smaller font for the list
+          />
+        </div>
       </main>
       
-      <footer className="sticky bottom-0 left-0 right-0 p-4 bg-[#12211F]/80 backdrop-blur-sm border-t border-white/10">
+      <footer className="sticky bottom-0 left-0 right-0 p-2 bg-transparent">
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl relative">
-            <Button 
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={!selectedVerseKey || isProcessing || (wordTimings.length === 0 && !karaokeDisabled)}
-                size="icon"
-                className="rounded-full h-16 w-16 transition-all duration-300 shadow-lg z-10 bg-primary hover:bg-primary/90"
-            >
-                {isProcessing ? (
-                    <Loader2 className="h-7 w-7 animate-spin" />
-                ) : isRecording ? (
-                    <Square className="h-7 w-7" />
-                ) : (
-                    <Mic className="h-7 w-7" />
-                )}
-            </Button>
+            <div className="absolute bottom-full mb-2 text-center w-full">
+                <p className="text-xs text-white/60">Practice verse: {selectedVerseKey}</p>
+            </div>
+            <div className="relative w-full h-16 flex justify-center items-center">
+                <SoundWave isRecording={isRecording} />
+                <Button 
+                    onClick={isRecording ? stopRecording : startRecording}
+                    disabled={!selectedVerseKey || isProcessing || (wordTimings.length === 0 && !karaokeDisabled)}
+                    size="icon"
+                    className="relative rounded-full h-14 w-14 transition-all duration-300 shadow-lg z-10 bg-primary hover:bg-primary/90"
+                >
+                    {isProcessing ? (
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                    ) : isRecording ? (
+                        <Square className="h-6 w-6" />
+                    ) : (
+                        <Mic className="h-6 w-6" />
+                    )}
+                </Button>
+            </div>
         </div>
       </footer>
       <audio ref={audioPlayerRef} onEnded={() => setCurrentWordIndex(-1)} className="hidden" />
