@@ -123,8 +123,8 @@ export default function RecordPage() {
           </div>
         </header>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-           <div>
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+           <div className="flex-1">
               <label htmlFor="surah-select" className="text-sm font-medium text-muted-foreground mb-2 block">Surah</label>
               <Select value={selectedSurahId} onValueChange={setSelectedSurahId}>
                   <SelectTrigger id="surah-select">
@@ -139,7 +139,7 @@ export default function RecordPage() {
                   </SelectContent>
               </Select>
           </div>
-           <div>
+           <div className="flex-1">
               <label htmlFor="verse-select" className="text-sm font-medium text-muted-foreground mb-2 block">Verse</label>
               <Select value={selectedVerseKey} onValueChange={setSelectedVerseKey} disabled={versesForSurah.length === 0}>
                   <SelectTrigger id="verse-select">
