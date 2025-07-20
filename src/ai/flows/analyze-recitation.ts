@@ -54,26 +54,6 @@ const prompt = ai.definePrompt({
   Based on your analysis of these points, provide your feedback in the "feedback" field and give an overall score out of 100.
 
   User's recitation audio: {{media url=audioDataUri}}`,
-  config: {
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_NONE',
-      },
-       {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-       {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      },
-    ],
-  },
 });
 
 const analyzeRecitationFlow = ai.defineFlow(
@@ -91,7 +71,7 @@ const analyzeRecitationFlow = ai.defineFlow(
     }
     
     // Heuristically determine score if not provided.
-    if (output.score === undefined) {
+    if (output.score === undefined || output.score === null) {
       const feedback = output.feedback.toLowerCase();
       if (feedback.includes('excellent') || feedback.includes('great') || feedback.includes('very good')) {
         output.score = Math.floor(Math.random() * 11) + 90; // 90-100
