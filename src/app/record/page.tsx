@@ -109,7 +109,7 @@ export default function RecordPage() {
   const selectedVerseText = versesForSurah.find(v => v.verse_key === selectedVerseKey)?.text_uthmani;
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+    <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl pb-32">
        <header className="flex items-center mb-8 relative">
           <Link href="/" passHref>
             <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
@@ -157,7 +157,7 @@ export default function RecordPage() {
       </div>
 
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-6 min-h-[150px] flex items-center justify-center">
             {selectedVerseText ? (
                 <div className="text-center">
                     <p dir="rtl" className="font-arabic text-3xl leading-loose">
@@ -172,27 +172,29 @@ export default function RecordPage() {
         </CardContent>
       </Card>
       
-      <div className="text-center mt-6">
-        <Button 
-            onClick={isRecording ? stopRecording : startRecording}
-            disabled={!selectedVerseKey || isProcessing}
-            size="icon"
-            className={cn(
-                "rounded-full h-16 w-16 transition-all duration-300 shadow-lg",
-                isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-primary'
-            )}
-        >
-            {isProcessing ? (
-                <Loader2 className="h-7 w-7 animate-spin" />
-            ) : isRecording ? (
-                <Square className="h-7 w-7" />
-            ) : (
-                <Mic className="h-7 w-7" />
-            )}
-        </Button>
-        <p className="text-muted-foreground mt-2">
-            {isProcessing ? 'Processing...' : (isRecording ? 'Tap to Stop Recording' : 'Tap to Start Recording')}
-        </p>
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border z-10">
+        <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl">
+            <Button 
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={!selectedVerseKey || isProcessing}
+                size="icon"
+                className={cn(
+                    "rounded-full h-16 w-16 transition-all duration-300 shadow-lg",
+                    isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-primary'
+                )}
+            >
+                {isProcessing ? (
+                    <Loader2 className="h-7 w-7 animate-spin" />
+                ) : isRecording ? (
+                    <Square className="h-7 w-7" />
+                ) : (
+                    <Mic className="h-7 w-7" />
+                )}
+            </Button>
+            <p className="text-muted-foreground mt-2 text-sm">
+                {isProcessing ? 'Processing...' : (isRecording ? 'Tap to Stop Recording' : 'Tap to Start Recording')}
+            </p>
+        </div>
       </div>
     </div>
   );
