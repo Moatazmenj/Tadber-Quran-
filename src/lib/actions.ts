@@ -23,6 +23,9 @@ export async function getVerseTafsir(input: GetVerseTafsirInput) {
     } catch (error) {
         console.error('Error in getVerseTafsir action:', error);
         if (error instanceof Error) {
+            if (error.message.includes('429')) {
+                throw new Error('You have exceeded the daily limit for Tafsir generation. Please try again tomorrow.');
+            }
             throw error;
         }
         throw new Error('Failed to generate Tafsir due to a server error.');
@@ -36,6 +39,9 @@ export async function getSpiritualRemedy(input: SpiritualRemedyInput): Promise<S
     } catch (error) {
         console.error('Error in getSpiritualRemedy action:', error);
         if (error instanceof Error) {
+             if (error.message.includes('429')) {
+                throw new Error('You have exceeded the daily limit for the Spiritual Clinic. Please try again tomorrow.');
+            }
             throw error;
         }
         throw new Error('Failed to generate spiritual remedy due to a server error.');
@@ -49,6 +55,9 @@ export async function analyzeRecitation(input: AnalyzeRecitationInput): Promise<
     } catch (error) {
         console.error('Error in analyzeRecitation action:', error);
         if (error instanceof Error) {
+            if (error.message.includes('429')) {
+                throw new Error('You have exceeded the daily limit for recitation analysis. Please try again tomorrow.');
+            }
             throw error;
         }
         throw new Error('Failed to analyze recitation due to a server error.');
