@@ -110,16 +110,16 @@ export default function RecordPage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl pb-32">
-       <header className="flex items-center mb-8 relative bg-transparent shadow-none">
+       <header className="flex items-center mb-8 relative bg-primary rounded-lg p-2">
           <Link href="/" passHref>
-            <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
+            <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10 text-primary-foreground hover:bg-white/20">
               <ChevronLeft className="h-6 w-6" />
               <span className="sr-only">Back</span>
             </Button>
           </Link>
           <div className="w-full text-center">
-            <h1 className="text-xl font-bold">Recitation Practice</h1>
-            <p className="text-sm text-muted-foreground mt-1">Choose a verse, record, and get AI feedback.</p>
+            <h1 className="text-xl font-bold text-primary-foreground">Recitation Practice</h1>
+            <p className="text-sm text-primary-foreground/80 mt-1">Choose a verse, record, and get AI feedback.</p>
           </div>
         </header>
       
@@ -172,7 +172,7 @@ export default function RecordPage() {
         </CardContent>
       </Card>
       
-      <div className="fixed bottom-0 left-0 right-0 p-2 bg-background/80 backdrop-blur-sm z-10">
+      <div className="fixed bottom-0 left-0 right-0 p-2 bg-transparent z-10">
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl">
             <Button 
                 onClick={isRecording ? stopRecording : startRecording}
