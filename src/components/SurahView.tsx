@@ -463,12 +463,68 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   }, [isShareSheetOpen, verseToShare, selectedShareBackground, toast, surahInfo.name, fullVerseData, settings.fontStyle]);
 
 
+  const handleSummarize = async () => {
+    setIsLoadingSummary(true);
+    setSummaryError('');
+    setSummary('');
+
+    const cacheKey = `summary_${surahInfo.id}`;
+    const cachedSummary = sessionStorage.getItem(cacheKey);
+
+    if (cachedSummary) {
+      setSummary(cachedSummary);
+      setIsLoadingSummary(false);
+      return;
+    }
+
+    try {
+      if (!surahText) throw new Error("Surah text is not available to summarize.");
+      const result = await getSurahSummary({ surahName: surahInfo.name, surahText });
+      setSummary(result);
+      sessionStorage.setItem(cacheKey, result);
+    } catch (e) {
+      setSummaryError('Failed to generate summary. Please try again later.');
+      console.error(e);
+    }
+    setIsLoadingSummary(false);
+  };
+
+  const handleTafsir = async (ayah: Ayah) => {
+    setSelectedVerseForTafsir(ayah);
+    setTafsirLanguage('Arabic'); // Default to Arabic
+    
+    // Check cache first
+    const cacheKey = `tafsir_${ayah.verse_key}_Arabic`;
+    const cachedTafsir = sessionStorage.getItem(cacheKey);
+    
+    if (cachedTafsir) {
+        setTafsirContent(cachedTafsir);
+        setIsTafsirSheetOpen(true);
+        setIsLoadingTafsir(false);
+        setTafsirError('');
+    } else {
+        setIsTafsirSheetOpen(true);
+        // fetchTafsir will be triggered by the useEffect for isTafsirSheetOpen
+    }
+  };
+
+
   useEffect(() => {
     if (!isTafsirSheetOpen || !selectedVerseForTafsir) {
       return;
     }
 
     const fetchTafsir = async () => {
+      const cacheKey = `tafsir_${selectedVerseForTafsir.verse_key}_${tafsirLanguage}`;
+      const cachedTafsir = sessionStorage.getItem(cacheKey);
+      
+      if (cachedTafsir) {
+        setTafsirContent(cachedTafsir);
+        setIsLoadingTafsir(false);
+        setTafsirError('');
+        return;
+      }
+      
       setIsLoadingTafsir(true);
       setTafsirContent('');
       setTafsirError('');
@@ -485,6 +541,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
           targetLanguage: tafsirLanguage,
         });
         setTafsirContent(result.tafsir);
+        sessionStorage.setItem(cacheKey, result.tafsir);
       } catch (e: any) {
         setTafsirError(e.message || 'Failed to generate Tafsir. Please try again later.');
         console.error(e);
@@ -496,21 +553,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     fetchTafsir();
   }, [isTafsirSheetOpen, selectedVerseForTafsir, tafsirLanguage, fullVerseData, surahInfo.name]);
 
-
-  const handleSummarize = async () => {
-    setIsLoadingSummary(true);
-    setSummaryError('');
-    setSummary('');
-    try {
-      if (!surahText) throw new Error("Surah text is not available to summarize.");
-      const result = await getSurahSummary(surahInfo.name, surahText);
-      setSummary(result);
-    } catch (e) {
-      setSummaryError('Failed to generate summary. Please try again later.');
-      console.error(e);
-    }
-    setIsLoadingSummary(false);
-  };
   
   const handleCopy = (textToCopy: string) => {
     navigator.clipboard.writeText(textToCopy).then(() => {
@@ -567,12 +609,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     } finally {
       setIsShareSheetOpen(false);
     }
-  };
-
-  const handleTafsir = (ayah: Ayah) => {
-    setSelectedVerseForTafsir(ayah);
-    setTafsirLanguage('Arabic'); // Always default to Arabic when opening
-    setIsTafsirSheetOpen(true);
   };
 
   const VerseSkeleton = () => (

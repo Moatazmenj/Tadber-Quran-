@@ -1,20 +1,17 @@
 'use server';
 
-import { summarizeSurah, SummarizeSurahInput, SummarizeSurahOutput } from '@/ai/flows/summarize-surah';
+import { summarizeSurah, type SummarizeSurahInput } from '@/ai/flows/summarize-surah';
 import { getVerseTafsir as getVerseTafsirFlow, type GetVerseTafsirInput } from '@/ai/flows/get-verse-tafsir';
 import { getSpiritualRemedy as getSpiritualRemedyFlow, type SpiritualRemedyInput, type SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
 import { analyzeRecitation as analyzeRecitationFlow, type AnalyzeRecitationInput, type AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 
 
-export async function getSurahSummary(surahName: string, surahText: string): Promise<string> {
-  // Add a rate limit check here in a real application
+export async function getSurahSummary(input: SummarizeSurahInput): Promise<string> {
   try {
-    const result = await summarizeSurah({ surahName, surahText });
+    const result = await summarizeSurah(input);
     return result.summary;
   } catch (error) {
     console.error('Error in getSurahSummary action:', error);
-    // In a real app, you might want to throw a more specific error
-    // that the client can interpret.
     throw new Error('Failed to generate summary due to a server error.');
   }
 }
