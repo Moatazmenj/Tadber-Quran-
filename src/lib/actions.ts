@@ -3,6 +3,7 @@
 import { summarizeSurah, SummarizeSurahInput, SummarizeSurahOutput } from '@/ai/flows/summarize-surah';
 import { getVerseTafsir as getVerseTafsirFlow, type GetVerseTafsirInput } from '@/ai/flows/get-verse-tafsir';
 import { getSpiritualRemedy as getSpiritualRemedyFlow, type SpiritualRemedyInput, type SpiritualRemedyOutput } from '@/ai/flows/get-spiritual-remedy';
+import { analyzeRecitation as analyzeRecitationFlow, type AnalyzeRecitationInput, type AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
 
 
 export async function getSurahSummary(surahName: string, surahText: string): Promise<string> {
@@ -41,5 +42,18 @@ export async function getSpiritualRemedy(input: SpiritualRemedyInput): Promise<S
             throw error;
         }
         throw new Error('Failed to generate spiritual remedy due to a server error.');
+    }
+}
+
+export async function analyzeRecitation(input: AnalyzeRecitationInput): Promise<AnalyzeRecitationOutput> {
+    try {
+        const result = await analyzeRecitationFlow(input);
+        return result;
+    } catch (error) {
+        console.error('Error in analyzeRecitation action:', error);
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Failed to analyze recitation due to a server error.');
     }
 }

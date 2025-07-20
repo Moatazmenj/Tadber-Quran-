@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import ThemeManager from '@/components/ThemeManager';
 import { SplashScreen } from '@/components/SplashScreen';
 import { cn } from '@/lib/utils';
+import { RecordButton } from '@/components/RecordButton';
 
 const cairo = Cairo({
   subsets: ['latin', 'arabic'],
@@ -58,6 +59,7 @@ export default function RootLayout({
           <div className="flex flex-col min-h-screen">
             <main className="flex-grow">{children}</main>
           </div>
+          <RecordButton />
           <Toaster />
         </SplashScreen>
       </body>
