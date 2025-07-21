@@ -36,7 +36,7 @@ export function AudioPlayerBar({
     <div className="fixed bottom-4 left-4 right-4 z-50">
       <div className={cn(
         "relative w-full rounded-2xl overflow-hidden shadow-2xl border-t border-white/10",
-        "bg-gradient-to-br from-primary/80 to-primary/95 backdrop-blur-lg text-primary-foreground"
+        "bg-gradient-to-b from-primary/80 via-primary/70 to-transparent text-primary-foreground"
       )}>
         <SoundWave isRecording={isPlaying} />
 
