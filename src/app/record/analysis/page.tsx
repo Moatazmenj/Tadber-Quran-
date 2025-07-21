@@ -9,9 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, RefreshCw, CheckCircle2, XCircle, Mic, ChevronLeft } from 'lucide-react';
+import { Loader2, RefreshCw, CheckCircle2, XCircle, Mic, ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
 import { QuotaBanner } from '@/components/QuotaBanner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -125,27 +131,56 @@ function AnalysisContent() {
                 <Progress value={score} className="h-4" />
                 <div>
                     <h3 className="font-semibold mb-2">Feedback:</h3>
-                    <p className="text-muted-foreground">{analysis.feedback}</p>
+                    <p className="text-muted-foreground">{analysis.overallFeedback}</p>
                 </div>
+            </CardContent>
+        </Card>
+        
+        {/* Actionable Tips */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Actionable Tips</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                    {analysis.actionableTips.map((tip, index) => (
+                        <li key={index}>{tip}</li>
+                    ))}
+                </ul>
             </CardContent>
         </Card>
 
         {/* Word-by-word Analysis */}
         <Card>
             <CardHeader>
-                <CardTitle>Detailed Tajweed Analysis</CardTitle>
+                <CardTitle>Detailed Word-by-Word Analysis</CardTitle>
             </CardHeader>
             <CardContent>
-                <div dir="rtl" className="flex flex-wrap gap-x-2 gap-y-4">
-                    {analysis.tajweedAnalysis.map((item, index) => (
-                        <div key={index} className="flex flex-col items-center">
-                            <span className={`text-3xl font-arabic px-2 py-1 rounded-md ${item.isCorrect ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                                {item.word}
-                            </span>
-                             <span className={`text-xs mt-1 ${item.isCorrect ? 'text-green-500' : 'text-red-500'}`}>
-                                {item.assessment}
-                            </span>
-                        </div>
+                <div dir="rtl" className="flex flex-wrap items-start gap-x-2 gap-y-6">
+                    {analysis.wordByWordAnalysis.map((item, index) => (
+                        <TooltipProvider key={index}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex flex-col items-center cursor-pointer">
+                                        <span className={`text-3xl font-arabic px-2 py-1 rounded-md ${item.isCorrect ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                            {item.word}
+                                        </span>
+                                        <span className={`text-xs mt-1 ${item.isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+                                            {item.assessment}
+                                        </span>
+                                    </div>
+                                </TooltipTrigger>
+                                {item.details && (
+                                    <TooltipContent side="bottom" className="max-w-xs text-sm" dir="ltr">
+                                        <div className="space-y-2 p-1">
+                                            {item.details.makharij && <p><strong>Makhraj:</strong> {item.details.makharij}</p>}
+                                            {item.details.sifaat && <p><strong>Sifaat:</strong> {item.details.sifaat}</p>}
+                                            {item.details.tajweedRule && <p><strong>Tajweed:</strong> {item.details.tajweedRule}</p>}
+                                        </div>
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
                     ))}
                 </div>
             </CardContent>
