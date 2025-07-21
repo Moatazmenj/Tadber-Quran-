@@ -17,6 +17,7 @@ const AnalyzeRecitationInputSchema = z.object({
       "The user's recitation audio, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
   originalVerseText: z.string().describe('The original Arabic text of the Quranic verse.'),
+  language: z.string().optional().default('English').describe('The target language for the analysis feedback (e.g., "English", "Arabic", "French").'),
 });
 export type AnalyzeRecitationInput = z.infer<typeof AnalyzeRecitationInputSchema>;
 
@@ -60,31 +61,31 @@ const prompt = ai.definePrompt({
     Listen meticulously to the student's recitation provided in the audio file.
     {{media url=audioDataUri}}
 
-    Provide your analysis in the following structured format:
+    Provide your analysis in the following structured format. IMPORTANT: The entire response (overallFeedback, assessments, details, tips, etc.) MUST be in the target language: {{language}}.
 
-    1.  **Overall Feedback**: Begin with a warm, encouraging opening (e.g., "Masha'Allah, a beautiful effort in reciting the words of Allah."). Praise specific strengths you observed (e.g., "Your pacing is steady," or "The clarity of your Seen (س) is commendable"). Then, gently transition to the areas for growth (e.g., "To elevate your recitation further, let's focus together on a couple of areas...").
+    1.  **Overall Feedback**: Begin with a warm, encouraging opening. Praise specific strengths you observed. Then, gently transition to the areas for growth.
 
     2.  **Word-by-Word Analysis**:
         *   Iterate through each word of the verse.
         *   For each word, determine if the overall pronunciation was correct (\`isCorrect\`). This must be a strict assessment. A word is only correct if all its letters and rules are applied perfectly.
         *   Provide a brief, general assessment (\`assessment\`) like 'Excellent' for correct words or 'Needs practice' for incorrect ones.
         *   **Crucially, only if a word has an error or a point of improvement**, provide a \`details\` object with specific, constructive feedback on one or more of the following, as applicable:
-            *   \`makharij\`: Pinpoint the specific letter and the correction needed. Example: "For the letter 'ق', ensure the articulation point is the deepest part of the tongue rising to the soft palate."
-            *   \`sifaat\`: Note the attribute that needs adjustment. Example: "The 'Tafkhim' (heaviness) of the 'ص' should be more pronounced compared to the 'س'."
-            *   \`tajweedRule\`: Identify the specific rule and how to apply it correctly. Example: "The Ikhfa' on the Noon Saakin before the letter 'ت' should have a light nasalization (ghunnah)." or "The Madd Al-Muttasil in this word requires a length of 4-5 counts."
-            *   \`timing\`: Comment on rhythm or duration. Example: "The ghunnah on the Meem Mushaddadah should be held for approximately two counts."
-        *   If a word is recited perfectly, simply mark it as correct and provide a positive assessment like "Excellent" or "Masha'Allah". Do not include the \`details\` object for perfectly recited words.
+            *   \`makharij\`: Pinpoint the specific letter and the correction needed.
+            *   \`sifaat\`: Note the attribute that needs adjustment.
+            *   \`tajweedRule\`: Identify the specific rule and how to apply it correctly.
+            *   \`timing\`: Comment on rhythm or duration.
+        *   If a word is recited perfectly, simply mark it as correct and provide a positive assessment. Do not include the \`details\` object for perfectly recited words.
 
     3. **Areas For Improvement**:
         *   Based on the detailed analysis, summarize the key patterns of error.
         *   List the specific letters whose \`makharij\` needs focus.
         *   List the specific \`tajweed\` rules that require more practice.
 
-    4.  **Actionable Tips**: Provide 2-3 clear, practical, and inspiring tips for the student. These should directly address the 'Areas For Improvement'. For instance: "Listen to Sheikh Al-Husary's recitation of this Surah, focusing only on how he pronounces the letters ض and ظ." or "Practice the Qalqalah letters by saying them with a sukoon and feeling the 'bounce'."
+    4.  **Actionable Tips**: Provide 2-3 clear, practical, and inspiring tips for the student. These should directly address the 'Areas For Improvement'.
 
     5.  **Score**: Conclude with an overall score out of 100, reflecting accuracy, application of Tajweed, and flow. This score should be mathematically derived from the word-by-word analysis.
 
-    Your feedback is an amanah (a trust). Deliver it with wisdom and compassion to help the student draw closer to the Quran.`,
+    Your feedback is an amanah (a trust). Deliver it with wisdom and compassion to help the student draw closer to the Quran. The entire output must be in {{language}}.`,
 });
 
 const analyzeRecitationFlow = ai.defineFlow(

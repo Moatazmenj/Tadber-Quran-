@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, Suspense, useCallback, useMemo } from 'react';
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { analysisTranslations } from '@/lib/analysis-translations';
+import { translationOptions } from '@/lib/translations';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -53,7 +53,12 @@ function AnalysisContent() {
             throw new Error(t.errorDataNotFound);
         }
 
-        const result = await analyzeRecitation({ audioDataUri, originalVerseText });
+        const targetLanguage = translationOptions.find(opt => opt.id === lang)?.language || 'English';
+        const result = await analyzeRecitation({ 
+          audioDataUri, 
+          originalVerseText, 
+          language: targetLanguage 
+        });
         setAnalysis(result);
 
         // Clear storage only on success
@@ -66,7 +71,7 @@ function AnalysisContent() {
     } finally {
         setIsLoading(false);
     }
-  }, [t]);
+  }, [t, lang]);
 
   useEffect(() => {
     performAnalysis();
@@ -168,7 +173,7 @@ function AnalysisContent() {
                                     </div>
                                 </TooltipTrigger>
                                 {item.details && (
-                                    <TooltipContent side="bottom" className="max-w-xs text-sm" dir="ltr">
+                                    <TooltipContent side="bottom" className="max-w-xs text-sm" dir={isRtl ? 'rtl' : 'ltr'}>
                                         <div className="space-y-2 p-1">
                                             {item.details.makharij && <p><strong>{t.makhraj}:</strong> {item.details.makharij}</p>}
                                             {item.details.sifaat && <p><strong>{t.sifaat}:</strong> {item.details.sifaat}</p>}
