@@ -170,10 +170,10 @@ function AnalysisContent() {
                                 {item.details && (
                                     <TooltipContent side="bottom" className="max-w-xs text-sm" dir="ltr">
                                         <div className="space-y-2 p-1">
-                                            {item.details.makharij && <p><strong>Makhraj:</strong> {item.details.makharij}</p>}
-                                            {item.details.sifaat && <p><strong>Sifaat:</strong> {item.details.sifaat}</p>}
-                                            {item.details.tajweedRule && <p><strong>Tajweed:</strong> {item.details.tajweedRule}</p>}
-                                            {item.details.timing && <p><strong>Timing:</strong> {item.details.timing}</p>}
+                                            {item.details.makharij && <p><strong>{t.makhraj}:</strong> {item.details.makharij}</p>}
+                                            {item.details.sifaat && <p><strong>{t.sifaat}:</strong> {item.details.sifaat}</p>}
+                                            {item.details.tajweedRule && <p><strong>{t.tajweed}:</strong> {item.details.tajweedRule}</p>}
+                                            {item.details.timing && <p><strong>{t.timing}:</strong> {item.details.timing}</p>}
                                         </div>
                                     </TooltipContent>
                                 )}
