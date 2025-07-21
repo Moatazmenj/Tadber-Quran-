@@ -4,8 +4,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
-import { getLocalVersesForSurah, getLocalWordTimings } from '@/lib/quran-verses';
-import type { Ayah, Surah, WordTiming } from '@/types';
+import { getLocalWordTimings } from '@/lib/quran-verses';
+import type { Ayah, Surah, WordTiming, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2, ChevronLeft, Languages, Bookmark, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -38,16 +38,19 @@ export default function RecordPage() {
   const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
   const [karaokeDisabled, setKaraokeDisabled] = useState(false);
   const [isTranslationSheetOpen, setIsTranslationSheetOpen] = useState(false);
+  const [activeTranslationOptions, setActiveTranslationOptions] = useState<TranslationOption[]>([]);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-  const wordTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   useEffect(() => {
     const surah = surahs.find(s => s.id === parseInt(selectedSurahId, 10));
     setSurahInfo(surah || null);
   }, [selectedSurahId]);
+
+  useEffect(() => {
+    setActiveTranslationOptions(
+      translationOptions.map(opt => ({ ...opt, isActive: settings.translationId === opt.id }))
+    );
+  }, [settings.translationId]);
 
   const clearWordTimeouts = () => {
     wordTimeoutsRef.current.forEach(clearTimeout);
@@ -90,25 +93,22 @@ export default function RecordPage() {
   }, [settings.reciterId, toast]);
 
   const fetchVerses = useCallback(async (surahId: number, translationId: string) => {
-    let verses: Omit<Ayah, 'translation'>[] | undefined = getLocalVersesForSurah(surahId);
+    let verses: Omit<Ayah, 'translation'>[] | undefined;
 
-    if (!verses) {
-        try {
-            const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
-            if (!res.ok) throw new Error('Failed to fetch verses');
-            const data = await res.json();
-            verses = data.verses;
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.'});
-            setVersesForSurah([]);
-            return;
-        }
+    try {
+        const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
+        if (!res.ok) throw new Error('Failed to fetch verses');
+        const data = await res.json();
+        verses = data.verses;
+    } catch (error) {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.'});
+        setVersesForSurah([]);
+        return;
     }
 
     if (!verses) return;
 
-    // Fetch translations
     const selectedTranslation = translationOptions.find(t => t.id === translationId);
     if (selectedTranslation) {
         try {
@@ -263,25 +263,22 @@ export default function RecordPage() {
                             </SheetHeader>
                             <ScrollArea className="flex-grow">
                                 <div className="p-4 space-y-1">
-                                    {translationOptions.map(opt => {
-                                        const isSelected = settings.translationId === opt.id;
-                                        return (
-                                            <button
-                                                key={opt.id}
-                                                onClick={() => handleTranslationChange(opt.id)}
-                                                className="w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors hover:bg-accent/50"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-2xl">{opt.flag}</span>
-                                                    <div>
-                                                        <p className="text-lg text-foreground">{opt.nativeName}</p>
-                                                        <p className="text-sm text-muted-foreground">{opt.translator}</p>
-                                                    </div>
+                                    {activeTranslationOptions.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => handleTranslationChange(opt.id)}
+                                            className="w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors hover:bg-accent/50"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-2xl">{opt.flag}</span>
+                                                <div>
+                                                    <p className="text-lg text-foreground">{opt.nativeName}</p>
+                                                    <p className="text-sm text-muted-foreground">{opt.translator}</p>
                                                 </div>
-                                                {isSelected && <Check className="h-5 w-5 text-primary" />}
-                                            </button>
-                                        );
-                                    })}
+                                            </div>
+                                            {opt.isActive && <Check className="h-5 w-5 text-primary" />}
+                                        </button>
+                                    ))}
                                 </div>
                             </ScrollArea>
                         </SheetContent>
