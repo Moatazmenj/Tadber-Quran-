@@ -236,7 +236,6 @@ export default function RecordPage() {
   };
   
   const selectedVerse = versesForSurah.find(v => v.verse_key === selectedVerseKey);
-  const verseNumber = selectedVerse?.verse_key?.split(':')[1] || '';
 
   return (
     <div className="bg-black text-white min-h-screen flex flex-col">
@@ -266,19 +265,7 @@ export default function RecordPage() {
        </header>
       
       <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center">
-        <div className="w-full mb-8">
-            {selectedVerse && (
-                <KaraokeVerse 
-                    verse={selectedVerse}
-                    wordTimings={wordTimings}
-                    currentWordIndex={currentWordIndex}
-                    fontStyle={settings.fontStyle}
-                    fontSize={settings.fontSize}
-                    isKaraokeDisabled={karaokeDisabled}
-                />
-            )}
-        </div>
-        <div className="w-full flex-grow">
+        <div className="w-full flex-grow flex items-center justify-center">
           <VerseSelector 
             verses={versesForSurah.map(v => ({...v, isActive: v.verse_key === selectedVerseKey}))}
             onVerseSelect={handleVerseSelect} 
