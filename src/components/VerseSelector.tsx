@@ -16,11 +16,11 @@ interface VerseSelectorProps {
 export function VerseSelector({ verses, onVerseSelect, fontStyle, fontSize }: VerseSelectorProps) {
 
   return (
-    <ScrollArea className="h-[300px] w-full bg-black/20 rounded-lg p-4">
+    <ScrollArea className="h-[350px] w-full bg-black/20 rounded-lg p-4">
       <div 
         dir="rtl"
         className={cn(
-            "leading-loose text-center text-white/80 flex flex-wrap justify-center items-center gap-x-2",
+            "leading-loose text-white/80 flex flex-wrap justify-start items-center gap-x-2 text-right",
             fontStyle === 'indopak' ? 'font-arabic-indopak' : (fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
         )}
         style={{ fontSize: `${fontSize}px`, lineHeight: `${fontSize * 1.8}px` }}
