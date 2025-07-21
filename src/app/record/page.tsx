@@ -116,7 +116,7 @@ export default function RecordPage() {
         text_uthmani: v.text_uthmani,
         juz: v.juz_number,
         page: v.page_number,
-        translation: v.translations[0]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+        translation: v.translations?.[0]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
       }));
 
       setVersesForSurah(combinedVerses);
