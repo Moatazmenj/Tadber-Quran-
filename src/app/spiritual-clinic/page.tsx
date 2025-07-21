@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { translationOptions } from '@/lib/translations';
 import { QuotaBanner } from '@/components/QuotaBanner';
+import { toastTranslations } from '@/lib/toast-translations';
 
 const translations: Record<string, Record<string, string>> = {
     en: {
@@ -34,10 +35,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "We recommend listening to {surahName} by reciter {reciterName} for your heart's comfort.",
         newRemedy: "Find Another Remedy",
         share: "Share Remedy",
-        shareSuccess: "Copied",
-        shareSuccessDesc: "The spiritual remedy has been copied to the clipboard.",
-        shareFail: "Share Failed",
-        shareFailDesc: "Could not share the remedy. Please try again.",
         shareTitle: "Spiritual Remedy - Tadber Quran",
         shareVerses: "Verses of Serenity",
         shareTafsir: "Gentle Interpretation",
@@ -61,10 +58,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Nous vous recommandons d'écouter {surahName} par le récitateur {reciterName} pour apaiser votre cœur.",
         newRemedy: "Trouver un autre remède",
         share: "Partager le Remède",
-        shareSuccess: "Copié",
-        shareSuccessDesc: "Le remède spirituel a été copié dans le presse-papiers.",
-        shareFail: "Partage Échoué",
-        shareFailDesc: "Impossible de partager le remède. Veuillez réessayer.",
         shareTitle: "Remède Spirituel - Tadber Quran",
         shareVerses: "Versets de Sérénité",
         shareTafsir: "Interprétation Douce",
@@ -88,10 +81,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "ننصحك بالاستماع إلى {surahName} بصوت القارئ {reciterName} لراحة قلبك.",
         newRemedy: "البحث عن وصفة أخرى",
         share: "مشاركة الوصفة",
-        shareSuccess: "تم النسخ",
-        shareSuccessDesc: "تم نسخ الوصفة الإيمانية إلى الحافظة.",
-        shareFail: "فشلت المشاركة",
-        shareFailDesc: "لم نتمكن من مشاركة الوصفة. يرجى المحاولة مرة أخرى.",
         shareTitle: "وصفة إيمانية - تدبر القرآن",
         shareVerses: "آيات السكينة",
         shareTafsir: "تفسير ميسّر",
@@ -115,10 +104,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Te recomendamos escuchar {surahName} por el recitador {reciterName} para el consuelo de tu corazón.",
         newRemedy: "Buscar Otro Remedio",
         share: "Compartir Remedio",
-        shareSuccess: "Copiado",
-        shareSuccessDesc: "El remedio espiritual ha sido copiado al portapapeles.",
-        shareFail: "Error al Compartir",
-        shareFailDesc: "No se pudo compartir el remedio. Por favor, inténtalo de nuevo.",
         shareTitle: "Remedio Espiritual - Tadber Quran",
         shareVerses: "Versos de Serenidad",
         shareTafsir: "Interpretación Suave",
@@ -142,10 +127,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Kami merekomendasikan mendengarkan {surahName} oleh qari {reciterName} untuk ketenangan hati Anda.",
         newRemedy: "Cari Obat Lain",
         share: "Bagikan Obat",
-        shareSuccess: "Disalin",
-        shareSuccessDesc: "Obat spiritual telah disalin ke clipboard.",
-        shareFail: "Gagal Berbagi",
-        shareFailDesc: "Tidak dapat membagikan obat. Silakan coba lagi.",
         shareTitle: "Obat Spiritual - Tadber Quran",
         shareVerses: "Ayat-ayat Ketenangan",
         shareTafsir: "Tafsir Lembut",
@@ -169,10 +150,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Мы рекомендуем слушать {surahName} в исполнении чтеца {reciterName} для успокоения вашего сердца.",
         newRemedy: "Найти Другое Лекарство",
         share: "Поделиться Лекарством",
-        shareSuccess: "Скопировано",
-        shareSuccessDesc: "Духовное лекарство скопировано в буфер обмена.",
-        shareFail: "Ошибка при отправке",
-        shareFailDesc: "Не удалось поделиться лекарством. Пожалуйста, попробуйте еще раз.",
         shareTitle: "Духовное Лекарство - Tadber Quran",
         shareVerses: "Аяты Спокойствия",
         shareTafsir: "Мягкое Толкование",
@@ -196,10 +173,6 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "ہم آپ کو قاری {reciterName} کی آواز میں {surahName} سننے کی تجویز کرتے ہیں تاکہ آپ کے دل کو سکون ملے۔",
         newRemedy: "دوسرا علاج تلاش کریں",
         share: "علاج شیئر کریں",
-        shareSuccess: "کاپی ہوگیا",
-        shareSuccessDesc: "روحانی علاج کلپ بورڈ پر کاپی کر لیا گیا ہے۔",
-        shareFail: "شیئر ناکام",
-        shareFailDesc: "علاج شیئر نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔",
         shareTitle: "روحانی علاج - تدبر قرآن",
         shareVerses: "آیاتِ سکون",
         shareTafsir: "نرم تفسیر",
@@ -227,6 +200,8 @@ export default function SpiritualClinicPage() {
 
   const t = useMemo(() => translations[lang] || translations['ar'], [lang]);
   const isRtl = lang === 'ar' || lang === 'ur';
+
+  const tToast = useMemo(() => toastTranslations[lang] || toastTranslations['en'], [lang]);
 
   const fetchRemedy = useCallback(async (currentFeeling: string) => {
     if (!currentFeeling.trim()) return;
@@ -283,16 +258,16 @@ export default function SpiritualClinicPage() {
         } else {
             await navigator.clipboard.writeText(shareText);
             toast({
-                title: t.shareSuccess,
-                description: t.shareSuccessDesc,
+                title: tToast.shareSuccess,
+                description: tToast.shareSuccessDescription,
             });
         }
     } catch (err) {
         console.error('Share failed:', err);
         toast({
             variant: 'destructive',
-            title: t.shareFail,
-            description: t.shareFailDesc,
+            title: tToast.shareFailed,
+            description: tToast.shareFailedDescription,
         });
     }
   };

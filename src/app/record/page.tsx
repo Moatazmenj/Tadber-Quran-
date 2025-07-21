@@ -1,10 +1,9 @@
 
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
-import { getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
@@ -15,7 +14,7 @@ import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VerseSelector } from '@/components/VerseSelector';
 import { SoundWave } from '@/components/SoundWave';
-import { cn } from '@/lib/utils';
+import { toastTranslations } from '@/lib/toast-translations';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -45,6 +44,12 @@ export default function RecordPage() {
   const [wordTimings, setWordTimings] = useState<any[]>([]);
   const [karaokeDisabled, setKaraokeDisabled] = useState(false);
 
+  const lang = useMemo(() => {
+    const langCode = settings.translationId;
+    return toastTranslations[langCode] ? langCode : 'en';
+  }, [settings.translationId]);
+  
+  const t = useMemo(() => toastTranslations[lang] || toastTranslations['en'], [lang]);
 
   useEffect(() => {
     const surah = surahs.find(s => s.id === parseInt(selectedSurahId, 10));
@@ -63,42 +68,36 @@ export default function RecordPage() {
     setWordTimings([]);
     setKaraokeDisabled(false);
 
-    let timings = getLocalWordTimings(verseKey);
-    
-    if (!timings) {
-        try {
-            const reciterId = settings.reciterId || 7; // Default to Alafasy
-            const response = await fetch(`https://api.quran.com/api/v4/quran/recitations/${reciterId}/by_verse/${verseKey}?word_fields=text_uthmani,timestamps`);
-            
-            if (!response.ok) {
-              console.warn(`Failed to fetch word timings for ${verseKey}: ${response.statusText}`);
-              toast({ variant: 'destructive', title: 'Karaoke Unavailable', description: 'Word-by-word highlighting is not available for this verse or reciter.' });
-              setKaraokeDisabled(true);
-              return;
+    try {
+        const reciterId = settings.reciterId || 7; // Default to Alafasy
+        const response = await fetch(`https://api.quran.com/api/v4/quran/recitations/${reciterId}/by_verse/${verseKey}?word_fields=text_uthmani,timestamps`);
+        
+        if (!response.ok) {
+          toast({ variant: 'destructive', title: t.karaokeUnavailable, description: t.karaokeVerseReciterUnavailable });
+          setKaraokeDisabled(true);
+          return;
+        }
+        
+        const data = await response.json();
+        const timings = data.audio_files[0]?.words;
+
+        if (timings && timings.length > 0 && timings[0].audio_url) {
+            setWordTimings(timings);
+            if (audioPlayerRef.current) {
+                const audioUrl = `https://verses.quran.com/${timings[0].audio_url}`;
+                audioPlayerRef.current.src = audioUrl;
             }
-            
-            const data = await response.json();
-            timings = data.audio_files[0]?.words;
-
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Karaoke Disabled', description: 'Could not load word timings for this verse. Karaoke highlighting is disabled.' });
+        } else {
+            toast({ variant: 'destructive', title: t.karaokeUnavailable, description: t.karaokeVerseReciterUnavailable });
             setKaraokeDisabled(true);
-            return;
         }
-    }
 
-    if (timings && timings.length > 0 && timings[0].audio_url) {
-        setWordTimings(timings);
-        if (audioPlayerRef.current) {
-            const audioUrl = `https://verses.quran.com/${timings[0].audio_url}`;
-            audioPlayerRef.current.src = audioUrl;
-        }
-    } else {
-        toast({ variant: 'destructive', title: 'Karaoke Unavailable', description: 'Word-by-word highlighting is not available for this verse or reciter.' });
+    } catch (error) {
+        console.error(error);
+        toast({ variant: 'destructive', title: t.karaokeDisabled, description: t.karaokeLoadError });
         setKaraokeDisabled(true);
     }
-  }, [settings.reciterId, toast]);
+  }, [settings.reciterId, toast, t]);
 
   const fetchVerses = useCallback(async (surahId: number) => {
     try {
@@ -114,7 +113,7 @@ export default function RecordPage() {
         text_uthmani: v.text_uthmani,
         juz: v.juz_number,
         page: v.page_number,
-        translation: v.translations?.[0]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+        translation: v.translations?.[0]?.text.replace(/<sup.*?<\/sup>/g, '') || t.translationNotAvailable
       }));
 
       setVersesForSurah(combinedVerses);
@@ -127,10 +126,10 @@ export default function RecordPage() {
 
     } catch (error) {
       console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.' });
+      toast({ variant: 'destructive', title: t.error, description: t.versesLoadError });
       setVersesForSurah([]);
     }
-  }, [toast, fetchWordTimings]);
+  }, [toast, fetchWordTimings, t]);
 
 
   useEffect(() => {
@@ -143,17 +142,18 @@ export default function RecordPage() {
 
   const handleVerseSelect = (verseKey: string) => {
     setSelectedVerseKey(verseKey);
+    setShowTranslation(false);
     fetchWordTimings(verseKey);
   }
 
 
   const startRecording = async () => {
     if (wordTimings.length === 0 && !karaokeDisabled) {
-      toast({ variant: 'destructive', title: 'Timings not loaded', description: 'Please wait for word timings to load before recording.' });
+      toast({ variant: 'destructive', title: t.timingsNotLoaded, description: t.waitTimings });
       return;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Audio recording is not supported in your browser.' });
+      toast({ variant: 'destructive', title: t.error, description: t.audioRecordingNotSupported });
       return;
     }
 
@@ -188,8 +188,8 @@ export default function RecordPage() {
         if (audioBlob.size < 1000) { // Less than 1KB is likely empty/silent
             toast({
                 variant: 'destructive',
-                title: 'Empty Recording',
-                description: 'No audio was detected. Please try recording again.',
+                title: t.emptyRecording,
+                description: t.noAudioDetected,
             });
             setIsRecording(false);
             setIsProcessing(false);
@@ -206,7 +206,7 @@ export default function RecordPage() {
                 localStorage.setItem(STORAGE_KEY_TEXT, originalVerseText);
                 router.push(`/record/analysis?verseText=${encodeURIComponent(originalVerseText)}`);
             } else {
-                 toast({ variant: 'destructive', title: 'Error', description: 'Could not find the verse text to analyze.'});
+                 toast({ variant: 'destructive', title: t.error, description: t.verseTextNotFound });
                  setIsProcessing(false);
             }
         };
@@ -214,7 +214,7 @@ export default function RecordPage() {
       mediaRecorderRef.current.start();
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      toast({ variant: 'destructive', title: 'Microphone Error', description: 'Could not access microphone. Please check permissions.'});
+      toast({ variant: 'destructive', title: t.micError, description: t.micAccessError });
     }
   };
 
@@ -288,8 +288,17 @@ export default function RecordPage() {
       
       <footer className="sticky bottom-0 left-0 right-0 p-2 bg-transparent">
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl relative">
-            <div className="absolute bottom-full mb-2 text-center w-full">
+            <div className="absolute bottom-full mb-2 text-center w-full flex justify-center items-center gap-4">
                 <p className="text-xs text-white/60">Practice verse: {selectedVerseKey}</p>
+                 <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowTranslation(s => !s)}
+                    className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8 rounded-full"
+                    aria-label="Toggle Translation"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>
+                 </Button>
             </div>
             <div className="relative w-full h-16 flex justify-center items-center">
                 <SoundWave isRecording={isRecording} />

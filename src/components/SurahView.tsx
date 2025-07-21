@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import type { Ayah, Surah, Reciter, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SurahNameDisplay } from './SurahNameDisplay';
+import { toastTranslations } from '@/lib/toast-translations';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -101,6 +102,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   const [reciter, setReciter] = useState<Reciter | null>(null);
   const [isReciterSheetOpen, setIsReciterSheetOpen] = useState(false);
 
+  const lang = useMemo(() => {
+    const langCode = settings.translationId;
+    return toastTranslations[langCode] ? langCode : 'en';
+  }, [settings.translationId]);
+  
+  const tToast = useMemo(() => toastTranslations[lang] || toastTranslations['en'], [lang]);
+
+
   const tafsirLanguages = [
     { id: 'english', name: 'English', nativeName: 'English', flag: '🇬🇧' },
     { id: 'arabic', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦' },
@@ -166,7 +175,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     if (playPromise !== undefined) {
       playPromise.catch(e => {
         console.error("Audio play error", e);
-        setAudioError('Could not play audio. The file might not be available.');
+        setAudioError(tToast.audioPlayError);
         setIsPlaying(false);
       });
     }
@@ -175,7 +184,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     if (verseElement) {
       verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [reciter, surahInfo.id]);
+  }, [reciter, surahInfo.id, tToast]);
 
   
   const handleNextVerse = useCallback(() => {
@@ -195,7 +204,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
-        audioRef.current = null;
+        // Setting ref to null is tricky in useEffect cleanup, so just clear src
       }
       return;
     }
@@ -211,7 +220,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     const handleError = (e: Event) => {
       const mediaError = (e.target as HTMLAudioElement).error;
       console.error('Audio Element Error:', mediaError);
-      setAudioError('Could not play audio. The file might not be available.');
+      setAudioError(tToast.audioPlayError);
       setIsPlaying(false);
     };
   
@@ -226,7 +235,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [showAudioPlayer, handleNextVerse]);
+  }, [showAudioPlayer, handleNextVerse, tToast.audioPlayError]);
   
   const handlePlayPause = () => {
     if (!audioRef.current) return;
@@ -274,15 +283,6 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     }
   };
 
-  const handleStopAndClosePlayer = () => {
-    if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-    }
-    setShowAudioPlayer(false);
-    setIsPlaying(false);
-  };
-
   const handleChangeReciter = (reciterId: number) => {
     setSetting('reciterId', reciterId);
     setIsReciterSheetOpen(false);
@@ -304,12 +304,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     if (bookmarkedVerses.includes(verseKey)) {
         updatedBookmarks = bookmarkedVerses.filter((key) => key !== verseKey);
         toast({
-            title: "Bookmark Removed",
+            title: tToast.bookmarkRemoved,
         });
     } else {
         updatedBookmarks = [...bookmarkedVerses, verseKey];
         toast({
-            title: "Verse Bookmarked",
+            title: tToast.verseBookmarked,
         });
     }
     setBookmarkedVerses(updatedBookmarks);
@@ -342,9 +342,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
 
     const selectedTranslation = translationOptions.find(t => t.id === settings.translationId);
     if (!selectedTranslation) {
-      setTranslationError('Selected translation not found.');
+      setTranslationError(tToast.translationNotFound);
       setIsLoadingTranslation(false);
-      const versesWithNoTranslation = initialVerses.map(v => ({ ...v, translation: 'Translation not available.' }));
+      const versesWithNoTranslation = initialVerses.map(v => ({ ...v, translation: tToast.translationNotAvailable }));
       setFullVerseData(versesWithNoTranslation);
       setDisplayVerses(versesWithNoTranslation);
       return;
@@ -357,7 +357,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
       
       const versesWithTranslations = initialVerses.map((verse, index) => ({
         ...verse,
-        translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+        translation: translationData.translations[index]?.text.replace(/<sup.*?<\/sup>/g, '') || tToast.translationNotAvailable
       }));
 
       setFullVerseData(versesWithTranslations);
@@ -365,14 +365,14 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
 
     } catch (e: any) {
       console.error('Translation fetch error:', e);
-      setTranslationError('Could not load translation. Please check your connection and try again.');
-      const versesWithFetchError = initialVerses.map(v => ({ ...v, translation: 'Translation not available.' }));
+      setTranslationError(tToast.translationLoadError);
+      const versesWithFetchError = initialVerses.map(v => ({ ...v, translation: tToast.translationNotAvailable }));
       setFullVerseData(versesWithFetchError);
       setDisplayVerses(versesWithFetchError);
     } finally {
       setIsLoadingTranslation(false);
     }
-  }, [settings.translationId, initialVerses, surahInfo.id]);
+  }, [settings.translationId, initialVerses, surahInfo.id, tToast]);
 
   useEffect(() => {
     fetchAndStoreTranslations();
@@ -477,8 +477,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
             console.error("Image generation failed:", err);
             toast({
                 variant: 'destructive',
-                title: 'Image Generation Failed',
-                description: 'Could not create the image. Please try again.'
+                title: tToast.imageGenerationFailed,
+                description: tToast.imageGenerationFailedDescription
             });
             setIsShareSheetOpen(false);
         } finally {
@@ -488,7 +488,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     };
 
     generateImage();
-  }, [isShareSheetOpen, verseToShare, selectedShareBackground, toast, surahInfo.name, fullVerseData, settings.fontStyle]);
+  }, [isShareSheetOpen, verseToShare, selectedShareBackground, toast, surahInfo.name, fullVerseData, settings.fontStyle, tToast]);
 
 
   const handleSummarize = async () => {
@@ -551,15 +551,15 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   const handleCopy = (textToCopy: string) => {
     navigator.clipboard.writeText(textToCopy).then(() => {
       toast({
-        title: "Copied to clipboard",
-        description: "The verse has been copied successfully.",
+        title: tToast.copiedToClipboard,
+        description: tToast.verseCopied,
       });
     }).catch(err => {
       console.error('Failed to copy text: ', err);
       toast({
         variant: "destructive",
-        title: "Copy Failed",
-        description: "Could not copy the text.",
+        title: tToast.copyFailed,
+        description: tToast.copyFailedDescription,
       });
     });
   };
@@ -587,8 +587,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
         toast({
-          title: "Image Downloaded",
-          description: "Direct sharing is not supported, so the image was downloaded instead.",
+          title: tToast.imageDownloaded,
+          description: tToast.imageDownloadedDescription,
         });
       }
     } catch (err: any) {
@@ -596,8 +596,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
         console.error('Failed to share:', err);
         toast({
           variant: "destructive",
-          title: "Share Failed",
-          description: err.message || "Could not share image. Please try again.",
+          title: tToast.shareFailed,
+          description: err.message || tToast.shareFailedDescription,
         });
       }
     } finally {
@@ -891,7 +891,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
       
       {audioError && showAudioPlayer && (
         <Alert variant="destructive" className="fixed bottom-24 left-1/2 -translate-x-1/2 w-auto z-[60]">
-            <AlertTitle>Audio Error</AlertTitle>
+            <AlertTitle>{tToast.error}</AlertTitle>
             <AlertDescription>{audioError}</AlertDescription>
         </Alert>
       )}
