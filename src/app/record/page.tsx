@@ -290,9 +290,6 @@ export default function RecordPage() {
       
       <footer className="sticky bottom-0 left-0 right-0 p-2 bg-transparent">
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl relative">
-            <div className="absolute bottom-full mb-2 text-center w-full flex justify-center items-center gap-4">
-                <p className="text-xs text-white/60">Practice verse: {selectedVerseKey}</p>
-            </div>
             <div className="relative w-full h-16 flex justify-center items-center">
                 <SoundWave isRecording={isRecording} />
                 <Button 
