@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
 import { getLocalWordTimings } from '@/lib/quran-verses';
-import type { Ayah, Surah, WordTiming, TranslationOption } from '@/types';
+import type { Ayah, Surah, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2, ChevronLeft, Languages, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -35,8 +35,7 @@ export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
-  const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
-  const [karaokeDisabled, setKaraokeDisabled] = useState(false);
+  
   const [isTranslationSheetOpen, setIsTranslationSheetOpen] = useState(false);
   const [activeTranslationOptions, setActiveTranslationOptions] = useState<TranslationOption[]>([]);
 
@@ -44,6 +43,10 @@ export default function RecordPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const wordTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
+
+  // State for Karaoke feature
+  const [wordTimings, setWordTimings] = useState<any[]>([]);
+  const [karaokeDisabled, setKaraokeDisabled] = useState(false);
 
 
   useEffect(() => {
@@ -75,9 +78,18 @@ export default function RecordPage() {
         try {
             const reciterId = settings.reciterId || 7; // Default to Alafasy
             const response = await fetch(`https://api.quran.com/api/v4/quran/recitations/${reciterId}/by_verse/${verseKey}?word_fields=text_uthmani,timestamps`);
-            if (!response.ok) throw new Error('Failed to fetch word timings');
+            
+            if (!response.ok) {
+              // Instead of throwing an error, we disable karaoke and inform the user.
+              console.warn(`Failed to fetch word timings for ${verseKey}: ${response.statusText}`);
+              toast({ variant: 'destructive', title: 'Karaoke Unavailable', description: 'Word-by-word highlighting is not available for this verse or reciter.' });
+              setKaraokeDisabled(true);
+              return;
+            }
+            
             const data = await response.json();
-            timings = data.audio_files[0].words;
+            timings = data.audio_files[0]?.words;
+
         } catch (error) {
             console.error(error);
             toast({ variant: 'destructive', title: 'Karaoke Disabled', description: 'Could not load word timings for this verse. Karaoke highlighting is disabled.' });
@@ -93,6 +105,7 @@ export default function RecordPage() {
             audioPlayerRef.current.src = audioUrl;
         }
     } else {
+        toast({ variant: 'destructive', title: 'Karaoke Unavailable', description: 'Word-by-word highlighting is not available for this verse or reciter.' });
         setKaraokeDisabled(true);
     }
   }, [settings.reciterId, toast]);
