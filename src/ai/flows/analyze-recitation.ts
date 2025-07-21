@@ -93,7 +93,6 @@ const analyzeRecitationFlow = ai.defineFlow(
         name: 'analyzeRecitationFlow',
         inputSchema: AnalyzeRecitationInputSchema,
         outputSchema: AnalyzeRecitationOutputSchema,
-        cache: {},
     },
     async (input) => {
         const { output } = await prompt(input);
