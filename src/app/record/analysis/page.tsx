@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
@@ -10,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, RefreshCw, CheckCircle2, XCircle, Mic, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { QuotaBanner } from '@/components/QuotaBanner';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -64,6 +66,9 @@ function AnalysisContent() {
   }
 
   if (error) {
+    if (error.includes('exceeded the daily limit')) {
+        return <QuotaBanner onRetry={performAnalysis} />;
+    }
     return (
         <div className="text-center p-4">
             <Alert variant="destructive">

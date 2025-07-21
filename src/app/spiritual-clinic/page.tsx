@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { translationOptions } from '@/lib/translations';
+import { QuotaBanner } from '@/components/QuotaBanner';
 
 const translations: Record<string, Record<string, string>> = {
     en: {
@@ -309,6 +310,9 @@ export default function SpiritualClinicPage() {
     }
     
     if (error) {
+        if (error.includes('exceeded the daily limit')) {
+            return <QuotaBanner onRetry={() => fetchRemedy(feeling)} isRtl={isRtl} />;
+        }
         return (
             <div className="text-center p-4 min-h-[300px]" dir={isRtl ? "rtl" : "ltr"}>
                 <Alert variant="destructive">
