@@ -21,7 +21,7 @@ import { translationOptions } from '@/lib/translations';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
-const ENGLISH_TRANSLATION_API_ID = 131;
+const ENGLISH_TRANSLATION_ID = '131'; // Sahih International
 
 export default function RecordPage() {
   const router = useRouter();
@@ -73,7 +73,6 @@ export default function RecordPage() {
             const response = await fetch(`https://api.quran.com/api/v4/quran/recitations/${reciterId}/by_verse/${verseKey}?word_fields=text_uthmani,timestamps`);
             
             if (!response.ok) {
-              // Instead of throwing an error, we disable karaoke and inform the user.
               console.warn(`Failed to fetch word timings for ${verseKey}: ${response.statusText}`);
               toast({ variant: 'destructive', title: 'Karaoke Unavailable', description: 'Word-by-word highlighting is not available for this verse or reciter.' });
               setKaraokeDisabled(true);
@@ -104,48 +103,34 @@ export default function RecordPage() {
   }, [settings.reciterId, toast]);
 
   const fetchVerses = useCallback(async (surahId: number) => {
-    let arabicVerses: Omit<Ayah, 'translation'>[];
-
-    // 1. Fetch Arabic verses
     try {
-        const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahId}`);
-        if (!res.ok) throw new Error('Failed to fetch Arabic verses.');
-        const data = await res.json();
-        arabicVerses = data.verses;
-    } catch (error) {
-        console.error(error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.'});
-        setVersesForSurah([]);
-        return;
-    }
+      const response = await fetch(`https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=en&words=false&translations=${ENGLISH_TRANSLATION_ID}&fields=text_uthmani,juz_number,page_number`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch verse data.');
+      }
+      const data = await response.json();
 
-    // 2. Fetch English translations
-    let translationsMap: Record<string, string> = {};
-    try {
-        const transRes = await fetch(`https://api.quran.com/api/v4/quran/translations/${ENGLISH_TRANSLATION_API_ID}?chapter_number=${surahId}`);
-        if (!transRes.ok) throw new Error('Failed to fetch English translations.');
-        const transData = await transRes.json();
-        translationsMap = transData.translations.reduce((acc: Record<string, string>, t: any) => {
-            acc[t.verse_key] = t.text.replace(/<sup.*?<\/sup>/g, '');
-            return acc;
-        }, {});
-    } catch (error) {
-         console.error(error);
-         // Don't toast here, as it might be an intermittent issue. We'll handle missing translations below.
-    }
+      const combinedVerses: Ayah[] = data.verses.map((v: any) => ({
+        id: v.id,
+        verse_key: v.verse_key,
+        text_uthmani: v.text_uthmani,
+        juz: v.juz_number,
+        page: v.page_number,
+        translation: v.translations[0]?.text.replace(/<sup.*?<\/sup>/g, '') || 'Translation not available.'
+      }));
 
-    // 3. Combine them
-    const versesWithTranslations = arabicVerses.map(v => ({
-        ...v,
-        translation: translationsMap[v.verse_key] || 'Translation not available.'
-    }));
-    
-    setVersesForSurah(versesWithTranslations);
-    
-    const firstVerseKey = versesWithTranslations[0]?.verse_key || '';
-    if (firstVerseKey) {
+      setVersesForSurah(combinedVerses);
+
+      const firstVerseKey = combinedVerses[0]?.verse_key || '';
+      if (firstVerseKey) {
         setSelectedVerseKey(firstVerseKey);
         await fetchWordTimings(firstVerseKey);
+      }
+
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not load verses for this Surah.' });
+      setVersesForSurah([]);
     }
   }, [toast, fetchWordTimings]);
 
