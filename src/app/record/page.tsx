@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
 import { getLocalVersesForSurah, getLocalWordTimings } from '@/lib/quran-verses';
-import type { Ayah, Surah, WordTiming, TranslationOption } from '@/types';
+import type { Ayah, Surah, WordTiming } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2, ChevronLeft, Languages, Bookmark, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -78,7 +78,7 @@ export default function RecordPage() {
         }
     }
 
-    if (timings) {
+    if (timings && timings.length > 0 && timings[0].audio_url) {
         setWordTimings(timings);
         if (audioPlayerRef.current) {
             const audioUrl = `https://verses.quran.com/${timings[0].audio_url}`;
@@ -136,8 +136,10 @@ export default function RecordPage() {
     }
     
     const firstVerseKey = verses?.[0]?.verse_key || '';
-    setSelectedVerseKey(firstVerseKey);
-    fetchWordTimings(firstVerseKey);
+    if (firstVerseKey) {
+        setSelectedVerseKey(firstVerseKey);
+        await fetchWordTimings(firstVerseKey);
+    }
   }, [toast, fetchWordTimings]);
 
   useEffect(() => {
@@ -224,7 +226,7 @@ export default function RecordPage() {
   };
   
   const selectedVerse = versesForSurah.find(v => v.verse_key === selectedVerseKey);
-  const verseNumber = selectedVerseKey.split(':')[1];
+  const verseNumber = selectedVerse?.verse_key?.split(':')[1] || '';
 
   return (
     <div className="bg-[#12211F] text-white min-h-screen flex flex-col">
