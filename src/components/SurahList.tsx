@@ -98,7 +98,7 @@ export function SurahList({ surahs, juzs }: SurahListProps) {
             <Card className="h-full hover:shadow-lg hover:border-primary transition-all duration-300 flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 flex items-center justify-center bg-accent/20 text-accent-foreground rounded-full font-bold">
+                    <div className="w-10 h-10 flex items-center justify-center bg-primary/20 text-primary rounded-full font-bold">
                         {surah.id}
                     </div>
                     <div>
