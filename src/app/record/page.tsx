@@ -7,7 +7,7 @@ import { surahs } from '@/lib/quran';
 import { getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah, WordTiming, TranslationOption } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Loader2, ChevronLeft, Languages, Bookmark, Check } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft, Languages, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { KaraokeVerse } from '@/components/KaraokeVerse';
@@ -295,10 +295,7 @@ export default function RecordPage() {
        <div className="bg-neutral-900/50 p-2 shadow-md">
             <div className="container mx-auto flex justify-between items-center text-xs text-white/80">
                 <span>Juz {selectedVerse?.juz || '...'} | Page {selectedVerse?.page || '...'}</span>
-                <div className="flex items-center gap-2">
-                    <Bookmark className="w-4 h-4" />
-                    <span>{verseNumber}/{surahInfo?.versesCount}</span>
-                </div>
+                <span>{verseNumber}/{surahInfo?.versesCount}</span>
             </div>
        </div>
       
