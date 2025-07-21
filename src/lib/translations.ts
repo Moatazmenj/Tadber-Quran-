@@ -1,6 +1,7 @@
 import type { TranslationOption } from '@/types';
 
 export const translationOptions: TranslationOption[] = [
+    { id: 'ar', apiId: 22, language: 'Arabic', nativeName: 'العربية', translator: 'Tafsir Al-Jalalayn', flag: '🇸🇦' },
     { id: 'en', apiId: 131, language: 'English', nativeName: 'English', translator: 'Sahih International', flag: '🇬🇧' },
     { id: 'es', apiId: 83, language: 'Spanish', nativeName: 'Español', translator: 'Raúl González Bornez', flag: '🇪🇸' },
     { id: 'fr', apiId: 20, language: 'French', nativeName: 'Français', translator: 'Muhammad Hamidullah', flag: '🇫🇷' },

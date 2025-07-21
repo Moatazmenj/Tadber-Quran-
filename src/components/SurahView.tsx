@@ -330,7 +330,12 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   }, [initialVerses]);
   
   const fetchAndStoreTranslations = useCallback(async () => {
-    if (initialVerses.length === 0) return;
+    if (initialVerses.length === 0 || settings.translationId === 'ar') {
+        const versesWithoutTranslation = initialVerses.map(v => ({ ...v, translation: undefined }));
+        setFullVerseData(versesWithoutTranslation);
+        setDisplayVerses(versesWithoutTranslation);
+        return;
+    }
 
     setIsLoadingTranslation(true);
     setTranslationError('');
@@ -339,9 +344,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     if (!selectedTranslation) {
       setTranslationError('Selected translation not found.');
       setIsLoadingTranslation(false);
-      const versesWithoutTranslation = initialVerses.map(v => ({ ...v, translation: 'Translation not available.' }));
-      setFullVerseData(versesWithoutTranslation);
-      setDisplayVerses(versesWithoutTranslation);
+      const versesWithNoTranslation = initialVerses.map(v => ({ ...v, translation: 'Translation not available.' }));
+      setFullVerseData(versesWithNoTranslation);
+      setDisplayVerses(versesWithNoTranslation);
       return;
     }
 
@@ -607,6 +612,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     </div>
   );
 
+  const shouldShowTranslation = settings.showTranslation && settings.translationId !== 'ar';
+
   return (
     <>
       <header className="sticky top-0 z-20 bg-gradient-to-b from-primary/30 via-primary/20 to-transparent">
@@ -706,13 +713,13 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
                 <p className={cn("text-center text-3xl mb-8 font-arabic-uthmanic")}>بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>
             )}
 
-            {(isLoadingTranslation && settings.showTranslation) && (
+            {(isLoadingTranslation && shouldShowTranslation) && (
                 <div className="space-y-8">
                     {Array.from({ length: 5 }).map((_, i) => <VerseSkeleton key={i} />)}
                 </div>
             )}
 
-            {!isLoadingTranslation && displayVerses.length > 0 && settings.showTranslation && (
+            {!isLoadingTranslation && displayVerses.length > 0 && shouldShowTranslation && (
                 <div className="space-y-8">
                     {displayVerses.map((ayah, index) => {
                         const verseNumber = ayah.verse_key.split(':')[1];
@@ -750,10 +757,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
                                       <span className="text-primary font-sans font-normal mx-1" style={{ fontSize: `${settings.fontSize * 0.8}px` }}>{verseEndSymbol}</span>
                                   </p>
                                 <div className="text-muted-foreground text-lg leading-relaxed text-center">
-                                    {(settings.showTranslation && ayah.translation) ? (
+                                    {(shouldShowTranslation && ayah.translation) ? (
                                       <p><span className="text-primary font-bold mr-2">{verseNumber}</span>{ayah.translation}</p>
                                     ) : (
-                                      (settings.showTranslation && !translationError) ? <p className="text-sm">Loading translation...</p> : null
+                                      (shouldShowTranslation && !translationError) ? <p className="text-sm">Loading translation...</p> : null
                                     )}
                                 </div>
                               </div>
@@ -783,7 +790,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
                 </div>
             )}
             
-            {!isLoadingTranslation && displayVerses.length > 0 && !settings.showTranslation && (
+            {!isLoadingTranslation && displayVerses.length > 0 && !shouldShowTranslation && (
               <div 
                 dir="rtl" 
                 className={cn(
@@ -846,7 +853,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
               </div>
             )}
 
-            {translationError && settings.showTranslation && (
+            {translationError && shouldShowTranslation && (
                 <Alert variant="destructive" className="mt-4">
                     <AlertTitle>Translation Error</AlertTitle>
                     <AlertDescription className="flex items-center justify-between">
