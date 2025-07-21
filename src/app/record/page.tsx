@@ -7,7 +7,7 @@ import { surahs } from '@/lib/quran';
 import { getLocalVersesForSurah, getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah, WordTiming } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Loader2, ChevronLeft, Info, Settings, Bookmark } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft, Languages, Bookmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { KaraokeVerse } from '@/components/KaraokeVerse';
@@ -212,11 +212,10 @@ export default function RecordPage() {
                     <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="hover:bg-white/10">
-                        <Info className="h-5 w-5" />
-                    </Button>
-                     <Button variant="ghost" size="icon" className="hover:bg-white/10">
-                        <Settings className="h-5 w-5" />
+                     <Button variant="ghost" size="icon" asChild className="hover:bg-white/10">
+                        <Link href="/settings/translation">
+                            <Languages className="h-5 w-5" />
+                        </Link>
                     </Button>
                 </div>
             </div>
