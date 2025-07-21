@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useState, Suspense, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { analyzeRecitation } from '@/lib/actions';
 import type { AnalyzeRecitationOutput } from '@/ai/flows/analyze-recitation';
@@ -18,6 +18,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useQuranSettings } from '@/hooks/use-quran-settings';
+import { analysisTranslations } from '@/lib/analysis-translations';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -30,6 +32,15 @@ function AnalysisContent() {
   const [analysis, setAnalysis] = useState<AnalyzeRecitationOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const { settings } = useQuranSettings();
+  const lang = useMemo(() => {
+    const langCode = settings.translationId;
+    return analysisTranslations[langCode] ? langCode : 'en';
+  }, [settings.translationId]);
+  
+  const t = useMemo(() => analysisTranslations[lang] || analysisTranslations['en'], [lang]);
+  const isRtl = lang === 'ar' || lang === 'ur';
 
   const performAnalysis = useCallback(async () => {
     setIsLoading(true);
@@ -39,7 +50,7 @@ function AnalysisContent() {
         const originalVerseText = localStorage.getItem(STORAGE_KEY_TEXT);
 
         if (!audioDataUri || !originalVerseText) {
-            throw new Error("Recitation data not found. Please record again.");
+            throw new Error(t.errorDataNotFound);
         }
 
         const result = await analyzeRecitation({ audioDataUri, originalVerseText });
@@ -51,11 +62,11 @@ function AnalysisContent() {
 
     } catch (e: any) {
         console.error("Analysis failed:", e);
-        setError(e.message || 'An unknown error occurred during analysis.');
+        setError(e.message || t.errorUnknown);
     } finally {
         setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     performAnalysis();
@@ -65,32 +76,32 @@ function AnalysisContent() {
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 gap-4 min-h-[400px]">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
-        <h2 className="text-2xl font-bold mt-4">Analyzing Your Recitation...</h2>
-        <p className="text-muted-foreground">This may take a few moments. We're listening carefully to your tilaawah.</p>
+        <h2 className="text-2xl font-bold mt-4">{t.loadingTitle}</h2>
+        <p className="text-muted-foreground">{t.loadingDescription}</p>
       </div>
     );
   }
 
   if (error) {
     if (error.includes('exceeded the daily limit')) {
-        return <QuotaBanner onRetry={performAnalysis} />;
+        return <QuotaBanner onRetry={performAnalysis} isRtl={isRtl} />;
     }
     return (
-        <div className="text-center p-4">
+        <div className="text-center p-4" dir={isRtl ? 'rtl' : 'ltr'}>
             <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
-                <AlertTitle>Analysis Failed</AlertTitle>
+                <AlertTitle>{t.errorTitle}</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
             </Alert>
             <div className="mt-6 flex gap-4 justify-center">
                 <Button onClick={performAnalysis}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Try Again
+                    <RefreshCw className={isRtl ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
+                    {t.retryButton}
                 </Button>
                 <Button variant="outline" asChild>
                     <Link href="/record">
-                        <Mic className="mr-2 h-4 w-4" />
-                        Record Again
+                        <Mic className={isRtl ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
+                        {t.recordAgainButton}
                     </Link>
                 </Button>
             </div>
@@ -101,7 +112,7 @@ function AnalysisContent() {
   if (!analysis) {
     return (
       <div className="text-center p-4">
-        <p>No analysis data available.</p>
+        <p>{t.noAnalysis}</p>
       </div>
     );
   }
@@ -109,11 +120,11 @@ function AnalysisContent() {
   const score = analysis.score || 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" dir={isRtl ? 'rtl' : 'ltr'}>
         {/* Original Text */}
         <Card>
             <CardHeader>
-                <CardTitle>Original Verse</CardTitle>
+                <CardTitle>{t.originalVerse}</CardTitle>
             </CardHeader>
             <CardContent>
                 <p dir="rtl" className="font-arabic text-2xl leading-loose text-center">
@@ -122,15 +133,15 @@ function AnalysisContent() {
             </CardContent>
         </Card>
 
-        {/* Score and Overall Feedback */}
+        {/* Score and Detailed Analysis */}
         <Card className="bg-gradient-to-br from-primary/10 to-transparent">
             <CardHeader>
-                <CardTitle>Recitation Score: {score}/100</CardTitle>
+                <CardTitle>{t.recitationScore}: {score}/100</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Progress value={score} className="h-4" />
                 <div>
-                    <h3 className="font-semibold mb-2">Feedback:</h3>
+                    <h3 className="font-semibold mb-2">{t.feedback}:</h3>
                     <p className="text-muted-foreground">{analysis.overallFeedback}</p>
                 </div>
             </CardContent>
@@ -139,7 +150,7 @@ function AnalysisContent() {
         {/* Word-by-word Analysis */}
         <Card>
             <CardHeader>
-                <CardTitle>Detailed Word-by-Word Analysis</CardTitle>
+                <CardTitle>{t.wordAnalysis}</CardTitle>
             </CardHeader>
             <CardContent>
                 <div dir="rtl" className="flex flex-wrap justify-center items-start gap-x-2 gap-y-6">
@@ -176,7 +187,7 @@ function AnalysisContent() {
         {/* Actionable Tips */}
         <Card>
             <CardHeader>
-                <CardTitle>Actionable Tips</CardTitle>
+                <CardTitle>{t.actionableTips}</CardTitle>
             </CardHeader>
             <CardContent>
                 <ul className="list-disc list-inside space-y-2 text-muted-foreground">
@@ -190,8 +201,8 @@ function AnalysisContent() {
         <div className="text-center">
             <Button asChild>
                 <Link href="/record">
-                    <Mic className="mr-2 h-4 w-4" />
-                    Practice Another Verse
+                    <Mic className={isRtl ? 'ml-2 h-4 w-4' : 'mr-2 h-4 w-4'} />
+                    {t.practiceAnother}
                 </Link>
             </Button>
         </div>
@@ -200,16 +211,25 @@ function AnalysisContent() {
 }
 
 export default function AnalysisPage() {
+    const { settings } = useQuranSettings();
+    const lang = useMemo(() => {
+        const langCode = settings.translationId;
+        return analysisTranslations[langCode] ? langCode : 'en';
+    }, [settings.translationId]);
+
+    const t = useMemo(() => analysisTranslations[lang] || analysisTranslations['en'], [lang]);
+    const isRtl = lang === 'ar' || lang === 'ur';
+
     return (
-        <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <div className="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl" dir={isRtl ? 'rtl' : 'ltr'}>
             <header className="flex items-center mb-8 relative">
                 <Link href="/record" passHref>
                     <Button variant="ghost" size="icon" className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-10">
-                        <ChevronLeft className="h-6 w-6" />
-                        <span className="sr-only">Back</span>
+                        <ChevronLeft className={isRtl ? 'rotate-180' : ''} />
+                        <span className="sr-only">{t.back}</span>
                     </Button>
                 </Link>
-                <h1 className="text-2xl font-bold w-full text-center">Recitation Analysis</h1>
+                <h1 className="text-2xl font-bold w-full text-center">{t.pageTitle}</h1>
             </header>
             <main>
                 <Suspense fallback={<div className="text-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
