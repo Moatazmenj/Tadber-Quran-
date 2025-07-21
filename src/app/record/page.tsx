@@ -7,7 +7,7 @@ import { surahs } from '@/lib/quran';
 import { getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Loader2, ChevronLeft, Languages } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { KaraokeVerse } from '@/components/KaraokeVerse';
@@ -16,8 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { VerseSelector } from '@/components/VerseSelector';
 import { SoundWave } from '@/components/SoundWave';
 import { cn } from '@/lib/utils';
-import { translationOptions } from '@/lib/translations';
-
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -185,6 +183,19 @@ export default function RecordPage() {
         clearWordTimeouts();
         setIsProcessing(true);
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+        // Check if the recording is empty
+        if (audioBlob.size < 1000) { // Less than 1KB is likely empty/silent
+            toast({
+                variant: 'destructive',
+                title: 'Empty Recording',
+                description: 'No audio was detected. Please try recording again.',
+            });
+            setIsRecording(false);
+            setIsProcessing(false);
+            return;
+        }
+
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
@@ -240,7 +251,6 @@ export default function RecordPage() {
                     <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
                 <div className="flex items-center gap-1 w-10">
-                    {/* Placeholder for alignment */}
                 </div>
             </div>
        </header>
