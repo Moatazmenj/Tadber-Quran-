@@ -234,8 +234,8 @@ export default function RecordPage() {
   const verseNumber = selectedVerse?.verse_key?.split(':')[1] || '';
 
   return (
-    <div className="bg-[#12211F] text-white min-h-screen flex flex-col">
-       <header className="sticky top-0 z-20 bg-black p-2">
+    <div className="bg-black text-white min-h-screen flex flex-col">
+       <header className="sticky top-0 z-20 bg-black/80 backdrop-blur-sm p-2">
             <div className="container mx-auto flex items-center justify-between">
                 <Link href="/" passHref>
                     <Button variant="ghost" size="icon" className="hover:bg-white/10">
@@ -292,7 +292,7 @@ export default function RecordPage() {
             </div>
        </header>
 
-       <div className="bg-[#2B3B38] p-2 shadow-md">
+       <div className="bg-neutral-900/50 p-2 shadow-md">
             <div className="container mx-auto flex justify-between items-center text-xs text-white/80">
                 <span>Juz {selectedVerse?.juz || '...'} | Page {selectedVerse?.page || '...'}</span>
                 <div className="flex items-center gap-2">
