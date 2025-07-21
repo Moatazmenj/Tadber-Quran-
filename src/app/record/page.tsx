@@ -40,6 +40,11 @@ export default function RecordPage() {
   const [isTranslationSheetOpen, setIsTranslationSheetOpen] = useState(false);
   const [activeTranslationOptions, setActiveTranslationOptions] = useState<TranslationOption[]>([]);
 
+  const audioPlayerRef = useRef<HTMLAudioElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const wordTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
+
 
   useEffect(() => {
     const surah = surahs.find(s => s.id === parseInt(selectedSurahId, 10));
