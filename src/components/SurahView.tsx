@@ -148,8 +148,9 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   
   
   const playVerse = useCallback((verseNumber: number, reciterToUse?: Reciter | null) => {
+    if (!audioRef.current) return;
     const currentReciter = reciterToUse || reciter;
-    if (!audioRef.current || !currentReciter?.server) return;
+    if (!currentReciter?.server) return;
     
     setAudioError(null);
     const surahNumPadded = String(surahInfo.id).padStart(3, '0');
@@ -190,8 +191,17 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   }, [surahInfo.versesCount, playVerse]);
 
   useEffect(() => {
+    if (!showAudioPlayer) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+      return;
+    }
+  
     if (!audioRef.current) {
-        audioRef.current = new Audio();
+      audioRef.current = new Audio();
     }
     const audio = audioRef.current;
   
@@ -199,10 +209,10 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => handleNextVerse();
     const handleError = (e: Event) => {
-        const mediaError = (e.target as HTMLAudioElement).error;
-        console.error('Audio Element Error:', mediaError);
-        setAudioError('Could not play audio. The file might not be available.');
-        setIsPlaying(false);
+      const mediaError = (e.target as HTMLAudioElement).error;
+      console.error('Audio Element Error:', mediaError);
+      setAudioError('Could not play audio. The file might not be available.');
+      setIsPlaying(false);
     };
   
     audio.addEventListener('play', handlePlay);
@@ -216,7 +226,7 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [handleNextVerse]);
+  }, [showAudioPlayer, handleNextVerse]);
   
   const handlePlayPause = () => {
     if (!audioRef.current) return;
@@ -229,10 +239,23 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
   
   const handleStartPlaybackFromVerse = (verseNumber: number) => {
     setActivePopoverKey(null);
-    setShowAudioPlayer(true);
     setCurrentVerse(verseNumber);
-    // Let the state update then trigger playVerse
-    setTimeout(() => playVerse(verseNumber), 0);
+    setShowAudioPlayer(true); // This will trigger the useEffect to create the audio element
+    
+    // A delay is needed to ensure the audio element is created and ready
+    setTimeout(() => {
+        if(audioRef.current) {
+            playVerse(verseNumber);
+        } else {
+            // Retry if it wasn't ready
+            const retryInterval = setInterval(() => {
+                if (audioRef.current) {
+                    playVerse(verseNumber);
+                    clearInterval(retryInterval);
+                }
+            }, 100);
+        }
+    }, 100);
   };
 
   const handleNext = () => {
