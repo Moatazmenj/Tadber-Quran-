@@ -15,8 +15,11 @@ import { cn } from '@/lib/utils';
 export function RecordButton() {
   const pathname = usePathname();
 
-  // Don't show the button on the record page itself, or the analysis page
-  if (pathname.startsWith('/record')) {
+  const isHomePage = pathname === '/';
+  const isSurahPage = pathname.startsWith('/surah/');
+
+  // Only show the button on the home page and surah pages
+  if (!isHomePage && !isSurahPage) {
     return null;
   }
 
