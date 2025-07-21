@@ -5,9 +5,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
 import { getLocalWordTimings } from '@/lib/quran-verses';
-import type { Ayah, Surah, TranslationOption } from '@/types';
+import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Loader2, ChevronLeft, Languages, Check } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft, Languages } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { KaraokeVerse } from '@/components/KaraokeVerse';
@@ -15,12 +15,13 @@ import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VerseSelector } from '@/components/VerseSelector';
 import { SoundWave } from '@/components/SoundWave';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import { translationOptions } from '@/lib/translations';
+
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
+const ENGLISH_TRANSLATION_API_ID = 131;
 
 export default function RecordPage() {
   const router = useRouter();
@@ -35,11 +36,9 @@ export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
+  const [showTranslation, setShowTranslation] = useState(false);
   
-  const [isTranslationSheetOpen, setIsTranslationSheetOpen] = useState(false);
-  const [activeTranslationOptions, setActiveTranslationOptions] = useState<TranslationOption[]>([]);
-
-  const audioPlayerRef = useRef<HTMLAudioElement>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const wordTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
@@ -53,12 +52,6 @@ export default function RecordPage() {
     const surah = surahs.find(s => s.id === parseInt(selectedSurahId, 10));
     setSurahInfo(surah || null);
   }, [selectedSurahId]);
-
-  useEffect(() => {
-    setActiveTranslationOptions(
-      translationOptions.map(opt => ({ ...opt, isActive: settings.translationId === opt.id }))
-    );
-  }, [settings.translationId]);
 
   const clearWordTimeouts = () => {
     wordTimeoutsRef.current.forEach(clearTimeout);
@@ -110,7 +103,7 @@ export default function RecordPage() {
     }
   }, [settings.reciterId, toast]);
 
-  const fetchVerses = useCallback(async (surahId: number, translationId: string) => {
+  const fetchVerses = useCallback(async (surahId: number) => {
     let verses: Omit<Ayah, 'translation'>[] | undefined;
 
     try {
@@ -127,30 +120,26 @@ export default function RecordPage() {
 
     if (!verses) return;
 
-    const selectedTranslation = translationOptions.find(t => t.id === translationId);
-    if (selectedTranslation) {
-        try {
-            const transRes = await fetch(`https://api.quran.com/api/v4/quran/translations/${selectedTranslation.apiId}?chapter_number=${surahId}`);
-            if (!transRes.ok) throw new Error('Failed to fetch translations');
-            const transData = await transRes.json();
-            const translationsMap = transData.translations.reduce((acc: any, t: any) => {
-                acc[t.verse_key] = t.text.replace(/<sup.*?<\/sup>/g, '');
-                return acc;
-            }, {});
+    try {
+        const transRes = await fetch(`https://api.quran.com/api/v4/quran/translations/${ENGLISH_TRANSLATION_API_ID}?chapter_number=${surahId}`);
+        if (!transRes.ok) throw new Error('Failed to fetch English translations');
+        const transData = await transRes.json();
+        const translationsMap = transData.translations.reduce((acc: any, t: any) => {
+            acc[t.verse_key] = t.text.replace(/<sup.*?<\/sup>/g, '');
+            return acc;
+        }, {});
 
-            const versesWithTranslations = verses.map(v => ({
-                ...v,
-                translation: translationsMap[v.verse_key] || 'Translation not available.'
-            }));
-            
-            setVersesForSurah(versesWithTranslations);
-        } catch (error) {
-             console.error(error);
-             toast({ variant: 'destructive', title: 'Error', description: 'Could not load translations.'});
-             setVersesForSurah(verses.map(v => ({...v, translation: 'Translation not available'})));
-        }
-    } else {
-      setVersesForSurah(verses.map(v => ({...v, translation: undefined})));
+        const versesWithTranslations = verses.map(v => ({
+            ...v,
+            translation: translationsMap[v.verse_key] || 'Translation not available.'
+        }));
+        
+        setVersesForSurah(versesWithTranslations);
+    } catch (error) {
+         console.error(error);
+         toast({ variant: 'destructive', title: 'Error', description: 'Could not load translations.'});
+         // Fallback with just Arabic text
+         setVersesForSurah(verses.map(v => ({...v, translation: 'Translation not available'})));
     }
     
     const firstVerseKey = verses?.[0]?.verse_key || '';
@@ -161,8 +150,8 @@ export default function RecordPage() {
   }, [toast, fetchWordTimings]);
 
   useEffect(() => {
-    fetchVerses(parseInt(selectedSurahId, 10), settings.translationId);
-  }, [selectedSurahId, settings.translationId, fetchVerses]);
+    fetchVerses(parseInt(selectedSurahId, 10));
+  }, [selectedSurahId, fetchVerses]);
 
   const handleSurahChange = (surahId: string) => {
     setSelectedSurahId(surahId);
@@ -173,10 +162,6 @@ export default function RecordPage() {
     fetchWordTimings(verseKey);
   }
 
-  const handleTranslationChange = (langId: string) => {
-    setSetting('translationId', langId);
-    setIsTranslationSheetOpen(false);
-  }
 
   const startRecording = async () => {
     if (wordTimings.length === 0 && !karaokeDisabled) {
@@ -269,38 +254,14 @@ export default function RecordPage() {
                     <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                     <Sheet open={isTranslationSheetOpen} onOpenChange={setIsTranslationSheetOpen}>
-                        <SheetTrigger asChild>
-                             <Button variant="ghost" size="icon" className="hover:bg-white/10">
-                                <Languages className="h-5 w-5" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="bottom" className="w-full max-w-xl mx-auto h-[60vh] flex flex-col rounded-t-2xl">
-                            <SheetHeader className="text-center pb-4 border-b">
-                                <SheetTitle>Choose Translation</SheetTitle>
-                            </SheetHeader>
-                            <ScrollArea className="flex-grow">
-                                <div className="p-4 space-y-1">
-                                    {activeTranslationOptions.map(opt => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => handleTranslationChange(opt.id)}
-                                            className="w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors hover:bg-accent/50"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-2xl">{opt.flag}</span>
-                                                <div>
-                                                    <p className="text-lg text-foreground">{opt.nativeName}</p>
-                                                    <p className="text-sm text-muted-foreground">{opt.translator}</p>
-                                                </div>
-                                            </div>
-                                            {opt.isActive && <Check className="h-5 w-5 text-primary" />}
-                                        </button>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </SheetContent>
-                     </Sheet>
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setShowTranslation(prev => !prev)}
+                        className={cn("hover:bg-white/10", showTranslation && "bg-primary/20 text-primary")}
+                    >
+                        <Languages className="h-5 w-5" />
+                    </Button>
                 </div>
             </div>
        </header>
@@ -322,7 +283,7 @@ export default function RecordPage() {
                     fontStyle={settings.fontStyle}
                     fontSize={settings.fontSize}
                     isKaraokeDisabled={karaokeDisabled}
-                    translation={selectedVerse.translation}
+                    translation={showTranslation ? selectedVerse.translation : undefined}
                 />
             )}
         </div>
