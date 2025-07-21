@@ -43,6 +43,7 @@ export interface TranslationOption {
   nativeName: string;
   translator: string;
   flag: string;
+  isActive?: boolean;
 }
 
 export interface ThemeOption {
