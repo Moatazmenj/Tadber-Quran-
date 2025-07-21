@@ -34,7 +34,6 @@ export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
-  const [showTranslation, setShowTranslation] = useState(false);
   
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -154,7 +153,6 @@ export default function RecordPage() {
 
   const handleVerseSelect = (verseKey: string) => {
     setSelectedVerseKey(verseKey);
-    setShowTranslation(false);
     fetchWordTimings(verseKey);
   }
 
@@ -277,7 +275,6 @@ export default function RecordPage() {
                     fontStyle={settings.fontStyle}
                     fontSize={settings.fontSize}
                     isKaraokeDisabled={karaokeDisabled}
-                    translation={showTranslation ? selectedVerse.translation : undefined}
                 />
             )}
         </div>
@@ -295,15 +292,6 @@ export default function RecordPage() {
         <div className="container mx-auto flex flex-col items-center justify-center max-w-4xl relative">
             <div className="absolute bottom-full mb-2 text-center w-full flex justify-center items-center gap-4">
                 <p className="text-xs text-white/60">Practice verse: {selectedVerseKey}</p>
-                 <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowTranslation(s => !s)}
-                    className="text-white/60 hover:text-white hover:bg-white/10 h-8 rounded-full"
-                    aria-label="Toggle Translation"
-                  >
-                    {showTranslation ? "Hide" : "Show"} Translation
-                 </Button>
             </div>
             <div className="relative w-full h-16 flex justify-center items-center">
                 <SoundWave isRecording={isRecording} />
@@ -328,5 +316,3 @@ export default function RecordPage() {
     </div>
   );
 }
-
-    
