@@ -142,7 +142,7 @@ function AnalysisContent() {
                 <CardTitle>Detailed Word-by-Word Analysis</CardTitle>
             </CardHeader>
             <CardContent>
-                <div dir="rtl" className="flex flex-wrap items-start gap-x-2 gap-y-6">
+                <div dir="rtl" className="flex flex-wrap justify-center items-start gap-x-2 gap-y-6">
                     {analysis.wordByWordAnalysis.map((item, index) => (
                         <TooltipProvider key={index}>
                             <Tooltip>
@@ -162,6 +162,7 @@ function AnalysisContent() {
                                             {item.details.makharij && <p><strong>Makhraj:</strong> {item.details.makharij}</p>}
                                             {item.details.sifaat && <p><strong>Sifaat:</strong> {item.details.sifaat}</p>}
                                             {item.details.tajweedRule && <p><strong>Tajweed:</strong> {item.details.tajweedRule}</p>}
+                                            {item.details.timing && <p><strong>Timing:</strong> {item.details.timing}</p>}
                                         </div>
                                     </TooltipContent>
                                 )}
