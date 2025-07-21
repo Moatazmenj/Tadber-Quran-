@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { KaraokeVerse } from '@/components/KaraokeVerse';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VerseSelector } from '@/components/VerseSelector';
@@ -264,7 +263,7 @@ export default function RecordPage() {
             </div>
        </header>
       
-      <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center">
+      <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center max-w-4xl">
         <div className="w-full flex-grow flex items-center justify-center">
           <VerseSelector 
             verses={versesForSurah.map(v => ({...v, isActive: v.verse_key === selectedVerseKey}))}
