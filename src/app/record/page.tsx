@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { surahs } from '@/lib/quran';
+import { getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
@@ -67,6 +68,17 @@ export default function RecordPage() {
     setCurrentWordIndex(-1);
     setWordTimings([]);
     setKaraokeDisabled(false);
+
+    // Try to get local timings first
+    const localTimings = getLocalWordTimings(verseKey);
+    if (localTimings) {
+        setWordTimings(localTimings);
+        if (audioPlayerRef.current) {
+            const audioUrl = localTimings[0].audio_url; // Assuming this is now a full path
+            audioPlayerRef.current.src = audioUrl;
+        }
+        return;
+    }
 
     try {
         const reciterId = settings.reciterId || 7; // Default to Alafasy
@@ -254,13 +266,6 @@ export default function RecordPage() {
                 </div>
             </div>
        </header>
-
-       <div className="bg-neutral-900/50 p-2 shadow-md">
-            <div className="container mx-auto flex justify-between items-center text-xs text-white/80">
-                <span>Juz {selectedVerse?.juz || '...'} | Page {selectedVerse?.page || '...'}</span>
-                <span>{verseNumber}/{surahInfo?.versesCount}</span>
-            </div>
-       </div>
       
       <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center">
         <div className="w-full mb-8">
@@ -292,12 +297,12 @@ export default function RecordPage() {
                 <p className="text-xs text-white/60">Practice verse: {selectedVerseKey}</p>
                  <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => setShowTranslation(s => !s)}
-                    className="text-white/60 hover:text-white hover:bg-white/10 h-8 w-8 rounded-full"
+                    className="text-white/60 hover:text-white hover:bg-white/10 h-8 rounded-full"
                     aria-label="Toggle Translation"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>
+                    {showTranslation ? "Hide" : "Show"} Translation
                  </Button>
             </div>
             <div className="relative w-full h-16 flex justify-center items-center">
@@ -323,3 +328,5 @@ export default function RecordPage() {
     </div>
   );
 }
+
+    
