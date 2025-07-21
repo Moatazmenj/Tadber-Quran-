@@ -66,8 +66,8 @@ const prompt = ai.definePrompt({
 
     2.  **Word-by-Word Analysis**:
         *   Iterate through each word of the verse.
-        *   For each word, determine if the overall pronunciation was correct (\`isCorrect\`).
-        *   Provide a brief, general assessment (\`assessment\`).
+        *   For each word, determine if the overall pronunciation was correct (\`isCorrect\`). This must be a strict assessment. A word is only correct if all its letters and rules are applied perfectly.
+        *   Provide a brief, general assessment (\`assessment\`) like 'Excellent' for correct words or 'Needs practice' for incorrect ones.
         *   **Crucially, only if a word has an error or a point of improvement**, provide a \`details\` object with specific, constructive feedback on one or more of the following, as applicable:
             *   \`makharij\`: Pinpoint the specific letter and the correction needed. Example: "For the letter 'ق', ensure the articulation point is the deepest part of the tongue rising to the soft palate."
             *   \`sifaat\`: Note the attribute that needs adjustment. Example: "The 'Tafkhim' (heaviness) of the 'ص' should be more pronounced compared to the 'س'."
@@ -82,7 +82,7 @@ const prompt = ai.definePrompt({
 
     4.  **Actionable Tips**: Provide 2-3 clear, practical, and inspiring tips for the student. These should directly address the 'Areas For Improvement'. For instance: "Listen to Sheikh Al-Husary's recitation of this Surah, focusing only on how he pronounces the letters ض and ظ." or "Practice the Qalqalah letters by saying them with a sukoon and feeling the 'bounce'."
 
-    5.  **Score**: Conclude with an overall score out of 100, reflecting accuracy, application of Tajweed, and flow.
+    5.  **Score**: Conclude with an overall score out of 100, reflecting accuracy, application of Tajweed, and flow. This score should be mathematically derived from the word-by-word analysis.
 
     Your feedback is an amanah (a trust). Deliver it with wisdom and compassion to help the student draw closer to the Quran.`,
 });
@@ -101,15 +101,13 @@ const analyzeRecitationFlow = ai.defineFlow(
             throw new Error("The AI model did not return a valid analysis.");
         }
         
-        // Fallback for score calculation if not provided by the model
-        if (output.score === undefined || output.score === null) {
-            const correctWords = output.wordByWordAnalysis.filter(w => w.isCorrect).length;
-            const totalWords = output.wordByWordAnalysis.length;
-            if (totalWords > 0) {
-                output.score = Math.round((correctWords / totalWords) * 100);
-            } else {
-                output.score = 0;
-            }
+        // Recalculate score for accuracy based on the detailed analysis
+        const correctWords = output.wordByWordAnalysis.filter(w => w.isCorrect).length;
+        const totalWords = output.wordByWordAnalysis.length;
+        if (totalWords > 0) {
+            output.score = Math.round((correctWords / totalWords) * 100);
+        } else {
+            output.score = 0;
         }
         
         return output;
