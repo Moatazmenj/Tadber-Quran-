@@ -263,13 +263,13 @@ export default function RecordPage() {
             </div>
        </header>
       
-      <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center max-w-4xl">
+      <main className="flex-grow container mx-auto p-4 flex flex-col items-center justify-center max-w-7xl">
         <div className="w-full flex-grow flex items-center justify-center">
           <VerseSelector 
             verses={versesForSurah.map(v => ({...v, isActive: v.verse_key === selectedVerseKey}))}
             onVerseSelect={handleVerseSelect} 
             fontStyle={settings.fontStyle}
-            fontSize={settings.fontSize * 0.75} // Smaller font for the list
+            fontSize={settings.fontSize * 1.0}
           />
         </div>
       </main>
