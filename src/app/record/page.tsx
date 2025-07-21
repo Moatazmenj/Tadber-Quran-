@@ -239,15 +239,8 @@ export default function RecordPage() {
                     </Select>
                     <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
-                <div className="flex items-center gap-1">
-                     <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => setShowTranslation(prev => !prev)}
-                        className={cn("hover:bg-white/10", showTranslation && "bg-primary/20 text-primary")}
-                    >
-                        <Languages className="h-5 w-5" />
-                    </Button>
+                <div className="flex items-center gap-1 w-10">
+                    {/* Placeholder for alignment */}
                 </div>
             </div>
        </header>
