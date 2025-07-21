@@ -136,20 +136,6 @@ function AnalysisContent() {
             </CardContent>
         </Card>
         
-        {/* Actionable Tips */}
-        <Card>
-            <CardHeader>
-                <CardTitle>Actionable Tips</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                    {analysis.actionableTips.map((tip, index) => (
-                        <li key={index}>{tip}</li>
-                    ))}
-                </ul>
-            </CardContent>
-        </Card>
-
         {/* Word-by-word Analysis */}
         <Card>
             <CardHeader>
@@ -186,6 +172,20 @@ function AnalysisContent() {
             </CardContent>
         </Card>
         
+        {/* Actionable Tips */}
+        <Card>
+            <CardHeader>
+                <CardTitle>Actionable Tips</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                    {analysis.actionableTips.map((tip, index) => (
+                        <li key={index}>{tip}</li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+
         <div className="text-center">
             <Button asChild>
                 <Link href="/record">
