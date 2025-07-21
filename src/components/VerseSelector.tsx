@@ -20,7 +20,7 @@ export function VerseSelector({ verses, onVerseSelect, fontStyle, fontSize }: Ve
       <div 
         dir="rtl"
         className={cn(
-            "leading-loose text-white/80 text-right",
+            "leading-loose text-white/80 text-center",
             fontStyle === 'indopak' ? 'font-arabic-indopak' : (fontStyle === 'uthmanic' ? 'font-arabic-uthmanic' : 'font-arabic')
         )}
         style={{ fontSize: `${fontSize}px`, lineHeight: `${fontSize * 1.8}px` }}
