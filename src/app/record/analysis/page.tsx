@@ -133,7 +133,7 @@ function AnalysisContent() {
             </CardContent>
         </Card>
 
-        {/* Score and Detailed Analysis */}
+        {/* Score and Overall Feedback */}
         <Card className="bg-gradient-to-br from-primary/10 to-transparent">
             <CardHeader>
                 <CardTitle>{t.recitationScore}: {score}/100</CardTitle>
