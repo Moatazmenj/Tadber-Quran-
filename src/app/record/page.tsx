@@ -7,7 +7,7 @@ import { surahs } from '@/lib/quran';
 import { getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Loader2, ChevronLeft } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft, FontSize } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { VerseSelector } from '@/components/VerseSelector';
 import { SoundWave } from '@/components/SoundWave';
 import { toastTranslations } from '@/lib/toast-translations';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
+import { KaraokeVerse } from '@/components/KaraokeVerse';
 
 const STORAGE_KEY_AUDIO = 'recitationAudio';
 const STORAGE_KEY_TEXT = 'recitationText';
@@ -23,7 +26,7 @@ const ENGLISH_TRANSLATION_ID = '131'; // Sahih International
 export default function RecordPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { settings } = useQuranSettings();
+  const { settings, setSetting } = useQuranSettings();
   
   const [selectedSurahId, setSelectedSurahId] = useState('1');
   const [selectedVerseKey, setSelectedVerseKey] = useState('1:1');
@@ -258,7 +261,27 @@ export default function RecordPage() {
                     </Select>
                     <p className="text-xs text-white/70">{surahInfo?.revelationPlace}</p>
                 </div>
-                <div className="flex items-center gap-1 w-10">
+                <div className="flex items-center gap-1 w-10 justify-end">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="hover:bg-white/10">
+                                <FontSize className="h-5 w-5" />
+                                <span className="sr-only">Font size</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-2">
+                            <div className="space-y-2">
+                                <label className="text-sm">Font Size</label>
+                                <Slider
+                                    value={[settings.fontSize]}
+                                    min={18}
+                                    max={48}
+                                    step={2}
+                                    onValueChange={(value) => setSetting('fontSize', value[0])}
+                                />
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
        </header>
