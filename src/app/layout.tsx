@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   title: 'Tadber',
   description: 'Browse, read, and reflect upon the Holy Quran.',
   icons: {
-    icon: '/favicon.ico',
+    icon: 'https://i.postimg.cc/htG7JQBz/20250709-110234.png',
   },
 };
 
