@@ -45,7 +45,7 @@ export default function RootLayout({
     <html lang="en" dir="ltr" className="dark notranslate" translate="no">
       <head>
         <meta name="google" content="notranslate" />
-        <meta name="google-site-verification" content="1rtnsfedjiC3AjNVuiUfv4djxi7Ne3tsi8G7u98BTbk" />
+        <meta name="google-site-verification" content="j3cRieG1OpvE_u5ubVVabNhX78ozbVhgnLpKhFQ5kU4" />
       </head>
       <body className={cn(
         "antialiased",
