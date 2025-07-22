@@ -35,12 +35,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "We recommend listening to {surahName} by reciter {reciterName} for your heart's comfort.",
         newRemedy: "Find Another Remedy",
         share: "Share Remedy",
-        shareTitle: "Spiritual Remedy - Tadber Quran",
+        shareTitle: "Spiritual Remedy - Tadber",
         shareVerses: "Verses of Serenity",
         shareTafsir: "Gentle Interpretation",
         shareDua: "Prophetic Dua",
         shareRecitation: "Listening Recommendation",
-        shareApp: "Tadber Quran App"
+        shareApp: "Tadber App"
     },
     fr: {
         title: "Clinique Spirituelle",
@@ -58,12 +58,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Nous vous recommandons d'écouter {surahName} par le récitateur {reciterName} pour apaiser votre cœur.",
         newRemedy: "Trouver un autre remède",
         share: "Partager le Remède",
-        shareTitle: "Remède Spirituel - Tadber Quran",
+        shareTitle: "Remède Spirituel - Tadber",
         shareVerses: "Versets de Sérénité",
         shareTafsir: "Interprétation Douce",
         shareDua: "Dua Prophétique",
         shareRecitation: "Recommandation d'Écoute",
-        shareApp: "Application Tadber Quran"
+        shareApp: "Application Tadber"
     },
     ar: {
         title: "العيادة الروحية",
@@ -81,12 +81,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "ننصحك بالاستماع إلى {surahName} بصوت القارئ {reciterName} لراحة قلبك.",
         newRemedy: "البحث عن وصفة أخرى",
         share: "مشاركة الوصفة",
-        shareTitle: "وصفة إيمانية - تدبر القرآن",
+        shareTitle: "وصفة إيمانية - تدبر",
         shareVerses: "آيات السكينة",
         shareTafsir: "تفسير ميسّر",
         shareDua: "دعاء نبوي",
         shareRecitation: "توصية استماع",
-        shareApp: "تطبيق تدبر القرآن"
+        shareApp: "تطبيق تدبر"
     },
      es: {
         title: "Clínica Espiritual",
@@ -104,12 +104,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Te recomendamos escuchar {surahName} por el recitador {reciterName} para el consuelo de tu corazón.",
         newRemedy: "Buscar Otro Remedio",
         share: "Compartir Remedio",
-        shareTitle: "Remedio Espiritual - Tadber Quran",
+        shareTitle: "Remedio Espiritual - Tadber",
         shareVerses: "Versos de Serenidad",
         shareTafsir: "Interpretación Suave",
         shareDua: "Dua Profética",
         shareRecitation: "Recomendación de Escucha",
-        shareApp: "Aplicación Tadber Quran"
+        shareApp: "Aplicación Tadber"
     },
     id: {
         title: "Klinik Spiritual",
@@ -127,12 +127,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Kami merekomendasikan mendengarkan {surahName} oleh qari {reciterName} untuk ketenangan hati Anda.",
         newRemedy: "Cari Obat Lain",
         share: "Bagikan Obat",
-        shareTitle: "Obat Spiritual - Tadber Quran",
+        shareTitle: "Obat Spiritual - Tadber",
         shareVerses: "Ayat-ayat Ketenangan",
         shareTafsir: "Tafsir Lembut",
         shareDua: "Doa Kenabian",
         shareRecitation: "Rekomendasi Mendengarkan",
-        shareApp: "Aplikasi Tadber Quran"
+        shareApp: "Aplikasi Tadber"
     },
     ru: {
         title: "Духовная Клиника",
@@ -150,12 +150,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "Мы рекомендуем слушать {surahName} в исполнении чтеца {reciterName} для успокоения вашего сердца.",
         newRemedy: "Найти Другое Лекарство",
         share: "Поделиться Лекарством",
-        shareTitle: "Духовное Лекарство - Tadber Quran",
+        shareTitle: "Духовное Лекарство - Tadber",
         shareVerses: "Аяты Спокойствия",
         shareTafsir: "Мягкое Толкование",
         shareDua: "Пророческое Дуа",
         shareRecitation: "Рекомендация к Прослушиванию",
-        shareApp: "Приложение Tadber Quran"
+        shareApp: "Приложение Tadber"
     },
     ur: {
         title: "روحانی کلینک",
@@ -173,12 +173,12 @@ const translations: Record<string, Record<string, string>> = {
         recitationText: "ہم آپ کو قاری {reciterName} کی آواز میں {surahName} سننے کی تجویز کرتے ہیں تاکہ آپ کے دل کو سکون ملے۔",
         newRemedy: "دوسرا علاج تلاش کریں",
         share: "علاج شیئر کریں",
-        shareTitle: "روحانی علاج - تدبر قرآن",
+        shareTitle: "روحانی علاج - تدبر",
         shareVerses: "آیاتِ سکون",
         shareTafsir: "نرم تفسیر",
         shareDua: "مسنون دعا",
         shareRecitation: "سننے کی تجویز",
-        shareApp: "تدبر قرآن ایپ"
+        shareApp: "تدبر ایپ"
     }
 };
 
@@ -277,7 +277,7 @@ export default function SpiritualClinicPage() {
       return (
         <div className="flex flex-col items-center justify-center text-center p-8 gap-4 min-h-[300px]">
           <h1 className="text-3xl font-headline font-bold text-primary animate-pulse">
-            Tadber Quran
+            Tadber
           </h1>
           <p className="text-muted-foreground">{t.loading}</p>
         </div>

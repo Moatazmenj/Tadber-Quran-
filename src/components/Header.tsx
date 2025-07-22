@@ -12,7 +12,7 @@ export function Header() {
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center gap-2 text-primary-foreground hover:text-primary-foreground/80 transition-colors">
             <h1 className="text-2xl font-headline font-bold">
-              Tadber Quran
+              Tadber
             </h1>
           </Link>
           <div className="flex items-center gap-2">

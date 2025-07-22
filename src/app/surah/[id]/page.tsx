@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: SurahPageProps) {
   }
 
   return {
-    title: `Surah ${surahInfo.name} - Tadber Quran`,
+    title: `Surah ${surahInfo.name} - Tadber`,
     description: `Read and listen to Surah ${surahInfo.name} (${surahInfo.arabicName}).`,
   };
 }

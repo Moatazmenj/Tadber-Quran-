@@ -25,7 +25,7 @@ export function Toaster() {
               )}
             </div>
             <div className="flex-shrink-0 text-xs font-bold text-foreground/50 self-center">
-              Tadber Quran
+              Tadber
             </div>
             {action}
             <ToastClose />

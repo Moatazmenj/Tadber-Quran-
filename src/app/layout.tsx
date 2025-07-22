@@ -32,8 +32,11 @@ const notoNaskhArabic = Noto_Naskh_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: 'Tadber Quran',
+  title: 'Tadber',
   description: 'Browse, read, and reflect upon the Holy Quran.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
