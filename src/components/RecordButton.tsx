@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Mic } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -33,7 +33,7 @@ export function RecordButton() {
           <TooltipTrigger asChild>
             <Button asChild size="icon" className="h-16 w-16 rounded-full shadow-2xl bg-gradient-to-br from-primary to-primary/80">
               <Link href="/record">
-                <Mic className="h-8 w-8 text-primary-foreground" />
+                <Image src="https://i.postimg.cc/VLBXnkTY/microphone.png" alt="Practice Recitation" width={32} height={32} />
                 <span className="sr-only">Practice Recitation</span>
               </Link>
             </Button>
