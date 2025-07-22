@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
@@ -7,7 +6,7 @@ import { surahs } from '@/lib/quran';
 import { getLocalWordTimings } from '@/lib/quran-verses';
 import type { Ayah, Surah } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Loader2, ChevronLeft, FontSize } from 'lucide-react';
+import { Mic, Square, Loader2, ChevronLeft, ALargeSmall } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useQuranSettings } from '@/hooks/use-quran-settings';
@@ -265,7 +264,7 @@ export default function RecordPage() {
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button variant="ghost" size="icon" className="hover:bg-white/10">
-                                <FontSize className="h-5 w-5" />
+                                <ALargeSmall className="h-5 w-5" />
                                 <span className="sr-only">Font size</span>
                             </Button>
                         </PopoverTrigger>
