@@ -6,6 +6,7 @@ import ThemeManager from '@/components/ThemeManager';
 import { SplashScreen } from '@/components/SplashScreen';
 import { cn } from '@/lib/utils';
 import { RecordButton } from '@/components/RecordButton';
+import Analytics from '@/components/Analytics';
 
 const cairo = Cairo({
   subsets: ['latin', 'arabic'],
@@ -33,7 +34,7 @@ const notoNaskhArabic = Noto_Naskh_Arabic({
 
 export const metadata: Metadata = {
   title: 'Tadber',
-  description: 'Browse, read, and reflect upon the Holy Quran.',
+  description: 'تدريب تفاعلي لتلاوة القرآن الكريم.',
   icons: {
     icon: 'https://i.postimg.cc/htG7JQBz/20250709-110234.png',
   },
@@ -58,6 +59,7 @@ export default function RootLayout({
         notoNaskhArabic.variable,
         'font-body'
       )}>
+        <Analytics />
         <SplashScreen>
           <ThemeManager />
           <div className="flex flex-col min-h-screen">
