@@ -45,11 +45,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-XXXXXXX';
   return (
     <html lang="en" dir="ltr" className="dark notranslate" translate="no">
       <head>
         <meta name="google" content="notranslate" />
         <meta name="google-site-verification" content="LgqOQAtjJYIobn9DHUcO6AwgO8q2gKnclAstbDwfcSs" />
+        <Analytics />
       </head>
       <body className={cn(
         "antialiased",
@@ -59,7 +61,14 @@ export default function RootLayout({
         notoNaskhArabic.variable,
         'font-body'
       )}>
-        <Analytics />
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          ></iframe>
+        </noscript>
         <SplashScreen>
           <ThemeManager />
           <div className="flex flex-col min-h-screen">
