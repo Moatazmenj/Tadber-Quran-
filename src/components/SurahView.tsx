@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SurahNameDisplay } from './SurahNameDisplay';
 import { toastTranslations } from '@/lib/toast-translations';
+import { AdsenseInArticle } from './AdsenseInArticle';
 
 interface SurahViewProps {
   surahInfo: Surah;
@@ -698,6 +699,8 @@ export function SurahView({ surahInfo, verses: initialVerses, surahText, autopla
               </CardContent>
             </Card>
           )}
+
+          {summary && <AdsenseInArticle />}
 
           <div className="surah-view-card rounded-lg p-4 md:p-8">
             <SurahNameDisplay surahInfo={surahInfo} />
