@@ -7,6 +7,7 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { cn } from '@/lib/utils';
 import { RecordButton } from '@/components/RecordButton';
 import Analytics from '@/components/Analytics';
+import Script from 'next/script';
 
 const cairo = Cairo({
   subsets: ['latin', 'arabic'],
@@ -51,6 +52,12 @@ export default function RootLayout({
       <head>
         <meta name="google" content="notranslate" />
         <meta name="google-site-verification" content="LgqOQAtjJYIobn9DHUcO6AwgO8q2gKnclAstbDwfcSs" />
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5913790292407293"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         <Analytics />
       </head>
       <body className={cn(
