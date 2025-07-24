@@ -19,7 +19,7 @@ export function AdsenseInArticle() {
         style={{ display: 'block', textAlign: 'center' }}
         data-ad-layout="in-article"
         data-ad-format="fluid"
-        data-ad-client="ca-pub-5913790292407293"
+        data-ad-client="ca-pub-9883714774141442"
         data-ad-slot="9371137641"
       ></ins>
     </div>
